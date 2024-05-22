@@ -1,0 +1,208 @@
+.task__details{
+    @apply fixed inset-0 z-[250] overflow-y-auto bg-black bg-opacity-75 py-12 px-8;
+    .wrapper{
+        @apply mx-auto mt-10 note-form transition duration-150 ease-in-out z-10 absolute top-0 right-0 bottom-0 left-0;
+        .container{
+            @apply relative w-full max-w-3xl max-h-full mx-auto;
+            .content{
+                @apply relative bg-white dark:bg-[#a1bdd914] rounded-xl shadow-lg;
+                .td__loader{
+                    @apply flex flex-col p-4 space-y-4 divide-y divide-gray-200 rounded shadow animate-pulse dark:divide-gray-700 md:p-6 dark:border-gray-700;
+                    .__f{
+                        @apply flex items-center justify-between pt-4;
+                        div{
+                            @apply w-[70%];
+                            .i__1{
+                                @apply h-2.5 bg-gray-300 rounded-full dark:bg-gray-600 w-full mb-2.5;
+                            }
+                            .i__2{
+                                @apply w-[90%] h-2 bg-gray-200 rounded-full dark:bg-gray-700;
+                            }
+                        }
+                        .i__r{
+                            @apply h-2.5 bg-gray-300 rounded-full dark:bg-gray-700 w-[25%];
+                        }
+                    }
+                }
+                .archive___task{
+                    @apply flex p-5 w-full;
+                    background-color: #fff7d6;
+                    background-image: linear-gradient(to bottom right, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent);
+                    background-size: 14px 14px;
+                    border-radius: 12px 12px 0 0;
+                    svg{
+                        @apply w-5 h-5 mr-2;
+                    }
+                }
+                .close_area{
+                    @apply block absolute right-2 top-0;
+                    .wrap{
+                        @apply ml-auto flex items-center px-2 py-2;
+                        .close__b{
+                            @apply cursor-pointer px-2 py-2 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg dark:hover:bg-gray-600 dark:hover:text-white;
+                        }
+                    }
+                }
+                .mv__card{
+                    @apply absolute top-20 left-7 flex w-[300px] z-10 text-xs flex-col bg-white px-4 py-4 rounded shadow;
+                }
+                .m__body{
+                    @apply flex bg-gray-50 dark:bg-[#a1bdd914] rounded-xl;
+                    .main{
+                        @apply flex-1 px-6 pt-8 pb-8;
+                        .checklist-box {
+                            position: relative;
+                            display: inline-block;
+                            width: 25px;
+                            height: 25px;
+                            &:hover .check {
+                                stroke-dashoffset: 0;
+                            }
+                            .background {
+                                fill: #ccc;
+                                transition: ease all 0.6s;
+                                -webkit-transition: ease all 0.6s;
+                            }
+                            .stroke {
+                                fill: none;
+                                stroke: #fff;
+                                stroke-miterlimit: 10;
+                                stroke-width: 2px;
+                                stroke-dashoffset: 100;
+                                stroke-dasharray: 100;
+                                transition: ease all 0.6s;
+                                -webkit-transition: ease all 0.6s;
+                            }
+                            .check {
+                                fill: none;
+                                stroke: #fff;
+                                stroke-linecap: round;
+                                stroke-linejoin: round;
+                                stroke-width: 2px;
+                                stroke-dashoffset: 22;
+                                stroke-dasharray: 22;
+                                transition: ease all 0.6s;
+                                -webkit-transition: ease all 0.6s;
+                            }
+                            input[type=checkbox] {
+                                position: absolute;
+                                width: 100%;
+                                height: 100%;
+                                left: 0;
+                                top: 0;
+                                margin: 0;
+                                opacity: 0;
+                                -appearance: none;
+                                -webkit-appearance: none;
+                            }
+                            input[type=checkbox]:hover {
+                                cursor: pointer;
+                            }
+                            input[type=checkbox]:checked + svg .background {
+                                fill: #3c53c7;
+                            }
+                            input[type=checkbox]:checked:hover + svg .background {
+                                fill: rgba(60, 83, 199, 0.80);
+                            }
+                            input[type=checkbox]:checked + svg .stroke {
+                                stroke-dashoffset: 0;
+                            }
+                            input[type=checkbox]:checked + svg .check {
+                                stroke-dashoffset: 0;
+                            }
+                        }
+                        .s__1{
+                            @apply flex;
+                            .t__l{
+                                @apply flex-1 pl-3;
+                                .__t{
+                                    @apply text-base font-semibold mb-1;
+                                }
+                            }
+                        }
+                        .s__2{
+                            @apply mt-6;
+                            .__details_top{
+                                @apply flex justify-center items-center;
+                                svg{
+                                    @apply w-5 h-5 mr-3;
+                                }
+                            }
+                            .__details{
+                                @apply pl-8;
+                            }
+                        }
+                    }
+                }
+                .t__cover{
+                    @apply flex w-full h-36 bg-cover bg-center rounded-t-lg bg-contain bg-no-repeat;
+                }
+                .task__description{
+                    max-width: 100%;
+                    height: 120px;
+                }
+                .__attachment{
+                    .preview{
+                        @apply h-[60px] w-[100px];
+                        div{
+                            @apply flex justify-center h-full w-auto max-w-full items-center bg-gray-400 bg-cover bg-contain bg-no-repeat bg-center;
+                        }
+                    }
+                    .cover{
+                        @apply flex items-center cursor-pointer hover:underline;
+                        width: fit-content;
+                        svg{
+                            @apply w-4 h-4 mr-2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+.dp__calendar_header, .dp__action, .dp__now_button{
+    font-weight: normal;
+    font-family: "Montserrat", sans-serif;
+}
+.dp__cell_inner, .dp__calendar_header_item, .dp__month_year_select{
+    font-size: 13px;
+    font-family: "Montserrat", sans-serif;
+}
+.dp__action_buttons, .dp__selection_preview{
+    font-weight: normal;
+    font-family: "Montserrat", sans-serif;
+}
+.dp__calendar_wrap{
+    .dp__calendar{
+        .dp__cell_inner{
+            margin: 0 2px;
+        }
+    }
+    &.e__type{
+        .dp__calendar{
+            .dp__cell_inner{
+                border-radius: 50%;
+            }
+        }
+    }
+}
+.dp__input_wrap{
+    .dp__input_readonly{
+        font-size: 13px;
+        font-weight: 300;
+        border: none;
+        background: none;
+        margin: 0;
+        padding: 0 20px;
+    }
+    svg{
+        padding: 0;
+    }
+}
+.dark{
+    .dp__input{
+        color: #e5e7eb;
+    }
+}
