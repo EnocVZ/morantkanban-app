@@ -39,7 +39,8 @@
                 </button>
             </li>
             <li v-if="$page.props.auth.user.role.slug === 'admin'">
-                <Link :href="route('global')"><icon name="settings" />
+                <Link :href="route('users')"><icon name="settings" />
+                    <!-- global x users -->
                     {{ __('Global Settings') }}
                 </Link>
             </li>
