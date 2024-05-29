@@ -2,16 +2,16 @@
     <div class="absolute w-[250px] z-[200] rounded-[8px] text-sm bg-white shadow overflow-hidden" :style="{top, left, right}">
         <div class="flex gap-3 flex-col py-3 px-3" v-if="!loading">
             <div class="flex items-center justify-between gap-1">
-                <!-- <div class="flex"></div>
+                <div class="flex"></div>
                 <div class="flex text-center">
                     {{ __('Filter') }}
                 </div>
                 <div @click="$emit('boardFilter')" class="flex hover:bg-gray-200 cursor-pointer rounded w-7 h-7 justify-center items-center">
                     <icon class="w-4 h-4" name="close" />
-                </div> -->
+                </div>
             </div>
             <div v-if="enable_options.includes('user')">
-                <div class="name my-2 font-medium">{{ __('Members') }}</div>
+                <!-- <div class="name my-2 font-medium">{{ __('Members') }}</div>
                 <ul class="flex flex-col gap-3 h-auto max-h-40 overflow-y-auto">
                     <li>
                         <label class="flex items-center cursor-pointer" for="filter__user__no">
@@ -40,10 +40,10 @@
                             <span data-a="" class="" type="button" :tabindex="user_index">{{ userObject.name }}</span>
                         </label>
                     </li>
-                </ul>
+                </ul> -->
             </div>
             <div v-if="enable_options.includes('due')">
-                <div class="name my-2">{{ __('Due Date') }}</div>
+                <!-- <div class="name my-2">{{ __('Due Date') }}</div>
                 <ul class="flex flex-col gap-3">
                     <li>
                         <label class="flex gap-1 items-center" for="filter__due__no">
@@ -69,10 +69,10 @@
                         </span>
                         </label>
                     </li>
-                </ul>
+                </ul> -->
             </div>
             <div v-if="enable_options.includes('label')">
-                <div class="name my-2">{{ __('Labels') }}</div>
+                <!-- <div class="name my-2">{{ __('Labels') }}</div>
                 <ul class="flex flex-col gap-3 max-h-40 overflow-y-auto">
                     <li v-for="(lab, lab_index) in labels">
                         <label class="flex items-center gap-1" :for="'f_l_'+lab_index">
@@ -80,7 +80,7 @@
                             <span class="w-full px-2 py-1 rounded cursor-pointer hover:opacity-80" :style="{background: lab.color}" :tabindex="lab_index" data-color="orange">{{ lab.name }}</span>
                         </label>
                     </li>
-                </ul>
+                </ul> -->
             </div>
         </div>
     </div>
