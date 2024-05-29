@@ -108,7 +108,8 @@
                                             </div>
                                         </div>
                                         <Link class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white" :href="route('users.edit.profile')"><icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Edit Profile') }}</Link>
-                                        <Link v-if="$page.props.auth.user.role.slug === 'admin'" class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white" :href="route('global')"><icon class="w-4 h-4 mr-2" name="settings" /> {{ __('Global Settings') }}</Link>
+                                        <Link v-if="$page.props.auth.user.role.slug === 'admin'" class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white" :href="route('users')"><icon class="w-4 h-4 mr-2" name="settings" /> {{ __('Global Settings') }}</Link>
+                                        <!-- Se modifico la ruta de acceso de global a users -->
                                         <Link class="flex items-center px-6 py-2 hover:bg-indigo-500 hover:text-white hover:fill-white w-full" :href="route('logout')" method="delete" as="button"><icon class="w-4 h-4 mr-2" name="logout" />{{ __('Logout') }}</Link>
                                     </div>
                                 </template>
