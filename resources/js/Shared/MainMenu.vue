@@ -34,7 +34,7 @@ export default {
               //{'name': 'Global', 'route': 'global', 'url': 'settings/global', 'icon': 'global_setting'},
               {'name': 'Manage Users', 'route': 'users', 'url': 'settings/users', 'icon': 'users'},
                {'name': 'User Roles', 'route': 'roles', 'url': 'settings/roles', 'icon': 'user_role'},
-              // {'name': 'Languages', 'route': 'languages', 'url': 'settings/languages', 'icon': 'edit'},
+              {'name': 'Languages', 'route': 'languages', 'url': 'settings/languages', 'icon': 'edit'},
               // {'name': 'Email Templates', 'route': 'templates', 'url': 'settings/templates', 'icon': 'email'},
               // {'name': 'SMTP Mail', 'route': 'settings.smtp', 'url': 'settings/smtp', 'icon': 'email_template'}
           ],

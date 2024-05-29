@@ -16,23 +16,23 @@
             </div>
         </div>
         <ul class="buttons" v-if="!show_back_button">
-            <li>
+            <!-- <li>
                 <button @click="showItems('tasks')"><icon name="archive" /> {{ __('Archived Tasks') }}</button>
             </li>
             <li>
                 <button @click="showItems('boards')"><icon name="archive" /> {{ __('Archived Board Items') }}</button>
-            </li>
+            </li> -->
             <li v-if="$page.props.auth.user.role.slug === 'admin'" class="border-t mt-2 py-2">
                 <button @click="showItems('backgrounds')"><span class="icon" :style="{backgroundImage: 'url('+project.background.image+')'}" /> {{ __('Change Background') }}</button>
             </li>
-            <li v-if="$page.props.auth.user.role.slug === 'admin'">
+            <!-- <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('workspaces')"><icon name="gear" />
                     {{ __('Change Workspace') }}</button>
-            </li>
-            <li v-if="$page.props.auth.user.role.slug === 'admin'">
+            </li> -->
+            <!-- <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('visibility')"><icon name="display" />
                     {{ __('Change Task Visibility') }}</button>
-            </li>
+            </li> -->
             <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="delete_project_confirmation=true"><icon name="trash" />
                     {{ __('Delete Project') }}
