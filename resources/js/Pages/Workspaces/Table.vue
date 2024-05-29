@@ -12,7 +12,7 @@
                               </th>
                               <th scope="col" class="">
                                   <button class="flex items-center gap-x-3 focus:outline-none">
-                                      <span>{{ __('Task') }}</span>
+                                      <span>{{ __('Tareas') }}</span>
                                   </button>
                               </th>
 
@@ -85,34 +85,34 @@
 
                                       <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <div class="t__title" v-if="element.due_date">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                              <!-- <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
                                                   <template #trigger>
                                                       <div class="flex t__title items-center">
                                                           <icon class="w-4 w-4" name="time" />
                                                           <span class="ml-1 font-light leading-none" aria-label="Due date"> {{ moment(element.due_date).format('MMM D') }} </span>
                                                       </div>
                                                   </template>
-                                              </Datepicker>
+                                              </Datepicker> -->
                                               <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />
                                               </div>
                                           </div>
                                           <div v-else class="w-full h-full">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                              <!-- <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
                                                   <template #trigger>
                                                       <div class="show_arrow_hover top-0 left-0 w-full h-full flex justify-start items-center">
                                                           <icon class="w-4 h-4" name="plus" />
                                                       </div>
                                                   </template>
-                                              </Datepicker>
+                                              </Datepicker> -->
                                           </div>
                                       </td>
 
-                                      <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
+                                      <!-- <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
                                           <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
                                           </button>
-                                      </td>
+                                      </td> -->
                                   </tr>
                               </template>
                           </draggable>
@@ -124,7 +124,10 @@
                       </table>
                       <!-- List Popup Board -->
                       <!-- List Popup Assignee -->
-                      <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showAssigneeBox">
+
+                      <!-- descomentar cuando se necesite mostrar -->
+
+                      <!-- <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showAssigneeBox">
                           <h4 class="text-center mb-3 font-bold">Assignee</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showAssigneeBox = false" >
                               <icon class=" w-4 h-4" name="close" />
@@ -142,10 +145,14 @@
                                   </label>
                               </li>
                           </ul>
-                      </div>
+                      </div> -->
+
+
                       <!-- List Popup Assignee -->
+                      
+                      
                       <!-- Label Search -->
-                      <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showLabelBox">
+                      <!-- <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showLabelBox">
                           <h4 class="text-center mb-3 font-bold">Labels</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                               <icon class=" w-4 h-4" name="close" />
@@ -163,7 +170,7 @@
                               </li>
                           </ul>
                           <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Create a new label </button>
-                      </div>
+                      </div> -->
                       <!-- Label Search -->
                   </div>
               </div>
