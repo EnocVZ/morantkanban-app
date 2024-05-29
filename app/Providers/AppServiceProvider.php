@@ -39,8 +39,8 @@ class AppServiceProvider extends ServiceProvider
                 return in_array($locale, $rtlCodes) ? 'rtl' : 'ltr';
             }
         ]);
-        if(App::environment('production')){
+        if (env('APP_ENV') !== 'local') {
             URL::forceScheme('https');
-        }
+        }
     }
 }
