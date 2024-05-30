@@ -35,7 +35,7 @@
                                             <section v-if="visible.menu_create" class="m__create">
                                                 <div tabindex="-1" class="m__area">
                                                     <ul role="menu" class="">
-                                                        <li v-for="create in creations" class="group">
+                                                        <!-- <li v-for="create in creations" class="group">
                                                             <div v-if="create.condition" class="c__1" @click="visible[create.visible] = true">
                                                                 <div class="c__2">
                                                                     <div class="c__3">
@@ -45,7 +45,7 @@
                                                                     <div class="font-normal text-xs">{{ create.details }}</div>
                                                                 </div>
                                                             </div>
-                                                        </li>
+                                                        </li> -->
                                                     </ul>
                                                 </div>
                                             </section>
