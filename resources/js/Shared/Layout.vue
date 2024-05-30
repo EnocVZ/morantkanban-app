@@ -63,7 +63,7 @@
                                 <button v-if="!!this.activeTimerString" @click="stopTracker()">STOP</button>
                                 <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Task details"><icon class="" name="info" /></Link>
                             </div>
-                            <!-- <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode" aria-live="polite" @click="switchMode">
+                            <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode == 'dark' ? 'Oscuro': 'Claro'" aria-live="polite" @click="switchMode">
                                 <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
                                     <mask class="moon" id="moon-mask">
                                         <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -81,7 +81,7 @@
                                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                                     </g>
                                 </svg>
-                            </button> -->
+                            </button>
                             <dropdown class="select_user" placement="bottom-end">
                                 <template #default>
                                     <div class="flex items-center cursor-pointer group">
@@ -179,8 +179,8 @@ export default {
             time: '',
             enable_sidebar: true,
             show__menu__list: false,
-            current_mode: 'Claro',
-            modes: ['Oscuro', 'Claro'],
+            current_mode: 'light',
+            modes: ['dark', 'light'],
             visible: {project_create: false, create_workspace: false, menu_workspace: false, menu_recent: false, menu_star: false, menu_create: false},
             edit_route: '',
             current_page: 'dashboard',
@@ -249,7 +249,7 @@ export default {
             }
         },
         switchMode(){
-            this.current_mode = this.current_mode === 'Claro' ? 'Oscuro' : 'Claro'
+            this.current_mode = this.current_mode === 'light' ? 'dark' : 'light'
             localStorage.setItem('current_mode', this.current_mode)
         },
         async getDuration(task_id){
