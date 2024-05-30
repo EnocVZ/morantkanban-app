@@ -18,7 +18,7 @@
                     <div class="flex relative">
                         <button v-if="workspace.member.role === 'admin'" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
-                            Invite Workspace members
+                            Agregar participantes
                         </button>
                         <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
                     </div>
@@ -26,7 +26,7 @@
                 <div class="flex px-2 w-full border-b my-5"></div>
 
                 <div class="flex justify-between items-center">
-                    <h2 class="text mb-1 px-2 text-[20px] font-medium">Team Members</h2>
+                    <h2 class="text mb-1 px-2 text-[20px] font-medium">Equipo de trabajo</h2>
                     <div class="tiny__time__log__bar">
                         <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
                     </div>

@@ -18,7 +18,7 @@
                     <div class="flex relative">
                         <button v-if="workspace.member.role === 'admin'" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
-                            Invite Workspace members
+                            Agregar participantes
                         </button>
                         <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
                     </div>
@@ -27,10 +27,10 @@
                     </button>
                     <div v-if="show_more" class="absolute right-7 top-[50%] w-30 z-999 bg-gray-100">
                         <button @click="edit_workspace_option = true" class="flex w-full items-center bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                            <icon class="mr-2 h-4 w-4" name="edit" /> Edit Workspace
+                            <icon class="mr-2 h-4 w-4" name="edit" /> Editar espacio de trabajo
                         </button>
                         <button @click="delete_workspace_popup = true" class="flex w-full items-center bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                            <icon class="mr-2 h-4 w-4" name="trash" /> Delete Workspace
+                            <icon class="mr-2 h-4 w-4" name="trash" /> Eliminar espacio de trabajo
                         </button>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="flex px-2 w-full border-b my-5"></div>
 
-                <h2 class="text mb-8 px-2 mt-6 text-[20px] font-medium">Projects</h2>
+                <h2 class="text mb-8 px-2 mt-6 text-[20px] font-medium">Proyecto</h2>
 
                 <create-project v-if="create_project" @create-project="create_project = false" />
 
@@ -72,7 +72,7 @@
                     <li class="w-full py-1 px-2" v-if="!!this.$page.props.auth.user.role.create_project">
                         <button @click="create_project = true" class="p-2 group flex w-full rounded justify-between bg-cover bg-[#091e420f] hover:bg-[#091e4224]">
                             <div class="flex flex-col h-24 w-full justify-center text-[16px] font-bold text-[#172b4d]">
-                                Create new project
+                                Crear nuevo proyecto
                             </div>
                         </button>
                     </li>

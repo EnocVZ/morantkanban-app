@@ -37,7 +37,7 @@
       <div class="flex cursor-pointer select-none text-[13px] text items-center justify-start gap-3 mt-4 font-bold px-2 pt-2 border-t border-[#ffffff29]" @click="hide_starred=!hide_starred">
           <icon v-if="!hide_starred" name="arrow-down" class="w-4 h-4" />
           <icon v-if="hide_starred" name="arrow-right" class="w-4 h-4" />
-          <div class="flex uppercase font-semibold">{{ __('Favorites') }}</div>
+          <div class="flex uppercase font-semibold">{{ __('Favoritos') }}</div>
       </div>
       <ul class="pt-1 text-sm side_p_list font-medium border-gray-200 dark:border-gray-700 max-h-[calc(100%-350px)] overflow-y-auto" v-show="!hide_starred && favorites.length">
           <li v-for="(project, p_index) in favorites" class="flex group">

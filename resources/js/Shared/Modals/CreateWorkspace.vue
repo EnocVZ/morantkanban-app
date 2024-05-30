@@ -13,13 +13,13 @@
 
             <div class="flex">
                 <label class="w-full flex flex-col text-left">
-                    <div>{{ __('Workspace name') }} *</div>
+                    <div>{{ __('Espacio de trabajo') }} *</div>
                     <input v-model="workspace.name" class="rounded border" type="text" required="" aria-required="true" autocomplete="off">
                 </label>
             </div>
             <div class="flex">
                 <label class="flex flex-col w-full text-left">
-                    <div>{{ __('Workspace Type') }}</div>
+                    <div>{{ __('Tipo de espacio trabajo') }}</div>
                     <select-input v-model="workspace.type" class=" mr-2 w-full">
                         <option v-for="(type, ti) in types" :key="ti" :value="type">{{ type }}</option>
                     </select-input>
@@ -27,13 +27,13 @@
             </div>
             <div class="flex">
                 <label class="w-full flex flex-col text-left">
-                    <div>{{ __('Website') }} <small>({{ __('optional') }})</small></div>
+                    <div>{{ __('Sitio web') }} <small>({{ __('opcional') }})</small></div>
                     <input v-model="workspace.website" class="rounded border" type="text" autocomplete="off">
                 </label>
             </div>
             <div class="flex">
                 <label class="w-full flex flex-col text-left">
-                    <div>{{ __('Workspace Description') }} <small>({{ __('optional') }})</small></div>
+                    <div>{{ __('Descripción del espacio de trabajo') }} <small>({{ __('opcional') }})</small></div>
                     <textarea v-model="workspace.description" class="rounded border" autocomplete="off" />
                 </label>
             </div>
@@ -71,7 +71,7 @@ export default {
             loading: false,
             workspaces: [],
             backgrounds: [],
-            types: ['Operation', 'Education', 'Marketing', 'Engineering-IT', 'Small Business', 'Other'],
+            types: ['Desarrollo', 'Educación', 'Marketing', 'Ingenieria-TI', 'Pequeñas empresa', 'Otros'],
         }
     },
     methods: {

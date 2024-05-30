@@ -35,7 +35,7 @@
                                             <section v-if="visible.menu_create" class="m__create">
                                                 <div tabindex="-1" class="m__area">
                                                     <ul role="menu" class="">
-                                                        <!-- <li v-for="create in creations" class="group">
+                                                        <li v-for="create in creations" class="group">
                                                             <div v-if="create.condition" class="c__1" @click="visible[create.visible] = true">
                                                                 <div class="c__2">
                                                                     <div class="c__3">
@@ -45,7 +45,7 @@
                                                                     <div class="font-normal text-xs">{{ create.details }}</div>
                                                                 </div>
                                                             </div>
-                                                        </li> -->
+                                                        </li>
                                                     </ul>
                                                 </div>
                                             </section>
@@ -63,7 +63,7 @@
                                 <button v-if="!!this.activeTimerString" @click="stopTracker()">STOP</button>
                                 <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Task details"><icon class="" name="info" /></Link>
                             </div>
-                            <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Toggles light & dark" :aria-label="current_mode" aria-live="polite" @click="switchMode">
+                            <!-- <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode" aria-live="polite" @click="switchMode">
                                 <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
                                     <mask class="moon" id="moon-mask">
                                         <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -81,7 +81,7 @@
                                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                                     </g>
                                 </svg>
-                            </button>
+                            </button> -->
                             <dropdown class="select_user" placement="bottom-end">
                                 <template #default>
                                     <div class="flex items-center cursor-pointer group">
@@ -95,7 +95,7 @@
                                 <template #dropdown>
                                     <div class="shadow-xl bg-white rounded text-sm ">
                                         <div class="flex px-4 flex-col py-3">
-                                            <div class="uppercase mb-2 font-bold">Account</div>
+                                            <div class="uppercase mb-2 font-bold">Perfil</div>
                                             <div class="flex gap-1 items-center">
                                                 <div class="flex">
                                                     <img v-if="$page.props.auth.user.photo" class="user_photo w-10 h-10" :alt="$page.props.auth.user.first_name" :src="$page.props.auth.user.photo" />
@@ -173,14 +173,14 @@ export default {
     data() {
         return{
             creations: [
-                {name: 'Project', visible: 'project_create', icon: 'project',  condition: !!this.$page.props.auth.user.role.create_project, details: 'After creating project, you will be able to manage your tasks on board.'},
-                {name: 'Workspace', visible: 'create_workspace', condition: !!this.$page.props.auth.user.role.create_workspace, icon: 'workspace', details: 'After creating project, you will be able to manage your tasks on board.'},
+                {name: 'Proyecto', visible: 'project_create', icon: 'project',  condition: !!this.$page.props.auth.user.role.create_project, details: 'Después de crear el proyecto, podrás administrar tus tareas a bordo.'},
+                {name: 'Espacio de trabajo', visible: 'create_workspace', condition: !!this.$page.props.auth.user.role.create_workspace, icon: 'workspace', details: 'Después de crear el proyecto, podrás administrar tus tareas a bordo.'},
             ],
             time: '',
             enable_sidebar: true,
             show__menu__list: false,
-            current_mode: 'light',
-            modes: ['dark', 'light'],
+            current_mode: 'Claro',
+            modes: ['Oscuro', 'Claro'],
             visible: {project_create: false, create_workspace: false, menu_workspace: false, menu_recent: false, menu_star: false, menu_create: false},
             edit_route: '',
             current_page: 'dashboard',
@@ -249,7 +249,7 @@ export default {
             }
         },
         switchMode(){
-            this.current_mode = this.current_mode === 'light' ? 'dark' : 'light'
+            this.current_mode = this.current_mode === 'Claro' ? 'Oscuro' : 'Claro'
             localStorage.setItem('current_mode', this.current_mode)
         },
         async getDuration(task_id){
