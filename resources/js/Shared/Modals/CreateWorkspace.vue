@@ -27,7 +27,7 @@
             </div>
             <div class="flex">
                 <label class="w-full flex flex-col text-left">
-                    <div>{{ __('Sitio web') }} <small>({{ __('opcional') }})</small></div>
+                    <div>{{ __('Url del anexo') }} <small>({{ __('opcional') }})</small></div>
                     <input v-model="workspace.website" class="rounded border" type="text" autocomplete="off">
                 </label>
             </div>
@@ -71,7 +71,7 @@ export default {
             loading: false,
             workspaces: [],
             backgrounds: [],
-            types: ['Desarrollo', 'Educación', 'Marketing', 'Ingenieria-TI', 'Pequeñas empresa', 'Otros'],
+            types: ['Desarrollo ', 'Ciencia de datos', 'IA', ' Encuestas', 'Ventas', 'Otros'],
         }
     },
     methods: {

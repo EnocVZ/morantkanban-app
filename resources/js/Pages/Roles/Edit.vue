@@ -8,9 +8,9 @@
                     <text-input v-model="form.slug" :error="form.errors.slug" class="pr-6 pb-8 w-full lg:w-1/2" :label="__('Slug')" />
                 </div>
                 <div class="p-8 flex flex-col gap-10">
-                    <label for="create__workspace" class="flex toggle_swtich items-center cursor-pointer">
+                    <label for="crear espacio de trabajo" class="flex toggle_swtich items-center cursor-pointer">
                         <div class="mr-3 text-sm">
-                            {{ __('Create workspace') }}
+                            {{ __('Crear espacio de trabajo') }}
                         </div>
                         <div class="relative">
                             <input id="create__workspace" type="checkbox" class="sr-only" v-model="form.create_workspace" />

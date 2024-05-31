@@ -1,7 +1,7 @@
 <template>
     <div class="absolute w-[250px] z-[200] rounded-[8px] text-sm bg-white shadow overflow-hidden" :style="{top, left, right}">
         <div class="flex gap-3 flex-col py-3 px-3" v-if="!loading">
-            <div class="flex items-center justify-between gap-1">
+            <!-- <div class="flex items-center justify-between gap-1">
                 <div class="flex"></div>
                 <div class="flex text-center">
                     {{ __('Filter') }}
@@ -9,7 +9,7 @@
                 <div @click="$emit('boardFilter')" class="flex hover:bg-gray-200 cursor-pointer rounded w-7 h-7 justify-center items-center">
                     <icon class="w-4 h-4" name="close" />
                 </div>
-            </div>
+            </div> -->
             <div v-if="enable_options.includes('user')">
                 <!-- <div class="name my-2 font-medium">{{ __('Members') }}</div>
                 <ul class="flex flex-col gap-3 h-auto max-h-40 overflow-y-auto">

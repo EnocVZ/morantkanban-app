@@ -96,7 +96,7 @@
 
         <delete-confirmation
             v-if="delete_workspace_popup" @popup="delete_workspace_popup = false" @confirm="deleteWorkspace()"
-            details="Deleting workspace will delete all of the projects including board list. Are you sure you want to delete this workspace?"
+            details="Al eliminar el espacio de trabajo, se eliminarán todos los proyectos, incluida la lista de tableros. ¿Está seguro de que desea eliminar este espacio de trabajo?"
         />
     </div>
 </template>

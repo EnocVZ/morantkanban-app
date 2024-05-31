@@ -57,7 +57,7 @@
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
                                   <div class="card__footer">
-                                      <div v-if="element.due_date" aria-label="Due date" class="__item due" :class="getDue(element)">
+                                      <div v-if="element.due_date" aria-label="Fecha de vencimiento" class="__item due" :class="getDue(element)">
                                           <icon class="w-4 h-4" name="time" />
                                           <span class="pl-[2px] pr-[4px] leading-none"> {{ moment(element.due_date).format('MMM D') }} </span>
                                       </div>
@@ -113,7 +113,7 @@
                           <span class="block text-sm">{{ __('Agregar una nueva lista') }}</span>
                       </div>
                       <div class="p-3" v-show="new_list_open">
-                          <input autofocus type="text" :id="'new_list_input_id_'+lists.length" :ref="'new_list_input_'+lists.length" v-model="new_list.title" class="block text-sm font-medium w-full px-2 py-2 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter list title..." @keyup="$event.keyCode === 13?submitNewList($event):''">
+                          <input autofocus type="text" :id="'new_list_input_id_'+lists.length" :ref="'new_list_input_'+lists.length" v-model="new_list.title" class="block text-sm font-medium w-full px-2 py-2 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Introduce el título de la lista..." @keyup="$event.keyCode === 13?submitNewList($event):''">
                           <div class="mt-2 flex">
                               <button @click="submitNewList($event)" class="inline-flex items-center border font-medium shadow-sm text-white border-transparent bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 text-xs rounded">
                                   Agregar lista
