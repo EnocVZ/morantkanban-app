@@ -22,7 +22,7 @@
                       <button @click="listItem.show_more = !listItem.show_more" class="flex items-center justify-center w-6 h-6 ml-auto text-indigo-500 rounded hover:bg-[#091e4224]">
                           <icon class="w-5 w-5" name="more-h" />
                       </button>
-                      <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
+                      <!-- <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
                           <button v-if="listIndex!==0" @click="moveList(listIndex, 'minus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="move_left" />
                               Move Left
@@ -35,7 +35,7 @@
                               <icon class="mr-2 h-4 w-4 " name="archive" />
                               Archive
                           </button>
-                      </div>
+                      </div> -->
                   </div>
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
                       <template #item="{ element, index }">
@@ -89,13 +89,13 @@
                           <div class="add_new pt-1">
                               <div v-if="!listItem.new_task_open" class="group mb-1.5 flex cursor-pointer items-center rounded py-2 hover:bg-white ltr:pl-2 rtl:pr-2" @click="openNewTask(listItem)">
                                   <icon class="w-4 w-4 text-indigo-500" name="add" />
-                                  <span class="block text-sm text-gray-500">Add a task</span>
+                                  <span class="block text-sm text-gray-500">Agregar tarea</span>
                               </div>
                               <div class="mb-2" v-show="listItem.new_task_open">
-                                  <input autofocus :id="'new_task_input_id_'+listItem.id" :ref="'new_task_input_'+listItem.id" type="text" v-model="new_task.title" class="block text-sm font-medium w-full px-4 py-3 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter a title for this task" @keyup="$event.keyCode === 13?submitNewTask(listItem, listIndex):''">
+                                  <input autofocus :id="'new_task_input_id_'+listItem.id" :ref="'new_task_input_'+listItem.id" type="text" v-model="new_task.title" class="block text-sm font-medium w-full px-4 py-3 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Introduzca un título para esta tarea" @keyup="$event.keyCode === 13?submitNewTask(listItem, listIndex):''">
                                   <div class="pl-1 mt-2 flex">
                                       <button @click="submitNewTask(listItem, listIndex)" class="inline-flex items-center border font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-white border-transparent bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 px-2.5 py-1.5 text-xs rounded">
-                                          Add task
+                                        Agregar tarea
                                       </button>
                                       <button @click="listItem.new_task_open = false" class="inline-flex items-center border font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 border-gray-300 bg-white hover:bg-gray-50 focus:ring-indigo-500 px-2.5 py-1 text-xs rounded ltr:ml-1 rtl:mr-1">
                                           <icon class="w-4 h-4" name="close" />
@@ -110,13 +110,13 @@
                   <div class="add_new" :class="{'active': new_list_open}">
                       <div v-if="!new_list_open" class="group p-3 flex cursor-pointer items-center rounded" @click="openNewList()">
                           <icon class="w-4 w-4" name="add" />
-                          <span class="block text-sm">{{ __('Add a new list') }}</span>
+                          <span class="block text-sm">{{ __('Agregar una nueva lista') }}</span>
                       </div>
                       <div class="p-3" v-show="new_list_open">
                           <input autofocus type="text" :id="'new_list_input_id_'+lists.length" :ref="'new_list_input_'+lists.length" v-model="new_list.title" class="block text-sm font-medium w-full px-2 py-2 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter list title..." @keyup="$event.keyCode === 13?submitNewList($event):''">
                           <div class="mt-2 flex">
                               <button @click="submitNewList($event)" class="inline-flex items-center border font-medium shadow-sm text-white border-transparent bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 text-xs rounded">
-                                  Add list
+                                  Agregar lista
                               </button>
                               <button @click="new_list_open = false" class="inline-flex items-center border font-medium shadow-sm text-gray-700 border-gray-300 bg-white hover:bg-gray-50 px-2.5 py-1 text-xs rounded ltr:ml-1 rtl:mr-1">
                                   Cancel

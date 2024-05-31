@@ -76,7 +76,7 @@
                                         <h2 class="__t" contenteditable="true" @keypress="saveTitle($event)" @blur="saveTitle($event)">
                                             {{ task.title }}
                                         </h2>
-                                        <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span>
+                                        <!-- <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
 
                                         <!-- <div class="flex flex-col mt-5">
                                             <span class="text-xs font-bold mb-1">{{ __('Labels') }}</span>
@@ -134,7 +134,7 @@
                                         <icon @click="toggleDetails()" class="w-4 h-4 ml-auto cursor-pointer" name="edit" />
                                     </div>
                                     <div class="__details">
-                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Add more details...'"></div>
+                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Añade más detalles...'"></div>
                                         <section class="mt-4" v-if="editDescription">
                                             <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="task.description" :options="editorOptions" contentType="html" theme="snow" />
                                             <div class="mt-2">
@@ -398,7 +398,7 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Select Date" :is-24="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" />
                                             </div>
                                         </div>
                                     </div>
