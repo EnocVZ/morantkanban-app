@@ -18,12 +18,12 @@
                   <span class="ml-3">{{ __('Workspace') }} {{ __('Tasks') }}</span>
               </Link>
           </li> -->
-          <li>
+          <!-- <li>
               <Link :href="route('workspace.tables', {'uid': workspace.slug || workspace.id, 'user': $page.props.auth.user.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('filter')}">
                   <icon class="w-4 h-4" name="list" />
                   <span class="ml-3">{{ __('My Tasks') }}</span>
               </Link>
-          </li>
+          </li> -->
           <!-- <li class="relative" v-if="workspace.member.role === 'admin'">
               <Link class="flex items-center px-3 p-2 group workspace_members" :href="route('workspace.members', workspace.id)" :class="{'active' : checkActiveClass('component', 'Workspaces_Members')}">
                   <icon class="w-4 h-4" name="user" />
