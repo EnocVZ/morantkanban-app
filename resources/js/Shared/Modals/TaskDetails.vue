@@ -76,15 +76,15 @@
                                         <h2 class="__t" contenteditable="true" @keypress="saveTitle($event)" @blur="saveTitle($event)">
                                             {{ task.title }}
                                         </h2>
-                                        <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span>
+                                        <!-- <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
 
-                                        <div class="flex flex-col mt-5">
+                                        <!-- <div class="flex flex-col mt-5">
                                             <span class="text-xs font-bold mb-1">{{ __('Labels') }}</span>
                                             <div class="list_labels flex flex-wrap gap-1">
                                                 <button @click="showLabelBox = true" class="label_button" v-for="(task_label, label_index) in task.task_labels" :style="{ background: task_label.label.color }" :aria-label="task_label.label.name" data-a="">{{ task_label.label.name }}</button>
                                                 <button @click="showLabelBox = true" class="label_button bg-gray-200 hover:bg-gray-300"><icon class="" name="plus" /></button>
                                             </div>
-                                        </div>
+                                        </div> -->
                                     </div>
                                 </div>
                                 <div class="fixed flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" v-if="showLabelBox">
@@ -134,7 +134,7 @@
                                         <icon @click="toggleDetails()" class="w-4 h-4 ml-auto cursor-pointer" name="edit" />
                                     </div>
                                     <div class="__details">
-                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Add more details...'"></div>
+                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Añade más detalles...'"></div>
                                         <section class="mt-4" v-if="editDescription">
                                             <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="task.description" :options="editorOptions" contentType="html" theme="snow" />
                                             <div class="mt-2">
@@ -206,7 +206,7 @@
                                 </section>
 
                                 <section class="mt-8">
-                                    <div>
+                                    <!-- <div>
                                         <div class="flex">
                                             <icon class="w-4 h-4 mr-3 mt-1" name="attachment" />
                                             <div class="flex-1 border-b pb-2">
@@ -237,11 +237,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </section>
 
                                 <section class="mt-8">
-                                    <div>
+                                    <!-- <div>
                                         <div class="flex">
                                             <icon class="w-4 h-4 mr-3 mt-1" name="comments" />
                                             <div class="flex-1 border-b pb-2">
@@ -249,10 +249,10 @@
                                                 <span class="ml-2 text-sm font-light ">{{ task.comments.length }}</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
 
                                     <div class="pl-8 pt-4">
-                                        <div>
+                                        <!-- <div>
                                             <div v-if="!showCommentBox" class="mt-1 mb-4 cursor-pointer rounded-md border border-gray-300 hover:shadow">
                                                 <p @click="showCommentBox = true" class="px-3 py-2 text-sm ">
                                                     {{ __('Write a comment...') }}
@@ -260,7 +260,7 @@
                                             </div>
 
                                             <form v-if="showCommentBox" class="mt-1 mb-4 rounded-md border border-gray-300" enctype="multipart/form-data">
-<!--                                                <textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea>-->
+                                               <textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea>
                                                 <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" />
 
                                                 <div class="flex items-center px-3 pt-2 pb-3">
@@ -278,10 +278,10 @@
                                                     </div>
                                                 </div>
                                             </form>
-                                        </div>
+                                        </div> -->
 
                                         <div class="space-y-4">
-                                            <div v-for="(comment, comment_i) in task.comments" class="group relative flex py-1">
+                                            <!-- <div v-for="(comment, comment_i) in task.comments" class="group relative flex py-1">
                                                 <div class="h-6 w-6">
                                                     <span class="block rounded-full h-6 w-6">
                                                         <img v-if="comment.user.photo_path" class="h-full w-full rounded-full" :src="comment.user.photo_path" alt="">
@@ -316,7 +316,7 @@
                                                     </div>
                                                     <div class="prose text-sm pt-1" v-if="!comment.modify" v-html="comment.details"></div>
                                                 </div>
-                                            </div>
+                                            </div> -->
                                         </div>
                                     </div>
                                 </section>
@@ -324,7 +324,7 @@
 
                             <aside class="w-60 divide-y divide-gray-200 px-6 py-6">
                                 <section class="py-3">
-                                    <h2 class="px-2 text-sm font-medium">
+                                    <!-- <h2 class="px-2 text-sm font-medium">
                                         {{ __('Move Task') }}
                                     </h2>
 
@@ -335,10 +335,10 @@
                                                 <icon class="w-3.5 h-3.5 ml-auto cursor-pointer" name="arrow-down" />
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </section>
                                 <section class="py-3.5">
-                                    <div class="flex items-center px-2">
+                                    <!-- <div class="flex items-center px-2">
                                         <h2 class="text-sm font-medium ">
                                             {{ __('Assignees') }}
                                         </h2>
@@ -368,16 +368,16 @@
                                                 </ul>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
 
-                                    <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
+                                    <!-- <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
                                       <span v-for="assignee in task.assignees" :aria-label="assignee.user.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
                                           <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
                                       </span>
-                                    </div>
+                                    </div> -->
                                 </section>
                                 <section class="py-4">
-                                    <h2 class="px-2 text-sm font-medium">
+                                    <!-- <h2 class="px-2 text-sm font-medium">
                                         {{ __('Time Count') }}
                                     </h2>
 
@@ -389,7 +389,7 @@
                                         </div>
                                         <button v-if="!!this.activeTimerString && task_assignees().includes($page.props.auth.user.id)" class="py-2 w-[70px] bg-red-600 hover:bg-red-700 rounded text-[12px] text-white select-none" @click="stopTracker()">{{ __('STOP') }}</button>
                                         <button v-else-if="!existing_timer && task_assignees().includes($page.props.auth.user.id)" class="py-2 w-[70px] bg-indigo-600 hover:bg-indigo-800 rounded text-[12px] text-white select-none" @click="startTracker()">{{ __('START') }}</button>
-                                    </div>
+                                    </div> -->
                                 </section>
                                 <section class="py-3">
                                     <h2 class="px-2 text-sm font-medium">
@@ -398,14 +398,14 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Select Date" :is-24="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" />
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
                                 <section class="py-3">
-                                    <div class="mt-2 space-y-2 px-1">
+                                    <!-- <div class="mt-2 space-y-2 px-1">
                                         <label class="flex cursor-pointer w-full items-center rounded bg-gray-200 td__btn hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt" @change="uploadAttachment($event)" class="hidden" type="file"/>
                                             <icon class="mr-2 h-4 w-4 " name="attachment" />
@@ -423,7 +423,7 @@
                                             <icon class="mr-2 h-4 w-4 fill-white" name="dash" />
                                             {{ __('Delete') }}
                                         </button>
-                                    </div>
+                                    </div> -->
                                 </section>
 
                             </aside>

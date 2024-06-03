@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Providers;
-
+use Illuminate\Support\Facades\App;
 use App\Models\Setting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $locale = config('app.locale')?? 'en';
         Inertia::share([
@@ -39,5 +40,9 @@ class AppServiceProvider extends ServiceProvider
                 return in_array($locale, $rtlCodes) ? 'rtl' : 'ltr';
             }
         ]);
+        if(App::environment('production'))
+        {
+            URL::forceScheme('https');
+        }
     }
 }
