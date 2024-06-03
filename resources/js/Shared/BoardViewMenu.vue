@@ -44,11 +44,11 @@ export default {
         return {
             icons: ['board', 'table', 'dashboard', 'calendar', 'time'],
             options: [
-                {name: 'Board', slug: 'board'},
-                {name: 'List', slug: 'table'},
-                {name: 'Report', slug: 'dashboard'},
-                {name: 'Calendar', slug: 'calendar'},
-                {name: 'Time Logs', slug: 'time_logs'}
+                {name: 'Tablero', slug: 'board'},
+                // {name: 'List', slug: 'table'},
+                // {name: 'Report', slug: 'dashboard'},
+                // {name: 'Calendar', slug: 'calendar'},
+                // {name: 'Time Logs', slug: 'time_logs'}
             ],
             position: {top: 0, left: 0, right: 'inherit'},
         }

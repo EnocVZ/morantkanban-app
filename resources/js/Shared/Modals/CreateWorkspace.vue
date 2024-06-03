@@ -71,7 +71,7 @@ export default {
             loading: false,
             workspaces: [],
             backgrounds: [],
-            types: ['Operation', 'Education', 'Marketing', 'Engineering-IT', 'Small Business', 'Other'],
+            types: ['Desarrollo ', 'Ciencia de datos', 'IA', ' Encuestas', 'Ventas', 'Other'],
         }
     },
     methods: {

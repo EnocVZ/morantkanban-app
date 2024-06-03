@@ -89,7 +89,7 @@
                           <div class="add_new pt-1">
                               <div v-if="!listItem.new_task_open" class="group mb-1.5 flex cursor-pointer items-center rounded py-2 hover:bg-white ltr:pl-2 rtl:pr-2" @click="openNewTask(listItem)">
                                   <icon class="w-4 w-4 text-indigo-500" name="add" />
-                                  <span class="block text-sm text-gray-500">Add a task</span>
+                                  <span class="block text-sm text-gray-500">Agregar Tarea</span>
                               </div>
                               <div class="mb-2" v-show="listItem.new_task_open">
                                   <input autofocus :id="'new_task_input_id_'+listItem.id" :ref="'new_task_input_'+listItem.id" type="text" v-model="new_task.title" class="block text-sm font-medium w-full px-4 py-3 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter a title for this task" @keyup="$event.keyCode === 13?submitNewTask(listItem, listIndex):''">
