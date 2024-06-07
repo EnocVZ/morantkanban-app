@@ -78,13 +78,13 @@
                                         </h2>
                                         <!-- <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
 
-                                        <!-- <div class="flex flex-col mt-5">
+                                        <div class="flex flex-col mt-5">
                                             <span class="text-xs font-bold mb-1">{{ __('Labels') }}</span>
                                             <div class="list_labels flex flex-wrap gap-1">
                                                 <button @click="showLabelBox = true" class="label_button" v-for="(task_label, label_index) in task.task_labels" :style="{ background: task_label.label.color }" :aria-label="task_label.label.name" data-a="">{{ task_label.label.name }}</button>
                                                 <button @click="showLabelBox = true" class="label_button bg-gray-200 hover:bg-gray-300"><icon class="" name="plus" /></button>
                                             </div>
-                                        </div> -->
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="fixed flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" v-if="showLabelBox">
@@ -338,7 +338,7 @@
                                     </div> -->
                                 </section>
                                 <section class="py-3.5">
-                                    <!-- <div class="flex items-center px-2">
+                                    <div class="flex items-center px-2">
                                         <h2 class="text-sm font-medium ">
                                             {{ __('Assignees') }}
                                         </h2>
@@ -368,7 +368,7 @@
                                                 </ul>
                                             </div>
                                         </div>
-                                    </div> -->
+                                    </div>
 
                                     <!-- <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
                                       <span v-for="assignee in task.assignees" :aria-label="assignee.user.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
@@ -377,7 +377,7 @@
                                     </div> -->
                                 </section>
                                 <section class="py-4">
-                                    <!-- <h2 class="px-2 text-sm font-medium">
+                                    <h2 class="px-2 text-sm font-medium">
                                         {{ __('Time Count') }}
                                     </h2>
 
@@ -389,7 +389,7 @@
                                         </div>
                                         <button v-if="!!this.activeTimerString && task_assignees().includes($page.props.auth.user.id)" class="py-2 w-[70px] bg-red-600 hover:bg-red-700 rounded text-[12px] text-white select-none" @click="stopTracker()">{{ __('STOP') }}</button>
                                         <button v-else-if="!existing_timer && task_assignees().includes($page.props.auth.user.id)" class="py-2 w-[70px] bg-indigo-600 hover:bg-indigo-800 rounded text-[12px] text-white select-none" @click="startTracker()">{{ __('START') }}</button>
-                                    </div> -->
+                                    </div>
                                 </section>
                                 <section class="py-3">
                                     <h2 class="px-2 text-sm font-medium">
