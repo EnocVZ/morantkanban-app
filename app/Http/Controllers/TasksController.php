@@ -169,7 +169,9 @@ class TasksController extends Controller
                 'image/jpeg','image/gif','image/png','image/bmp','image/svg+xml', 'image/tiff',
                 'video/x-flv', 'video/mp4', 'application/x-mpegURL', 'video/3gpp', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv',
                 'text/plain', 'audio/wav', 'audio/aac', 'audio/mpeg', 'video/mpeg',
-                'application/pdf', 'application/vnd.ms-powerpoint', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/csv'
+                'application/pdf', 'application/vnd.ms-powerpoint', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/csv',
+                'application/vnd.ms-excel', 
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             ];
             $contentType = $file->getClientmimeType();
 

@@ -164,11 +164,12 @@ export default {
                 const created_at = this.moment(event_item.created_at || event_item.updated_at, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm');
                 const due_date = event_item.due_date? this.moment(event_item.due_date, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm'): '';
                 let html = '';
-                html+= '<span><a href="/p/board/'+event_item.project_id+'?task='+event_item.id+'">'+event_item.title+'</a></span>';
-                html+= '<span><strong>Board:</strong> <a href="/p/board/'+event_item.project_idet +'">'+(event_item.list?event_item.list.title:'')+'</a></span>';
-                html+= '<span><strong>Created At:</strong> '+this.moment(event_item.created_at || event_item.updated_at, 'YYYY-MM-DD HH:mm:ss').format('Do MMMM, YYYY')+'</span>';
+                html+= '<span><strong>Tarea:</strong><a href="/p/board/'+event_item.project_id+'?task='+event_item.id+'">'+event_item.title+'</a></span>';
+                // html+= '<span><strong>Tablero:</strong> <a href="/p/board/'+event_item.project_idet +'">'+(event_item.list?event_item.list.title:'')+'</a></span>';
+                html+= '<span><strong>Tablero:</strong> '+(event_item.list?event_item.list.title:'')+'</span>';
+                html+= '<span><strong>Creado:</strong> '+this.moment(event_item.created_at || event_item.updated_at, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD')+'</span>';
                 if(due_date){
-                    html+= '<span><strong>Due Date:</strong> '+this.moment(event_item.due_date, 'YYYY-MM-DD HH:mm:ss').format('Do MMMM, YYYY')+'</span>';
+                    html+= '<span><strong>Fecha vencimiento:</strong> '+this.moment(event_item.due_date, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm')+'</span>';
                 }
                 this.calendarEvents.push({
                     title: (event_item.list?event_item.list.title+' : ':'')+event_item.title,

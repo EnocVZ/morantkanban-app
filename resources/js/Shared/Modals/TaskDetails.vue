@@ -92,7 +92,7 @@
                                     <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                                         <icon class=" w-4 h-4" name="close" />
                                     </div>
-                                    <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search labels" />
+                                    <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar" />
                                     <ul class="flex flex-col mt-3 gap-3 max-h-[200px] overflow-y-auto">
                                         <li v-for="(lab, lab_index) in searchLabel(label_search)">
                                             <label class="flex gap-1">
@@ -206,7 +206,7 @@
                                 </section>
 
                                 <section class="mt-8">
-                                    <!-- <div>
+                                    <div>
                                         <div class="flex">
                                             <icon class="w-4 h-4 mr-3 mt-1" name="attachment" />
                                             <div class="flex-1 border-b pb-2">
@@ -225,7 +225,7 @@
                                                 <div class="flex flex-col gap-2 w-full">
                                                     <div class="font-bold"><a :href="attachment.path" target="_blank">{{ attachment.name }}</a></div>
                                                     <div class="flex gap-3">
-                                                        <span :aria-label="moment(attachment.created_at).format('MMMM D, YYYY h:mm A')">{{ moment(attachment.created_at).format('[Added] MMM D, YYYY [at] h:mm A') }} </span>
+                                                        <span :aria-label="moment(attachment.created_at).format('MMMM D, YYYY h:mm A')">{{ moment(attachment.created_at).format('[Agregado] MMM D, YYYY [at] h:mm A') }} </span>
                                                         -
                                                         <span class="flex underline cursor-pointer" @click="deleteAttachment(attachment.id, a_index)">{{ __('Delete') }}</span>
                                                     </div>
@@ -237,7 +237,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div> -->
+                                    </div>
                                 </section>
 
                                 <section class="mt-8">
@@ -398,20 +398,20 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
                                 <section class="py-3">
-                                    <!-- <div class="mt-2 space-y-2 px-1">
+                                    <div class="mt-2 space-y-2 px-1">
                                         <label class="flex cursor-pointer w-full items-center rounded bg-gray-200 td__btn hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                                            <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt" @change="uploadAttachment($event)" class="hidden" type="file"/>
+                                            <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt,.xlsx,.xlsm,.xlsb" @change="uploadAttachment($event)" class="hidden" type="file"/>
                                             <icon class="mr-2 h-4 w-4 " name="attachment" />
                                             {{ __('Attachment') }}
                                         </label>
-                                        <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
+                                        <!-- <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <icon class="mr-2 h-4 w-4 " name="archive" />
                                             {{ __('Archive') }}
                                         </button>
@@ -422,8 +422,8 @@
                                         <button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4 fill-white" name="dash" />
                                             {{ __('Delete') }}
-                                        </button>
-                                    </div> -->
+                                        </button> -->
+                                    </div>
                                 </section>
 
                             </aside>
