@@ -109,9 +109,9 @@
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                          <!-- <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
-                                          </button>
+                                          </button> -->
                                       </td>
                                   </tr>
                               </template>
