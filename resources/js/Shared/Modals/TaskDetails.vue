@@ -785,6 +785,10 @@ export default {
         saveTask(taskObject){
             axios.post(this.route('task.update', this.task.id), taskObject).then((response) => {
                 if(response.data){
+                    axios.get(this.route('google.calendar',this.task.id)).then((response) => {
+                    if(response.data){
+                        }
+                    })
                     this.sendNotification('send.mail.task_update', response.data.id)
                 }
             })
