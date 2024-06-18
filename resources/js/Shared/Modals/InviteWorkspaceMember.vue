@@ -4,13 +4,13 @@
             <div class="flex items-center justify-between gap-1">
                 <div class="flex"></div>
                 <div class="flex text-center">
-                    Invite Workspace
+                    Agregar participantes
                 </div>
                 <div @click="$emit('inviteMember')" class="flex hover:bg-gray-200 cursor-pointer rounded w-7 h-7 justify-center items-center">
                     <icon class="w-4 h-4" name="close" />
                 </div>
             </div>
-            <input id="i_w_m_s_u" name="user_search" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search User" />
+            <input id="i_w_m_s_u" name="user_search" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar participante" />
             <ul class="flex flex-col gap-1 h-48 max-h-48 overflow-y-auto">
                 <li v-for="(userObject, user_index) in searchUser(user_search)">
                     <label :for="'uid_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">

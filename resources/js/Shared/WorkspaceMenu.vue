@@ -12,19 +12,19 @@
           </div>
       </div>
       <ul class="font-medium text-sm items">
-          <li v-if="workspace.member.role === 'admin'">
+          <!-- <li v-if="workspace.member.role === 'admin'">
               <Link :href="route('workspace.tables', workspace.slug || workspace.id)" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('component', 'Workspaces_Table') && !($page.props.filters && $page.props.filters.user)}">
                   <icon class="w-4 h-4" name="table" />
                   <span class="ml-3">{{ __('Workspace') }} {{ __('Tasks') }}</span>
               </Link>
-          </li>
+          </li> -->
           <li>
               <Link :href="route('workspace.tables', {'uid': workspace.slug || workspace.id, 'user': $page.props.auth.user.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('filter')}">
                   <icon class="w-4 h-4" name="list" />
                   <span class="ml-3">{{ __('My Tasks') }}</span>
               </Link>
           </li>
-          <li class="relative" v-if="workspace.member.role === 'admin'">
+          <!-- <li class="relative" v-if="workspace.member.role === 'admin'">
               <Link class="flex items-center px-3 p-2 group workspace_members" :href="route('workspace.members', workspace.id)" :class="{'active' : checkActiveClass('component', 'Workspaces_Members')}">
                   <icon class="w-4 h-4" name="user" />
                   <span class="flex-1 ml-3 whitespace-nowrap">{{ __('Team Members') }}</span>
@@ -32,12 +32,12 @@
                       <icon class="w-4 h-4" name="plus" />
                   </button>
               </Link>
-          </li>
+          </li> -->
       </ul>
       <div class="flex cursor-pointer select-none text-[13px] text items-center justify-start gap-3 mt-4 font-bold px-2 pt-2 border-t border-[#ffffff29]" @click="hide_starred=!hide_starred">
           <icon v-if="!hide_starred" name="arrow-down" class="w-4 h-4" />
           <icon v-if="hide_starred" name="arrow-right" class="w-4 h-4" />
-          <div class="flex uppercase font-semibold">{{ __('Favorites') }}</div>
+          <div class="flex uppercase font-semibold">{{ __('Urgentes') }}</div>
       </div>
       <ul class="pt-1 text-sm side_p_list font-medium border-gray-200 dark:border-gray-700 max-h-[calc(100%-350px)] overflow-y-auto" v-show="!hide_starred && favorites.length">
           <li v-for="(project, p_index) in favorites" class="flex group">
@@ -88,7 +88,7 @@
               </Link>
           </li>
       </ul>
-      <div class="p-3 font-light text-center text-sm" v-if="!loading && !projects.length">{{ 'No project!' }}</div>
+      <div class="p-3 font-light text-center text-sm" v-if="!loading && !projects.length">{{ 'Sin proyecto!' }}</div>
   </div>
 </template>
 

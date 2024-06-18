@@ -63,7 +63,7 @@
                                 <button v-if="!!this.activeTimerString" @click="stopTracker()">STOP</button>
                                 <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Task details"><icon class="" name="info" /></Link>
                             </div>
-                            <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Toggles light & dark" :aria-label="current_mode" aria-live="polite" @click="switchMode">
+                            <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode == 'dark' ? 'Oscuro': 'Claro'" aria-live="polite" @click="switchMode">
                                 <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
                                     <mask class="moon" id="moon-mask">
                                         <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -95,7 +95,7 @@
                                 <template #dropdown>
                                     <div class="shadow-xl bg-white rounded text-sm ">
                                         <div class="flex px-4 flex-col py-3">
-                                            <div class="uppercase mb-2 font-bold">Account</div>
+                                            <div class="uppercase mb-2 font-bold">Perfil</div>
                                             <div class="flex gap-1 items-center">
                                                 <div class="flex">
                                                     <img v-if="$page.props.auth.user.photo" class="user_photo w-10 h-10" :alt="$page.props.auth.user.first_name" :src="$page.props.auth.user.photo" />
@@ -173,8 +173,8 @@ export default {
     data() {
         return{
             creations: [
-                {name: 'Project', visible: 'project_create', icon: 'project',  condition: !!this.$page.props.auth.user.role.create_project, details: 'After creating project, you will be able to manage your tasks on board.'},
-                {name: 'Workspace', visible: 'create_workspace', condition: !!this.$page.props.auth.user.role.create_workspace, icon: 'workspace', details: 'After creating project, you will be able to manage your tasks on board.'},
+                {name: 'Proyecto', visible: 'project_create', icon: 'project',  condition: !!this.$page.props.auth.user.role.create_project, details: 'Después de crear el proyecto, podrás administrar tus tareas a bordo.'},
+                {name: 'Espacio de trabajo', visible: 'create_workspace', condition: !!this.$page.props.auth.user.role.create_workspace, icon: 'workspace', details: 'Después de crear el proyecto, podrás administrar tus tareas a bordo.'},
             ],
             time: '',
             enable_sidebar: true,

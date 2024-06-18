@@ -12,7 +12,7 @@
                               </th>
                               <th scope="col" class="">
                                   <button class="flex items-center gap-x-3 focus:outline-none">
-                                      <span>{{ __('Task') }}</span>
+                                      <span>{{ __('Tareas') }}</span>
                                   </button>
                               </th>
 
@@ -45,7 +45,7 @@
                                       </td>
                                       <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                           <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: element.project.slug || element.project.id, task: element.slug || element.id})" :data-id="element.id">
-                                              <icon v-if="element.timer" name="blink" class="w-2 h-2" />
+                                              <!-- <icon v-if="element.timer" name="blink" class="w-2 h-2" /> -->
                                               <h2 class="font-medium t__title text-pretty">{{ element.title }}</h2>
                                           </Link>
                                       </td>
@@ -109,9 +109,9 @@
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                          <!-- <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
-                                          </button>
+                                          </button> -->
                                       </td>
                                   </tr>
                               </template>
@@ -124,12 +124,15 @@
                       </table>
                       <!-- List Popup Board -->
                       <!-- List Popup Assignee -->
+
+                      <!-- descomentar cuando se necesite mostrar -->
+
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showAssigneeBox">
-                          <h4 class="text-center mb-3 font-bold">Assignee</h4>
+                          <h4 class="text-center mb-3 font-bold">Participantes</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showAssigneeBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input id="w_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search users" />
+                          <input id="w_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar" />
                           <ul class="flex flex-col mt-3 gap-1 h-48 max-h-[200px] overflow-y-auto">
                               <li v-for="(userObject, user_index) in searchUser(user_search)">
                                   <label :for="'w_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
@@ -143,14 +146,18 @@
                               </li>
                           </ul>
                       </div>
+
+
                       <!-- List Popup Assignee -->
+                      
+                      
                       <!-- Label Search -->
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showLabelBox">
-                          <h4 class="text-center mb-3 font-bold">Labels</h4>
+                          <h4 class="text-center mb-3 font-bold">Etiquetas</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search labels" />
+                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar etiquetas" />
                           <ul class="flex flex-col mt-3 gap-3 max-h-[200px] overflow-y-auto">
                               <li v-for="(lab, lab_index) in searchLabel(label_search)">
                                   <label class="flex gap-1">
@@ -162,7 +169,7 @@
                                   </label>
                               </li>
                           </ul>
-                          <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Create a new label </button>
+                          <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Crear nueva etiqueta </button>
                       </div>
                       <!-- Label Search -->
                   </div>

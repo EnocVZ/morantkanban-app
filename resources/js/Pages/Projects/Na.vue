@@ -3,9 +3,9 @@
         <Head :title="__(title)" />
         <div class="welcome">
             <div class="message">
-                <h1>No workspace found!</h1>
-                <button v-if="$page.props.auth.user.role.slug === 'admin'" @click="create_workspace=!create_workspace" class="create_new">Create New</button>
-                <p v-if="$page.props.auth.user.role.slug !== 'admin'">You didn't joined on any workspace yet. Please contact with administrator.</p>
+                <h1>No se encontro el espacio de trabajo!</h1>
+                <button v-if="$page.props.auth.user.role.slug === 'admin'" @click="create_workspace=!create_workspace" class="create_new">Crear nuevo</button>
+                <p v-if="$page.props.auth.user.role.slug !== 'admin'">Aún no te has unido a ningún espacio de trabajo. Póngase en contacto con el administrador.</p>
             </div>
         </div>
         <create-workspace v-if="create_workspace" @create-workspace="create_workspace = false" />

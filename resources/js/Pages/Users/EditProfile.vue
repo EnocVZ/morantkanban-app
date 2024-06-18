@@ -8,13 +8,13 @@
           <text-input v-model="form.last_name" :error="form.errors.last_name" class="pb-8 pr-6 w-full lg:w-1/3" :label="__('Last name')" />
           <text-input v-model="form.email" :error="form.errors.email" class="pb-8 pr-6 w-full lg:w-1/3" :label="__('Email')" />
           <text-input v-model="form.phone" :error="form.errors.phone" class="pb-8 pr-6 w-full lg:w-1/3" :label="__('Phone')" />
-            <select-input v-model="form.locale" :error="form.errors.locale" class="pr-6 pb-8 w-full lg:w-1/3" :label="__('Language')">
+            <!-- <select-input v-model="form.locale" :error="form.errors.locale" class="pr-6 pb-8 w-full lg:w-1/3" :label="__('Language')">
                 <option :value="null" />
                 <option v-for="language in languages" :key="language.code" :value="language.code">{{ __(language.name) }}</option>
-            </select-input>
+            </select-input> -->
           <text-input v-model="form.address" :error="form.errors.address" class="pb-8 pr-6 w-full" :label="__('Address')" />
           <text-input v-model="form.password" :error="form.errors.password" class="pb-8 pr-6 w-full lg:w-1/3" type="password" autocomplete="new-password" :label="__('Password')" />
-          <file-input v-model="form.photo" :error="form.errors.photo" class="pb-8 pr-6 w-full lg:w-1/3" type="file" accept="image/*" label="Photo" />
+          <file-input v-model="form.photo" :error="form.errors.photo" class="pb-8 pr-6 w-full lg:w-1/3" type="file" accept="image/*" label="Foto" />
             <div class="w-full lg:w-1/3 flex items-center justify-start">
                 <img v-if="user.photo_path" class="block mb-2 w-8 h-8 rounded-full" :src="user.photo_path" />
             </div>
