@@ -27,7 +27,7 @@
                               </th>
 
                               <th scope="col" class="w-[17%]">
-                                  {{ __('Users') }}
+                                  {{ __('Assignees') }}
                               </th>
 
                               <th scope="col" class="w-[17%]">
@@ -43,7 +43,7 @@
                               <template #item="{ element, index }">
                                   <tr class="list-group-item group" :data-id="element.id">
                                       <td class="pl-2 pr-0 opacity-0 group-hover:opacity-100 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
-                                          <div class="cursor-grab handle"><icon class="w-6 h-6" name="drag" /></div>
+                                          <!--div class="cursor-grab handle"><icon class="w-6 h-6" name="drag" /></div-->
                                       </td>
                                       <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                           <div class="cursor-pointer" @click="taskDetailsPopup(element.slug || element.id)" :data-id="element.id">
@@ -51,12 +51,12 @@
                                               <h2 class="font-medium t__title text-pretty">{{ element.title }}</h2>
                                           </div>
                                       </td>
-                                      <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showListBox')">
+                                      <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
                                               {{ element.list.title }}
-                                              <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
+                                              <!--div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />
-                                              </div>
+                                              </div-->
                                           </div>
                                       </td>
                                       <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
@@ -90,23 +90,23 @@
 
                                       <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <div class="t__title" v-if="element.due_date">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)" disabled >
                                                   <template #trigger>
                                                       <div class="flex t__title items-center">
                                                           <icon class="w-4 w-4" name="time" />
-                                                          <span class="ml-1 font-light leading-none" aria-label="Due date"> {{ moment(element.due_date).format('MMM D') }} </span>
+                                                          <span class="ml-1 font-light leading-none" aria-label="Fecha vencimiento"> {{ moment(element.due_date).format('MMM D') }} </span>
                                                       </div>
                                                   </template>
                                               </Datepicker>
-                                              <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
+                                              <!--div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />
-                                              </div>
+                                              </div-->
                                           </div>
                                           <div v-else class="w-full h-full">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)" disabled >
                                                   <template #trigger>
                                                       <div class="show_arrow_hover top-0 left-0 w-full h-full flex justify-start items-center">
-                                                          <icon class="w-4 h-4" name="plus" />
+                                                          <!--icon class="w-4 h-4" name="plus" / -->
                                                       </div>
                                                   </template>
                                               </Datepicker>
@@ -114,7 +114,7 @@
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                          <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
                                           </button>
                                       </td>
@@ -123,17 +123,17 @@
                           </draggable>
                           <tbody v-if="!tasks.length">
                           <tr>
-                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found!') }}</td>
+                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!</td>
                           </tr>
                           </tbody>
                       </table>
                       <!-- List Popup Board -->
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showListBox">
-                          <h4 class="text-center mb-3 font-bold">Change List</h4>
+                          <h4 class="text-center mb-3 font-bold">Cambiar de lista</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showListBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input v-model="list_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search lists" />
+                          <input v-model="list_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar lista" />
                           <ul class="flex flex-col mt-3 gap-1 h-48 max-h-[200px] overflow-y-auto">
                               <li v-for="(listObject, li_index) in searchList(list_search)">
 
@@ -147,11 +147,11 @@
                       <!-- List Popup Board -->
                       <!-- List Popup Assignee -->
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showAssigneeBox">
-                          <h4 class="text-center mb-3 font-bold">Assignee</h4>
+                          <h4 class="text-center mb-3 font-bold">Participantes</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showAssigneeBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input id="p_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search users" />
+                          <input id="p_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar usuarios" />
                           <ul class="flex flex-col mt-3 gap-1 h-48 max-h-[200px] overflow-y-auto">
                               <li v-for="(userObject, user_index) in searchUser(user_search)">
                                   <label :for="'t_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
@@ -168,23 +168,23 @@
                       <!-- List Popup Assignee -->
                       <!-- Label Search -->
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showLabelBox">
-                          <h4 class="text-center mb-3 font-bold">Labels</h4>
+                          <h4 class="text-center mb-3 font-bold">Etiquetas</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search labels" />
+                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar etiqueta" />
                           <ul class="flex flex-col mt-3 gap-3 max-h-[200px] overflow-y-auto">
                               <li v-for="(lab, lab_index) in searchLabel(label_search)">
                                   <label class="flex gap-1">
                                       <input class="w-5 mr-2 cursor-pointer" type="checkbox" :checked="task_label_ids().includes(lab.id)" @change="addLabelToTask($event.target.checked, lab.id)">
                                       <span class="w-full px-3 py-2 rounded cursor-pointer hover:opacity-80" :style="{background: lab.color}" :tabindex="lab_index" data-color="orange">{{ lab.name }}</span>
-                                      <button class="p-3 hover:bg-gray-200 rounded" type="button" :tabindex="lab_index" @click="label = lab; showLabelBox = false; showEditLabelBox = true;">
+                                      <!--button class="p-3 hover:bg-gray-200 rounded" type="button" :tabindex="lab_index" @click="label = lab; showLabelBox = false; showEditLabelBox = true;">
                                           <icon class="w-3 h-3" name="edit" />
-                                      </button>
+                                      </button-->
                                   </label>
                               </li>
                           </ul>
-                          <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Create a new label </button>
+                          <!--button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Crear nueva etiqueta </button-->
                       </div>
                       <!-- Label Search -->
                   </div>

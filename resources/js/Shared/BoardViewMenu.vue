@@ -45,7 +45,7 @@ export default {
             icons: ['board','calendar'],//,'table', 'dashboard',  'time'
             options: [
                 {name: 'Board', slug: 'board'},
-                // {name: 'List', slug: 'table'},
+                {name: 'List', slug: 'table'},
                 // {name: 'Report', slug: 'dashboard'},
                 {name: 'Calendar', slug: 'calendar'}
                 //{name: 'Time Logs', slug: 'time_logs'}

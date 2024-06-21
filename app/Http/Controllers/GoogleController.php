@@ -73,13 +73,15 @@ class GoogleController extends Controller
                     'end' => [
                         'dateTime' => $endDate,
                         'timeZone' => 'America/Mexico_City', // Zona horaria de México
-                    ],
+                    ]
                 ]);
                 
                 
                 $event->setAttendees($assigneeMail);
+               
+                
     
-                $calendarService->events->insert('primary', $event);
+                $calendarService->events->insert('primary', $event, ['sendUpdates' => 'all']);
                 $response['error'] = false;
                 $response['message'] = 'Evento creado';
                 $response['data'] = $assigneeMail;
@@ -106,18 +108,42 @@ class GoogleController extends Controller
 
             $driveService = new Drive($this->client);
 
-            $file = new Drive\DriveFile();
-            $file->setName('testfile.txt');
-            $file->setMimeType('application/octet-stream');
+            $folderName = "Task";
+            // Define la carpeta a crear
+            $folderMetadata = new Drive\DriveFile([
+                'name' => $folderName,
+                'mimeType' => 'application/vnd.google-apps.folder'
+            ]);
 
-            $content = file_get_contents(storage_path('app/testfile.txt'));
-            $driveService->files->create($file, [
+            // Crea la carpeta
+            $folder = $driveService->files->create($folderMetadata, [
+                'fields' => 'id'
+            ]);
+            $folderId = $folder->id;
+            
+
+            $file = new Drive\DriveFile();
+            $file->setName('664cc7875a805-john-lennon.jpg');
+            $file->setMimeType('application/octet-stream');
+            // ID de la carpeta de destino en Google Drive
+            
+            $file->setParents([$folderId]);
+
+            $content = file_get_contents(public_path('files/tasks/664cc7875a805-john-lennon.jpg'));
+            $uploadedFile = $driveService->files->create($file, [
                 'data' => $content,
                 'uploadType' => 'multipart',
                 'fields' => 'id'
             ]);
 
-            return 'File uploaded';
+            // Obtener el ID del archivo subido
+        $fileId = $uploadedFile->id;
+
+        
+        // O bien, obtener el enlace directamente usando la API (si es necesario)
+        $fileMetadata = $driveService->files->get($fileId, ['fields' => 'webViewLink']);
+        $fileUrl = $fileMetadata->webViewLink;
+        return $fileUrl;
         }
 
         return redirect()->route('google.redirect');

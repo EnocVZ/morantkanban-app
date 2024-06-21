@@ -43,7 +43,7 @@
                               <div v-if="element.show_more" class="absolute right-7 top-1 w-30 z-999 bg-gray-100">
                                   <button @click="makeArchive($event, element.id, listItem.tasks, index)" class="m__archive">
                                       <icon class="mr-2 h-4 w-4 " name="archive" />
-                                      Archive
+                                      Archivar
                                   </button>
                               </div>
                               <button @click="visibleShowMore($event, element)" class="hidden show__more group-hover:flex">
@@ -57,10 +57,11 @@
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
                                   <div class="card__footer">
-                                      <div v-if="element.due_date" aria-label="Fecha de vencimiento" class="__item due" :class="getDue(element)">
+                                      <div v-if="element.due_date" aria-label="Fecha entrega" class="__item due" :class="getDue(element)">
                                           <icon class="w-4 h-4" name="time" />
                                           <span class="pl-[2px] pr-[4px] leading-none"> {{ moment(element.due_date).format('MMM D') }} </span>
                                       </div>
+                                      <!--
                                       <div class="__item" v-if="element.description" aria-label="This task has a description.">
                                           <icon class="w-4 h-4" name="details" />
                                       </div>
@@ -68,11 +69,12 @@
                                           <icon class="w-4 h-4" name="comment" />
                                           <span class="ml-1 leading-none"> {{ element.comments_count }} </span>
                                       </div>
-                                      <div class="__item" v-if="element.attachments_count" aria-label="Attachments">
+                                      -->
+                                      <div class="__item" v-if="element.attachments_count" aria-label="Adjuntos">
                                           <icon class="w-4 h-4" name="attachment" />
                                           <span class="ml-1 leading-none"> {{ element.attachments_count }} </span>
                                       </div>
-                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist items" :class="{'completed': element.checklist_done_count === element.checklists_count}">
+                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist" :class="{'completed': element.checklist_done_count === element.checklists_count}">
                                           <icon class="w-4 h-4" name="checklist" />
                                           <span class="ml-1 leading-none"> {{ element.checklist_done_count+'/'+element.checklists_count }} </span>
                                       </div>
