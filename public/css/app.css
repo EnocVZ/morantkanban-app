@@ -1344,12 +1344,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .top-\[52px\] {
   top: 52px;
 }
-.bottom-4 {
-  bottom: 1rem;
-}
-.right-4 {
-  right: 1rem;
-}
 .-z-10 {
   z-index: -10;
 }
@@ -2104,14 +2098,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .bg-yellow-300 {
   --tw-bg-opacity: 1;
   background-color: rgb(253 224 71 / var(--tw-bg-opacity));
-}
-.bg-blue-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(59 130 246 / var(--tw-bg-opacity));
-}
-.bg-yellow-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(234 179 8 / var(--tw-bg-opacity));
 }
 .bg-opacity-30 {
   --tw-bg-opacity: 0.3;

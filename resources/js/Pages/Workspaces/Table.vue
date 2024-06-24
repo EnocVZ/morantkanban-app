@@ -118,7 +118,7 @@
                           </draggable>
                           <tbody v-if="!tasks.length">
                           <tr>
-                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found!') }}</td>
+                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!</td>
                           </tr>
                           </tbody>
                       </table>
