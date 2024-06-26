@@ -12,12 +12,12 @@
           </div>
       </div>
       <ul class="font-medium text-sm items">
-          <!-- <li v-if="workspace.member.role === 'admin'">
+          <li v-if="workspace.member.role === 'admin'">
               <Link :href="route('workspace.tables', workspace.slug || workspace.id)" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('component', 'Workspaces_Table') && !($page.props.filters && $page.props.filters.user)}">
                   <icon class="w-4 h-4" name="table" />
-                  <span class="ml-3">{{ __('Workspace') }} {{ __('Tasks') }}</span>
+                  <span class="ml-3">{{ __('Workspace Task') }}</span>
               </Link>
-          </li> -->
+          </li>
           <li>
               <Link :href="route('workspace.tables', {'uid': workspace.slug || workspace.id, 'user': $page.props.auth.user.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('filter')}">
                   <icon class="w-4 h-4" name="list" />

@@ -75,7 +75,8 @@
                                       <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
                                           <div class="flex items-center" v-if="element.assignees.length">
                                               <div v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                                  <img class="h-full w-full border border-white rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
+                                                <img v-if="assignee.user.photo_path" class="user_photo w-10 h-10" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                                <img v-else src="/images/svg/profile.svg" class="w-10 h-10" alt="user profile" />
                                               </div>
                                               <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />

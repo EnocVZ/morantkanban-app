@@ -87,9 +87,18 @@ class Task extends Model
 
     public function scopeFilter($query, array $filters){
         $query->when($filters['search'] ?? null, function ($query, $search) {
-            $query->where(function ($query) use ($search) {
-                $query->where('title', 'like', '%'.$search.'%');
-            });
+            $query->where('title', 'like', '%'.$search.'%')
+                  //->orWhere('description', 'like', '%'.$search.'%')
+                  ->orWhereHas('assignees.user', function ($query) use ($search) {
+                      $query->where('first_name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    })
+                  ->orWhereHas('taskLabels.label', function ($query) use ($search) {
+                        $query->where('name', 'like', '%'.$search.'%');
+                    })
+                  ->orWhereHas('project', function ($query) use ($search) {
+                        $query->where('title', 'like', '%'.$search.'%');
+                    });
         })->when($filters['user'] ?? null, function ($query, $user) {
             $f_users = explode(',', $user);
             $includeTasks = Assignee::whereIn('user_id', $f_users)->groupBy('task_id')->pluck('task_id');

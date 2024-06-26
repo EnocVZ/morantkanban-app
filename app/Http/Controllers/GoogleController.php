@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Google\Client as GoogleClient;
@@ -11,7 +10,8 @@ use App\Models\Task;
 use DateTime;
 use DateTimeZone;
 use App\Models\Assignee;
-use App\Models\User;
+use Google_Service_Calendar;
+use Google_Service_Calendar_Event;
 
 class GoogleController extends Controller
 {
@@ -23,6 +23,8 @@ class GoogleController extends Controller
         $this->client->setAuthConfig(storage_path('app/google/credentials.json'));
         $this->client->addScope(Calendar::CALENDAR);
         $this->client->addScope(Drive::DRIVE_FILE);
+        $this->client->setAccessType('offline'); // Necesario para obtener el refresh token
+        $this->client->setPrompt('consent'); // Forzar para asegurar que se obtenga el refresh token
         $this->client->setRedirectUri(route('google.callback'));
     }
 
@@ -35,70 +37,86 @@ class GoogleController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         $this->client->authenticate($request->code);
-        $request->session()->put('google_token', $this->client->getAccessToken());
+        $token = $this->client->getAccessToken();
+
+        // Almacenar el refresh token en un archivo
+        if (isset($token['refresh_token'])) {
+            file_put_contents(storage_path('app/google/google-refresh-token.json'), json_encode(['refresh_token' => $token['refresh_token'], 'google_token' => $token]));
+        }
+
+        // Almacenar el access token en la sesión
+        $request->session()->put('google_token', $token);
 
         return redirect()->route('home');
     }
 
-    
     public function addEventToCalendar($taskId, Request $request)
-    {
-        $response = ['error'=> true,'message'=>""];
-        $now = new DateTime();
-        try {
-            $task = Task::whereId($taskId)->first();
-            // Crear un objeto DateTime a partir de la fecha original
-            $endDate = new DateTime($task->due_date);
+{
+    $response = ['error' => true, 'message' => ""];
+    try {
+        $task = Task::find($taskId);
+        $endDate = new DateTime($task->due_date);
 
-            $assigneeMail = Assignee::join('users', 'assignees.user_id', '=', 'users.id')
+        // Obtener correos electrónicos de los asignados
+        $assignees = Assignee::join('users', 'assignees.user_id', '=', 'users.id')
             ->where('assignees.task_id', $taskId)
             ->select('users.email')
             ->get();
-            // Convertir al formato ISO 8601 con la zona horaria
-            $endDate = $endDate->format('Y-m-d\TH:i:s');
-            $endDateTime = new \DateTime($task->due_date);
-            
-            $token = session('google_token');
-            if ($token) {
-                $this->client->setAccessToken($token);
-    
-                $calendarService = new Calendar($this->client);
-                
-                $event = new Calendar\Event([
-                    'summary' => $task->title,
-                    'start' => [
-                        'dateTime' => $endDate,
-                        'timeZone' => 'America/Mexico_City', // Zona horaria de México
-                    ],
-                    'end' => [
-                        'dateTime' => $endDate,
-                        'timeZone' => 'America/Mexico_City', // Zona horaria de México
-                    ]
-                ]);
-                
-                
-                $event->setAttendees($assigneeMail);
-               
-                
-    
-                $calendarService->events->insert('primary', $event, ['sendUpdates' => 'all']);
-                $response['error'] = false;
-                $response['message'] = 'Evento creado';
-                $response['data'] = $assigneeMail;
-                
-            }else{
 
-                $response['message'] = "Se necesita session de google";
-            }
-            //code...
-        } catch (\Throwable $th) {
-            $response['message'] = $th->getMessage();
+        // Convertir a formato adecuado para Google Calendar
+        $attendees = [];
+        foreach ($assignees as $assignee) {
+            $attendees[] = ['email' => $assignee->email];
         }
-        return response()->json($response);
-        //return redirect()->route('google.redirect');
+
+        $endDateFormatted = $endDate->format('Y-m-d\TH:i:s');
+
+        $tokenData = json_decode(file_get_contents(storage_path('app/google/google-refresh-token.json')), true);
+        $refreshToken = $tokenData['refresh_token'];
+
+        $token = $tokenData['google_token'];
+        if ($token) {
+            $this->client->setAccessToken($token);
+
+            // Verificar si el token de acceso ha expirado
+            if ($this->client->isAccessTokenExpired()) {
+                $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
+                $newToken = $this->client->getAccessToken();
+
+                // Actualizar el token en el archivo si ha cambiado
+                if (isset($newToken['refresh_token'])) {
+                    file_put_contents(storage_path('app/google/google-refresh-token.json'), json_encode(['refresh_token' => $newToken['refresh_token'], 'google_token' => $newToken]));
+                }
+            }
+
+            $calendarService = new Google_Service_Calendar($this->client);
+
+            $event = new Google_Service_Calendar_Event([
+                'summary' => $task->title,
+                'start' => [
+                    'dateTime' => $endDateFormatted,
+                    'timeZone' => 'America/Mexico_City',
+                ],
+                'end' => [
+                    'dateTime' => $endDateFormatted,
+                    'timeZone' => 'America/Mexico_City',
+                ],
+                'attendees' => $attendees,
+            ]);
+
+            $calendarService->events->insert('primary', $event, ['sendUpdates' => 'all']);
+            $response['error'] = false;
+            $response['message'] = 'Evento creado y notificaciones enviadas';
+            $response['data'] = $attendees;
+        } else {
+            $response['message'] = "Se necesita sesión de Google";
+        }
+    } catch (\Throwable $th) {
+        $response['message'] = $th->getMessage();
     }
 
-
+    return response()->json($response);
+}
 
     public function uploadFileToDrive()
     {
@@ -109,24 +127,19 @@ class GoogleController extends Controller
             $driveService = new Drive($this->client);
 
             $folderName = "Task";
-            // Define la carpeta a crear
             $folderMetadata = new Drive\DriveFile([
                 'name' => $folderName,
                 'mimeType' => 'application/vnd.google-apps.folder'
             ]);
 
-            // Crea la carpeta
             $folder = $driveService->files->create($folderMetadata, [
                 'fields' => 'id'
             ]);
             $folderId = $folder->id;
-            
 
             $file = new Drive\DriveFile();
             $file->setName('664cc7875a805-john-lennon.jpg');
             $file->setMimeType('application/octet-stream');
-            // ID de la carpeta de destino en Google Drive
-            
             $file->setParents([$folderId]);
 
             $content = file_get_contents(public_path('files/tasks/664cc7875a805-john-lennon.jpg'));
@@ -136,45 +149,10 @@ class GoogleController extends Controller
                 'fields' => 'id'
             ]);
 
-            // Obtener el ID del archivo subido
-        $fileId = $uploadedFile->id;
-
-        
-        // O bien, obtener el enlace directamente usando la API (si es necesario)
-        $fileMetadata = $driveService->files->get($fileId, ['fields' => 'webViewLink']);
-        $fileUrl = $fileMetadata->webViewLink;
-        return $fileUrl;
-        }
-
-        return redirect()->route('google.redirect');
-    }
-
-    public function addEventToCalendaraaaa()
-    {
-        $token = session('google_token');
-        if ($token) {
-            $this->client->setAccessToken($token);
-
-            $calendarService = new Calendar($this->client);
-
-            $event = new Calendar\Event([
-                'summary' => 'Test tareas prueba, invite',
-                'start' => [
-                    'dateTime' => '2024-06-14T10:00:00-07:00',
-                    'timeZone' => 'America/Los_Angeles',
-                ],
-                'end' => [
-                    'dateTime' => '2024-06-15T12:00:00-07:00',
-                    'timeZone' => 'America/Los_Angeles',
-                ],
-            ]);
-            // Añadir invitados al evento (en este caso, solo uno)
-            $event->setAttendees([
-                ['email' => "d47117263@gmail.com"],
-            ]);
-
-            $calendarService->events->insert('primary', $event);
-            return 'Event created';
+            $fileId = $uploadedFile->id;
+            $fileMetadata = $driveService->files->get($fileId, ['fields' => 'webViewLink']);
+            $fileUrl = $fileMetadata->webViewLink;
+            return $fileUrl;
         }
 
         return redirect()->route('google.redirect');

@@ -166,7 +166,7 @@ class WorkSpacesController extends Controller
             $loopIndex+= 1;
         }
         return Inertia::render('Workspaces/Table', [
-            'title' => 'Tasks | '.$workspace->name,
+            'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,

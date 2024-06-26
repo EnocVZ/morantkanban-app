@@ -400,7 +400,7 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({sendGoogle:true, due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
                                             </div>
                                         </div>
                                     </div>
@@ -795,18 +795,26 @@ export default {
             this.goToLink(this.route(this.view === 'table'?'projects.view.table':'projects.view.board', this.task.project_id));
         },
         saveTask(taskObject){
+            const sendGoogle = taskObject.sendGoogle;
+            if(sendGoogle){
+                delete taskObject.sendGoogle;
+            }
             axios.post(this.route('task.update', this.task.id), taskObject).then((response) => {
                 if(response.data){
-                    axios.get(this.route('google.calendar',this.task.id)).then((response) => {
-                        const {data} = response;
-                        if(data){
-                            if(data.error){
-                                this.notificationType = "error";
-                                this.notificationMessage = "Revisa las credenciales de API google";
-                                this.$refs.toast.showToast();
+                    if(sendGoogle){
+                        axios.get(this.route('google.calendar',this.task.id))
+                        .then((response) => {
+                            const {data} = response;
+                            if(data){
+                                if(data.error){
+                                    this.notificationType = "error";
+                                    this.notificationMessage = "Revisa las credenciales de API google";
+                                    this.$refs.toast.showToast();
+                                }
                             }
-                        }
-                    })
+                        })
+                    }
+                    
                     this.sendNotification('send.mail.task_update', response.data.id)
                 }
             })
