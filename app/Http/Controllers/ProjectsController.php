@@ -26,13 +26,13 @@ use Inertia\Inertia;
 class ProjectsController extends Controller {
     public function index(){
         return Inertia::render('Projects/Index', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
         ]);
     }
 
     public function test(){
         return Inertia::render('Projects/Test', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
         ]);
     }
 
@@ -127,8 +127,8 @@ class ProjectsController extends Controller {
 
     public function noProject(){
         return Inertia::render('Projects/Na', [
-            'title' => 'No Workspace',
-            'notice' => 'You did not assigned any workspace yet. Please contact with admin'
+            'title' => 'No hay espacio de tranajo',
+            'notice' => 'Aún no ha asignado ningún espacio de trabajo. Póngase en contacto con el administrador'
         ]);
     }
 
@@ -168,7 +168,7 @@ class ProjectsController extends Controller {
         }
 //        dd($board_lists);
         return Inertia::render('Projects/View', [
-            'title' => 'Board | '.$project->title,
+            'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
@@ -207,7 +207,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/View', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
             'filters' => $requests,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
@@ -245,7 +245,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Table', [
-            'title' => 'Table | '.$project->title,
+            'title' => 'Lista | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
@@ -281,7 +281,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Table', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
@@ -350,7 +350,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Calendar', [
-            'title' => 'Calendar | '.$project->title,
+            'title' => 'Calendario | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,

@@ -70,10 +70,10 @@
                         <div class="m__body">
                             <main class="main">
                                 <div class="s__1">
-                                    <!--div class="checklist-box">
+                                    <div class="checklist-box">
                                         <input type="checkbox" :checked="!!task.is_done" @change="saveTask({is_done: $event.target.checked})" />
                                         <icon name="checklist_box" />
-                                    </div-->
+                                    </div>
                                     <div class="t__l">
                                         <h2 class="__t" contenteditable="true" @keypress="saveTitle($event)" @blur="saveTitle($event)">
                                             {{ task.title }}

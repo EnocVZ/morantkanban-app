@@ -110,7 +110,7 @@ class WorkSpacesController extends Controller
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/View', [
-            'title' => 'Projects | '.$workspace->name,
+            'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects
         ]);
@@ -123,7 +123,7 @@ class WorkSpacesController extends Controller
         }
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/Members', [
-            'title' => 'Members | '.$workspace->name,
+            'title' => 'Participantes | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects,
             'team_members' => TeamMember::where('workspace_id', $workspace->id)
