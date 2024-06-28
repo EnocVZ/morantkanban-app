@@ -91,8 +91,8 @@
                                                 <!--div class="logo flex justify-center items-center w-9 h-9 rounded-full bg-indigo-600 text-lg">
                                                     {{ assignee.user.name.charAt(0) }}
                                                 </div-->
-                                                <img v-if="assignee.user.photo_path" class="user_photo w-10 h-10" :alt="assignee.user.name" :src="assignee.user.photo_path" />
-                                                <img v-else src="/images/svg/profile.svg" class="w-10 h-10" alt="user profile" />
+                                                <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                                <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
                                                 
                                               </div>
                                               <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
