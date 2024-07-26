@@ -24,15 +24,15 @@
                   <span class="ml-3">{{ __('My Tasks') }}</span>
               </Link>
           </li>
-          <!-- <li class="relative" v-if="workspace.member.role === 'admin'">
+          <li class="relative" v-if="workspace.member.role === 'admin'">
               <Link class="flex items-center px-3 p-2 group workspace_members" :href="route('workspace.members', workspace.id)" :class="{'active' : checkActiveClass('component', 'Workspaces_Members')}">
                   <icon class="w-4 h-4" name="user" />
                   <span class="flex-1 ml-3 whitespace-nowrap">{{ __('Team Members') }}</span>
-                  <button v-if="workspace.member.role === 'admin'" @click="$event.preventDefault();invite_workspace = true" class="flex w-5 h-5 rounded justify-center items-center add__plus">
+                  <!--button v-if="workspace.member.role === 'admin'" @click="$event.preventDefault();invite_workspace = true" class="flex w-5 h-5 rounded justify-center items-center add__plus">
                       <icon class="w-4 h-4" name="plus" />
-                  </button>
+                  </button-->
               </Link>
-          </li> -->
+          </li>
       </ul>
       <div class="flex cursor-pointer select-none text-[13px] text items-center justify-start gap-3 mt-4 font-bold px-2 pt-2 border-t border-[#ffffff29]" @click="hide_starred=!hide_starred">
           <icon v-if="!hide_starred" name="arrow-down" class="w-4 h-4" />

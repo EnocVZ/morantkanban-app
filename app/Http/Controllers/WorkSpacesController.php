@@ -132,10 +132,12 @@ class WorkSpacesController extends Controller
                 ->paginate(10)
                 ->withQueryString()
                 ->through(function ($member) {
+                    $name = $member->user->first_name.' '.$member->user->last_name;
+                    $photo_path = $member->user->photo_path;
                     return [
                         'id' => $member->id,
-                        'name' => $member->user->first_name.' '.$member->user->last_name,
-                        'photo' => $member->user->photo_path,
+                        'name' => $name,
+                        'photo' => $photo_path,
                         'role' => $member->role,
                         'workspace_id' => $member->workspace_id,
                         'user_id' => $member->user_id,
