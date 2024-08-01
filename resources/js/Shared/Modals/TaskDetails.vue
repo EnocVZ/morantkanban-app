@@ -170,6 +170,10 @@
                                                         </span>
                                                         <span class="text-sm">{{ check_list.title }}</span>
                                                     </label>
+                                                    <div class="absolute right-0 hidden pl-12 group-hover:flex" v-if="!check_list.modify">
+                                                        <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
+                                                        <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
+                                                    </div>
                                                 </div>
                                                 <div class="checklist-box2 pl-6 w-full" v-if="check_list.modify">
                                                     <input :id="'modify_'+check_list.id" class="border rounded p-2 text-sm bg-white w-full" v-model="check_list.title" @keyup="$event.keyCode === 13?modifyCheckListSubmit(check_list, c_index, task.checklists):''" />
@@ -182,10 +186,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="!check_list.modify">
-                                                    <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
-                                                    <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
-                                                </div>
+                                                
                                             </div>
                                             <div v-show="newCheckList" class="group relative flex">
                                                 <div class="checklist-box2 pl-6 w-full">
