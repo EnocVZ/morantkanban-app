@@ -18,17 +18,17 @@
                       <div class="flex w-full text-sm font-semibold">
                           <span class="px-2 py-1 w-full" contenteditable="true" @keyup.enter="saveListTitle($event, listItem.id)" @blur="saveListTitle($event, listItem.id)">{{ listItem.title }}</span>
                       </div>
-                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total Tasks">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
+                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total de tareas">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
                       <button @click="listItem.show_more = !listItem.show_more" class="flex items-center justify-center w-6 h-6 ml-auto text-indigo-500 rounded hover:bg-[#091e4224]">
                           <icon class="w-5 w-5" name="more-h" />
                       </button>
                       <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
                           <button v-if="listIndex!==0" @click="moveList(listIndex, 'minus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="move_left" />
-                              Mover izquierda
+                              Mover a la izquierda
                           </button>
                           <button v-if="listIndex !== lists.length - 1" @click="moveList(listIndex, 'plus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                              Mover derecha
+                              Mover a la derecha
                               <icon class="ml-2 h-4 w-4 " name="move_right" />
                           </button>
                           <button @click="makeListArchive($event, listItem.id, listIndex)" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
