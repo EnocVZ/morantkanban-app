@@ -2287,6 +2287,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .pl-1 {
   padding-left: 0.25rem;
 }
+.pl-12 {
+  padding-left: 3rem;
+}
 .pl-2 {
   padding-left: 0.5rem;
 }
@@ -2349,9 +2352,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .pt-6 {
   padding-top: 1.5rem;
-}
-.pl-12 {
-  padding-left: 3rem;
 }
 .text-left {
   text-align: left;
