@@ -60,8 +60,8 @@
                                 <p class="show">
                                     {{ activeTimerString }}
                                 </p>
-                                <button v-if="!!this.activeTimerString" @click="stopTracker()">STOP</button>
-                                <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Task details"><icon class="" name="info" /></Link>
+                                <button v-if="!!this.activeTimerString" @click="stopTracker()">{{ __('STOP') }}</button>
+                                <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Detalles de la tarea"><icon class="" name="info" /></Link>
                             </div>
                             <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode == 'dark' ? 'Oscuro': 'Claro'" aria-live="polite" @click="switchMode">
                                 <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">

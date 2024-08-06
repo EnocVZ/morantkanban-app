@@ -34,6 +34,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\WorkSpacesController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoogleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -361,5 +362,10 @@ Route::group(['prefix' => 'update', 'as' => 'LaravelUpdater::', 'middleware' => 
     // run, the middleware sends a 404.
     Route::get('final', [UpdateController::class, 'finish'])->name('final');
 });
+
+Route::get('/google/redirect', [GoogleController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('/oauth2/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
+Route::get('/google/calendar/{taskId}', [GoogleController::class, 'addEventToCalendar'])->name('google.calendar');
+Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->name('google.drive');
 // New code for installer
 

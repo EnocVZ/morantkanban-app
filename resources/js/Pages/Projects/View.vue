@@ -18,24 +18,24 @@
                       <div class="flex w-full text-sm font-semibold">
                           <span class="px-2 py-1 w-full" contenteditable="true" @keyup.enter="saveListTitle($event, listItem.id)" @blur="saveListTitle($event, listItem.id)">{{ listItem.title }}</span>
                       </div>
-                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total Tasks">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
+                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total de tareas">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
                       <button @click="listItem.show_more = !listItem.show_more" class="flex items-center justify-center w-6 h-6 ml-auto text-indigo-500 rounded hover:bg-[#091e4224]">
                           <icon class="w-5 w-5" name="more-h" />
                       </button>
-                      <!-- <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
+                      <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
                           <button v-if="listIndex!==0" @click="moveList(listIndex, 'minus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="move_left" />
-                              Move Left
+                              Mover a la izquierda
                           </button>
                           <button v-if="listIndex !== lists.length - 1" @click="moveList(listIndex, 'plus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                              Move Right
+                              Mover a la derecha
                               <icon class="ml-2 h-4 w-4 " name="move_right" />
                           </button>
                           <button @click="makeListArchive($event, listItem.id, listIndex)" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="archive" />
-                              Archive
+                              Archivar
                           </button>
-                      </div> -->
+                      </div>
                   </div>
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
                       <template #item="{ element, index }">
@@ -43,7 +43,7 @@
                               <div v-if="element.show_more" class="absolute right-7 top-1 w-30 z-999 bg-gray-100">
                                   <button @click="makeArchive($event, element.id, listItem.tasks, index)" class="m__archive">
                                       <icon class="mr-2 h-4 w-4 " name="archive" />
-                                      Archive
+                                      Archivar
                                   </button>
                               </div>
                               <button @click="visibleShowMore($event, element)" class="hidden show__more group-hover:flex">
@@ -57,10 +57,11 @@
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
                                   <div class="card__footer">
-                                      <div v-if="element.due_date" aria-label="Fecha de vencimiento" class="__item due" :class="getDue(element)">
+                                      <div v-if="element.due_date" aria-label="Fecha entrega" class="__item due" :class="getDue(element)">
                                           <icon class="w-4 h-4" name="time" />
                                           <span class="pl-[2px] pr-[4px] leading-none"> {{ moment(element.due_date).format('MMM D') }} </span>
                                       </div>
+                                      <!--
                                       <div class="__item" v-if="element.description" aria-label="This task has a description.">
                                           <icon class="w-4 h-4" name="details" />
                                       </div>
@@ -68,19 +69,21 @@
                                           <icon class="w-4 h-4" name="comment" />
                                           <span class="ml-1 leading-none"> {{ element.comments_count }} </span>
                                       </div>
-                                      <div class="__item" v-if="element.attachments_count" aria-label="Attachments">
+                                      -->
+                                      <div class="__item" v-if="element.attachments_count" aria-label="Adjuntos">
                                           <icon class="w-4 h-4" name="attachment" />
                                           <span class="ml-1 leading-none"> {{ element.attachments_count }} </span>
                                       </div>
-                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist items" :class="{'completed': element.checklist_done_count === element.checklists_count}">
+                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist" :class="{'completed': element.checklist_done_count === element.checklists_count}">
                                           <icon class="w-4 h-4" name="checklist" />
                                           <span class="ml-1 leading-none"> {{ element.checklist_done_count+'/'+element.checklists_count }} </span>
                                       </div>
                                   </div>
                                   <div class="pop__assignee">
                                       <span v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                          <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
-                                      </span>
+                                          <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                          <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
+                                        </span>
                                   </div>
                               </div>
                           </div>

@@ -7,7 +7,7 @@ createServer((page) => createInertiaApp({
     page,
     render: renderToString,
     resolve: name => require(`./Pages/${name}`),
-    title: title => title ? `${title} - Pro Task` : 'Pro Task',
+    title: title => title ? `${title} - Kanban` : 'Kanban',
     setup({ app, props, plugin }) {
         return createSSRApp({
             render: () => h(app, props),

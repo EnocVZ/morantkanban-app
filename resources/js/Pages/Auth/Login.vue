@@ -6,11 +6,11 @@
         <Link :href="route('dashboard')"><logo class="block w-48 mx-auto fill-white" /></Link>
       <form class="mt-8 bg-white dark:bg-slate-900 border border-gray-100 rounded-lg shadow-xl overflow-hidden" @submit.prevent="login">
         <div class="px-10 py-6">
-          <text-input v-model="form.email" :error="form.errors.email" class="mt-10" label="Email" type="email" autofocus autocapitalize="off" />
-          <text-input v-model="form.password" :error="form.errors.password" class="mt-6" label="Password" type="password" />
+          <text-input v-model="form.email" :error="form.errors.email" class="mt-10" label="Correo" type="email" autofocus autocapitalize="off" />
+          <text-input v-model="form.password" :error="form.errors.password" class="mt-6" label="Contraseña" type="password" />
           <label class="mt-4 select-none flex items-center" for="remember">
             <input id="remember" v-model="form.remember" class="mr-1" type="checkbox" />
-            <span class="text-sm">Remember Me</span>
+            <span class="text-sm">Recuerdame</span>
           </label>
             <loading-button :loading="form.processing" class="ml-auto btn-indigo w-full items-center justify-center mt-6" type="submit">{{ __('Login') }}</loading-button>
             <!-- <div class="mt-5 flex justify-center"><Link class="ml-2 " :href="route('password.reset')">{{ __('Forgot your password?') }}</Link></div>

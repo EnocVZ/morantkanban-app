@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => 'ProTask',
+    'name' => 'Kanban',
 
     'installed' => env('APP_INSTALLED', false),
 

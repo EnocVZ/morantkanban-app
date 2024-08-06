@@ -3,6 +3,7 @@
     <div class="task__details">
         <div class="wrapper" id="modal">
             <div role="alert" class="container">
+                
                 <div v-if="loading" class="content">
                     <div role="status" class="td__loader">
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div><div class="i__r" /></div>
@@ -14,11 +15,12 @@
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
-                        <span class="sr-only">Loading...</span>
+                        <span class="sr-only">Cargando...</span>
                     </div>
                 </div>
                 <div v-else>
                     <div class="content">
+                        <toast ref="toast" :type="notificationType" :onClose="onCloseGoogleAlert">{{notificationMessage}}</toast>
                         <div v-if="task.cover" ref="t__cover" class="t__cover" :style="{backgroundImage: 'url('+task.cover.path+')'}"></div>
                         <div v-if="task.is_archive" class="archive___task">
                             <icon name="archive" />
@@ -168,6 +170,10 @@
                                                         </span>
                                                         <span class="text-sm">{{ check_list.title }}</span>
                                                     </label>
+                                                    <div class="absolute right-0 hidden pl-12 group-hover:flex" v-if="!check_list.modify">
+                                                        <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
+                                                        <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
+                                                    </div>
                                                 </div>
                                                 <div class="checklist-box2 pl-6 w-full" v-if="check_list.modify">
                                                     <input :id="'modify_'+check_list.id" class="border rounded p-2 text-sm bg-white w-full" v-model="check_list.title" @keyup="$event.keyCode === 13?modifyCheckListSubmit(check_list, c_index, task.checklists):''" />
@@ -180,10 +186,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="!check_list.modify">
-                                                    <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
-                                                    <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
-                                                </div>
+                                                
                                             </div>
                                             <div v-show="newCheckList" class="group relative flex">
                                                 <div class="checklist-box2 pl-6 w-full">
@@ -230,8 +233,8 @@
                                                         <span class="flex underline cursor-pointer" @click="deleteAttachment(attachment.id, a_index)">{{ __('Delete') }}</span>
                                                     </div>
                                                     <div class="flex gap-3">
-                                                        <div v-if="!task.cover && ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="cover" @click="makeCover(task, attachment)"><icon name="image" /> {{ __('Make Cover') }}</div>
-                                                        <div v-if="task.cover && task.cover.id === attachment.id" class="cover" @click="removeCover(task)"><icon name="image" /> {{ __('Remove Cover') }}</div>
+                                                        <!--div v-if="!task.cover && ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="cover" @click="makeCover(task, attachment)"><icon name="image" /> {{ __('Make Cover') }}</div>
+                                                        <div v-if="task.cover && task.cover.id === attachment.id" class="cover" @click="removeCover(task)"><icon name="image" /> {{ __('Remove Cover') }}</div -->
                                                         <a class="cover" :href="attachment.path" target="_blank"><icon name="link_external" /> {{ __('Open') }}</a>
                                                     </div>
                                                 </div>
@@ -398,7 +401,7 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({sendGoogle:true, due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
                                             </div>
                                         </div>
                                     </div>
@@ -411,7 +414,7 @@
                                             <icon class="mr-2 h-4 w-4 " name="attachment" />
                                             {{ __('Attachment') }}
                                         </label>
-                                        <!-- <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
+                                        <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <icon class="mr-2 h-4 w-4 " name="archive" />
                                             {{ __('Archive') }}
                                         </button>
@@ -419,11 +422,13 @@
                                             <icon class="mr-2 h-4 w-4" name="undo" />
                                             {{ __('Revert Back') }}
                                         </button>
-                                        <button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
+                                        <!--button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4 fill-white" name="dash" />
                                             {{ __('Delete') }}
-                                        </button> -->
+                                        </button-->
                                     </div>
+                                    
+                                    
                                 </section>
 
                             </aside>
@@ -433,6 +438,7 @@
             </div>
         </div>
     </div>
+    
 </template>
 
 <script>
@@ -446,6 +452,9 @@ import 'moment-duration-format';
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import axios from 'axios'
+import FlashMessages from '@/Shared/FlashMessages'
+import Toast from '@/Shared/Toast';
+//import { useToast } from "vue-toastification";
 
 export default {
     props: {
@@ -458,6 +467,7 @@ export default {
     emits: {closeModal: null},
     data() {
         return {
+            //toast: ()=>{},
             showAssigneeBox: false,
             editDescription: false,
             showCommentBox: false,
@@ -503,11 +513,14 @@ export default {
                     },
                     // imageDrop: true,
                 }
-            }
+            },
+            snackbar: true,
+            notificationMessage: '',
+            notificationType: 'success',
         }
     },
     components: {
-        Icon, Loader, Link, Datepicker, QuillEditor, Head
+        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast
     },
     computed: {
 
@@ -783,8 +796,26 @@ export default {
             this.goToLink(this.route(this.view === 'table'?'projects.view.table':'projects.view.board', this.task.project_id));
         },
         saveTask(taskObject){
+            const sendGoogle = taskObject.sendGoogle;
+            if(sendGoogle){
+                delete taskObject.sendGoogle;
+            }
             axios.post(this.route('task.update', this.task.id), taskObject).then((response) => {
                 if(response.data){
+                    if(sendGoogle){
+                        axios.get(this.route('google.calendar',this.task.id))
+                        .then((response) => {
+                            const {data} = response;
+                            if(data){
+                                if(data.error){
+                                    this.notificationType = "error";
+                                    this.notificationMessage = "Revisa las credenciales de API google";
+                                    this.$refs.toast.showToast();
+                                }
+                            }
+                        })
+                    }
+                    
                     this.sendNotification('send.mail.task_update', response.data.id)
                 }
             })
@@ -916,6 +947,9 @@ export default {
                 this.$refs.t__cover.style.backgroundColor = await this.bgColor(this.task.cover.path)
             }
         },
+        onCloseGoogleAlert(){
+            window.open(this.route('google.redirect'), '_blank');
+        }
     },
     created() {
         this.moment = moment

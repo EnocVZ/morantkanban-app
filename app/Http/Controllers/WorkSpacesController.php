@@ -110,7 +110,7 @@ class WorkSpacesController extends Controller
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/View', [
-            'title' => 'Projects | '.$workspace->name,
+            'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects
         ]);
@@ -123,7 +123,7 @@ class WorkSpacesController extends Controller
         }
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/Members', [
-            'title' => 'Members | '.$workspace->name,
+            'title' => 'Participantes | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects,
             'team_members' => TeamMember::where('workspace_id', $workspace->id)
@@ -132,10 +132,12 @@ class WorkSpacesController extends Controller
                 ->paginate(10)
                 ->withQueryString()
                 ->through(function ($member) {
+                    $name = $member->user->first_name.' '.$member->user->last_name;
+                    $photo_path = $member->user->photo_path;
                     return [
                         'id' => $member->id,
-                        'name' => $member->user->first_name.' '.$member->user->last_name,
-                        'photo' => $member->user->photo_path,
+                        'name' => $name,
+                        'photo' => $photo_path,
                         'role' => $member->role,
                         'workspace_id' => $member->workspace_id,
                         'user_id' => $member->user_id,
@@ -166,7 +168,7 @@ class WorkSpacesController extends Controller
             $loopIndex+= 1;
         }
         return Inertia::render('Workspaces/Table', [
-            'title' => 'Tasks | '.$workspace->name,
+            'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,

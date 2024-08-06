@@ -28,7 +28,7 @@ class UsersController extends Controller{
     }
     public function index(){
         return Inertia::render('Users/Index', [
-            'title' => 'Users',
+            'title' => 'Usuarios',
             'filters' => Request::all(['search','role_id']),
             'roles' => Role::orderBy('name')
                 ->get()
@@ -52,7 +52,7 @@ class UsersController extends Controller{
 
     public function create(){
         return Inertia::render('Users/Create',[
-            'title' => 'Create a new user',
+            'title' => 'Crear nuevo usuario',
             'roles' => Role::orderBy('name')
                 ->get()
                 ->map
