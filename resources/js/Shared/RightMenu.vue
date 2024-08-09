@@ -16,19 +16,19 @@
             </div>
         </div>
         <ul class="buttons" v-if="!show_back_button">
-            <!-- <li>
+             <li>
                 <button @click="showItems('tasks')"><icon name="archive" /> {{ __('Archived Tasks') }}</button>
             </li>
             <li>
                 <button @click="showItems('boards')"><icon name="archive" /> {{ __('Archived Board Items') }}</button>
-            </li> -->
+            </li>
             <li v-if="$page.props.auth.user.role.slug === 'admin'" class="border-t mt-2 py-2">
                 <button @click="showItems('backgrounds')"><span class="icon" :style="{backgroundImage: 'url('+project.background.image+')'}" /> {{ __('Change Background') }}</button>
             </li>
-             <!--li v-if="$page.props.auth.user.role.slug === 'admin'">
+             <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('workspaces')"><icon name="gear" />
                     {{ __('Change Workspace') }}</button>
-            </li-->
+            </li>
             <!-- <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('visibility')"><icon name="display" />
                     {{ __('Change Task Visibility') }}</button>
@@ -78,7 +78,7 @@
             <div class="item" v-for="list in menu_data.boards">
                 <div class="b__title">{{ list.title }}</div>
                 <button class="btn" @click="sendToBoard(list.id)"><icon class="mr-1 h-3 w-3" name="undo" />
-                    {{ __('Send to board') }}</button>
+                    {{ __('Unarchive') }}</button>
             </div>
             <div class="flex" v-if="!menu_data.boards.length">{{ __('No list found!') }}</div>
         </div>
@@ -192,6 +192,8 @@ export default {
         async sendToBoard(id){
             await axios.post(this.route('json.board.remove.archive', id));
             await this.getItem('boards');
+            window.location.href = this.route('projects.view.board', this.project.slug || this.project.id)
+            //this.goToLink(this.route(this.view === 'table'?'projects.view.table':'projects.view.board', task.project.slug || task.project.id))
         },
         async changeWorkSpace(workspace_id){
             await axios.post(this.route('json.workspace.change'), {workspace_id, project_id: this.project.id});

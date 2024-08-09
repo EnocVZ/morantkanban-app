@@ -20,7 +20,7 @@
                 </div>
                 <div v-else>
                     <div class="content">
-                        <toast ref="toast" :type="notificationType" :onClose="onCloseGoogleAlert">{{notificationMessage}}</toast>
+                        <toast ref="toast" :type="notificationType" >{{notificationMessage}}</toast>
                         <div v-if="task.cover" ref="t__cover" class="t__cover" :style="{backgroundImage: 'url('+task.cover.path+')'}"></div>
                         <div v-if="task.is_archive" class="archive___task">
                             <icon name="archive" />
@@ -411,8 +411,22 @@
                                     <div class="mt-2 space-y-2 px-1">
                                         <label class="flex cursor-pointer w-full items-center rounded bg-gray-200 td__btn hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt,.xlsx,.xlsm,.xlsb" @change="uploadAttachment($event)" class="hidden" type="file"/>
-                                            <icon class="mr-2 h-4 w-4 " name="attachment" />
-                                            {{ __('Attachment') }}
+                                            <template v-if="!isLoadingAttach">
+                                                <icon class="mr-2 h-4 w-4 " name="attachment"/>
+                                                <span>
+                                                    {{ __('Attachment') }}
+                                                </span>
+                                            </template>
+                                            <template v-else>
+                                                <svg class="animate-spin h-4 w-4 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                                </svg>
+                                                <span>
+                                                  Cargando...
+                                                </span>
+                                            </template>
+                                            
                                         </label>
                                         <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <icon class="mr-2 h-4 w-4 " name="archive" />
@@ -420,7 +434,7 @@
                                         </button>
                                         <button v-else @click="saveTask({ is_archive: 0 });this.task.is_archive = false" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4" name="undo" />
-                                            {{ __('Revert Back') }}
+                                            {{ __('Unarchive') }}
                                         </button>
                                         <!--button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4 fill-white" name="dash" />
@@ -517,6 +531,7 @@ export default {
             snackbar: true,
             notificationMessage: '',
             notificationType: 'success',
+            isLoadingAttach: false,
         }
     },
     components: {
@@ -578,11 +593,19 @@ export default {
             });
         },
         async uploadAttachment(e, is_comment){
+            this.isLoadingAttach = true
             e.preventDefault();
             const file = e.target.files[0];
-            const obj = await this.uploadFile(file)
+            const obj = await this.uploadFile(file).catch((err)=>{
+                this.notificationType = "error";
+                this.notificationMessage = "Se excede el tamaño del archivo";
+                this.$refs.toast.showToast();
+            })
+            this.isLoadingAttach = false
             if(obj && obj.error){
-                alert('Please upload image, video, doc/pdf/text file format only!');
+                this.notificationType = "error";
+                this.notificationMessage = "Se aceptan solo formatos imagen, video, doc/pdf/text";
+                this.$refs.toast.showToast();
             }else{
                 this.task.attachments.push(obj)
                 if(is_comment){
@@ -591,6 +614,8 @@ export default {
                     this.new_comment.details = this.new_comment.details || '' + link;
                 }
             }
+           
+            
         },
         async uploadFile(file){
             let formData = new FormData();

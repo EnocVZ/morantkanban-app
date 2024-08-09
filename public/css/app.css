@@ -1761,6 +1761,14 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
 .cursor-default {
   cursor: default;
 }
@@ -2532,6 +2540,12 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .opacity-0 {
   opacity: 0;
+}
+.opacity-25 {
+  opacity: 0.25;
+}
+.opacity-75 {
+  opacity: 0.75;
 }
 .shadow {
   --tw-shadow: 0 0 3px rgb(60 72 88 / 0.15);

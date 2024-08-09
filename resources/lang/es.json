@@ -100,7 +100,7 @@
     "Create a new label": "Crear una nueva etiqueta",
     "Menu": "Menú",
     "Archived Tasks": "Tareas archivadas",
-    "Archived Board Items": "Artículos archivados del tablero",
+    "Archived Board Items": "Listas archivadas",
     "Change Background": "Cambiar el fondo",
     "Change Workspace": "Cambiar espacio de trabajo",
     "No task found!": "¡No se encontró ninguna tarea!",
@@ -155,5 +155,7 @@
     "Action": "Acción",
     "Member": "Participante",
     "Select a workspace": "Seleccione un espacio de trabajo",
-    "Tasks": "Tareas"
+    "Tasks": "Tareas",
+    "Send to board": "Desarchivar",
+    "Unarchive": "Desarchivar"
 }
