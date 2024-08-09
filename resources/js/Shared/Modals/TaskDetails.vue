@@ -598,8 +598,9 @@ export default {
             const file = e.target.files[0];
             const obj = await this.uploadFile(file).catch((err)=>{
                 this.notificationType = "error";
-                this.notificationMessage = "Se excede el tamaño del archivo";
+                this.notificationMessage = "Se excede el tamaño 1MB";
                 this.$refs.toast.showToast();
+                this.isLoadingAttach = false
             })
             this.isLoadingAttach = false
             if(obj && obj.error){
