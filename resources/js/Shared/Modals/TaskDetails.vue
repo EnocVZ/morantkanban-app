@@ -161,7 +161,47 @@
 
                                     <div class="pl-8 pt-4">
                                         <div class="space-y-4">
-                                            <div v-for="(check_list, c_index) in task.checklists" class="group relative flex items-center">
+                                            <draggable v-model="task.checklists" item-key="id" class="group relative" @end="onEndDrag()">
+                                                <template #item="{ element, index }">
+                                                  <div class="checklist-item relative flex items-center mb-4">
+                                                    <!-- Check and Label -->
+                                                    <div class=" items-center checklist-box2" v-if="!element.modify" >
+                                                      <input class="inp-cbx" :id="'cbx-' + element.id" :checked="!!element.is_done" 
+                                                             @click="element.is_done = $event.target.checked; saveCheckList(element.id, { is_done: element.is_done })" 
+                                                             type="checkbox" style="display: none;" />
+                                                      <label class="cbx  items-center" :for="'cbx-' + element.id">
+                                                        <span>
+                                                          <icon class="w-5 h-4" name="checklist_box_2" />
+                                                        </span>
+                                                        <span class="text-sm ml-3">{{ element.title }}</span>
+                                                      </label>
+                                                    </div>
+                                              
+                                                    <!-- Action Buttons (Edit/Delete) -->
+                                                    <div class="absolute bottom-0 flex right-0 space-x-2" v-if="!element.modify">
+                                                      <icon class="w-4 h-4 cursor-pointer" name="edit" @click="modifyCheck(element)" />
+                                                      <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(element.id, index, task.checklists)" />
+                                                    </div>
+                                              
+                                                    <!-- Edit Mode -->
+                                                    <div class="checklist-box2 w-full" v-if="element.modify">
+                                                      <input :id="'modify_'+element.id" 
+                                                             class="border rounded p-2 text-sm bg-white w-full" 
+                                                             v-model="element.title" 
+                                                             @keyup.enter="modifyCheckListSubmit(element, index, task.checklists)" />
+                                                      <div class="justify-end mt-2 space-x-2">
+                                                        <button type="button" class="small save" @click="modifyCheckListSubmit(element, index, task.checklists)">
+                                                          {{ __('Save') }}
+                                                        </button>
+                                                        <button type="button" class="small cancel" @click="element.modify = false">
+                                                          {{ __('Cancel') }}
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </template>
+                                              </draggable>
+                                            <!--div v-for="(check_list, c_index) in task.checklists" class="group relative flex items-center">
                                                 <div class="checklist-box2" v-if="!check_list.modify">
                                                     <input class="inp-cbx" :id="'cbx-' + check_list.id" :checked="!!check_list.is_done" @click="check_list.is_done = $event.target.checked;saveCheckList(check_list.id, {is_done: check_list.is_done})" type="checkbox" style="display: none;"/>
                                                     <label class="cbx" :for="'cbx-' + check_list.id">
@@ -187,7 +227,7 @@
                                                     </div>
                                                 </div>
                                                 
-                                            </div>
+                                            </div -->
                                             <div v-show="newCheckList" class="group relative flex">
                                                 <div class="checklist-box2 pl-6 w-full">
                                                     <input class="border rounded p-2 text-sm bg-white w-full" ref="ncl" v-model="new_chek_list.title" @keyup="inputNewChecklistAction(new_chek_list, $event)" />
@@ -244,7 +284,7 @@
                                 </section>
 
                                 <section class="mt-8">
-                                    <!-- <div>
+                                     <div>
                                         <div class="flex">
                                             <icon class="w-4 h-4 mr-3 mt-1" name="comments" />
                                             <div class="flex-1 border-b pb-2">
@@ -252,10 +292,10 @@
                                                 <span class="ml-2 text-sm font-light ">{{ task.comments.length }}</span>
                                             </div>
                                         </div>
-                                    </div> -->
+                                    </div>
 
                                     <div class="pl-8 pt-4">
-                                        <!-- <div>
+                                        <div>
                                             <div v-if="!showCommentBox" class="mt-1 mb-4 cursor-pointer rounded-md border border-gray-300 hover:shadow">
                                                 <p @click="showCommentBox = true" class="px-3 py-2 text-sm ">
                                                     {{ __('Write a comment...') }}
@@ -263,7 +303,7 @@
                                             </div>
 
                                             <form v-if="showCommentBox" class="mt-1 mb-4 rounded-md border border-gray-300" enctype="multipart/form-data">
-                                               <textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea>
+                                               <!--textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea -->
                                                 <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" />
 
                                                 <div class="flex items-center px-3 pt-2 pb-3">
@@ -281,10 +321,10 @@
                                                     </div>
                                                 </div>
                                             </form>
-                                        </div> -->
+                                        </div>
 
                                         <div class="space-y-4">
-                                            <!-- <div v-for="(comment, comment_i) in task.comments" class="group relative flex py-1">
+                                            <div v-for="(comment, comment_i) in task.comments" class="group relative flex py-1">
                                                 <div class="h-6 w-6">
                                                     <span class="block rounded-full h-6 w-6">
                                                         <img v-if="comment.user.photo_path" class="h-full w-full rounded-full" :src="comment.user.photo_path" alt="">
@@ -319,7 +359,7 @@
                                                     </div>
                                                     <div class="prose text-sm pt-1" v-if="!comment.modify" v-html="comment.details"></div>
                                                 </div>
-                                            </div> -->
+                                            </div>
                                         </div>
                                     </div>
                                 </section>
@@ -469,6 +509,7 @@ import axios from 'axios'
 import FlashMessages from '@/Shared/FlashMessages'
 import Toast from '@/Shared/Toast';
 //import { useToast } from "vue-toastification";
+import draggable from 'vuedraggable'
 
 export default {
     props: {
@@ -535,9 +576,12 @@ export default {
         }
     },
     components: {
-        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast
+        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast,draggable
     },
     computed: {
+        sortedTasks:()=> {
+            return this.task.checklists.sort((a, b) => a.order - b.order);
+        },
 
     },
     methods: {
@@ -876,11 +920,13 @@ export default {
             check_list.modify = false
         },
         inputNewChecklistAction(check_list, e){
+            const list = this.task.checklists;
+            const order = list.length + 1;
             if((e && e.keyCode === 13) || !e){
                 if(!check_list.title){
                     this.newCheckList = false;
                 }else{
-                    this.saveNewCheckList({title: check_list.title, task_id: this.task.id}, this.task.checklists);
+                    this.saveNewCheckList({title: check_list.title, task_id: this.task.id, order: order}, this.task.checklists);
                     this.openNewChecklist()
                 }
             }
@@ -975,6 +1021,14 @@ export default {
         },
         onCloseGoogleAlert(){
             window.open(this.route('google.redirect'), '_blank');
+        },
+        onEndDrag(){
+            const list = this.task.checklists;
+            list.forEach((check_list, key) => {
+                const order = key + 1;
+                check_list.order = order;
+                this.saveCheckList(check_list.id, {order: order});
+            });
         }
     },
     created() {
@@ -996,3 +1050,12 @@ export default {
     name: "task-details"
 };
 </script>
+<style scoped>
+.checklist-item {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    position: relative;
+  }
+</style>

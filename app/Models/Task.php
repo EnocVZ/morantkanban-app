@@ -50,7 +50,7 @@ class Task extends Model
     }
 
     public function checklists() {
-        return $this->hasMany(CheckList::class);
+        return $this->hasMany(CheckList::class)->orderBy('order', 'asc');
     }
 
     public function comments() {
