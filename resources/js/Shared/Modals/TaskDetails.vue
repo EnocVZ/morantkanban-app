@@ -304,8 +304,36 @@
 
                                             <form v-if="showCommentBox" class="mt-1 mb-4 rounded-md border border-gray-300" enctype="multipart/form-data">
                                                <!--textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea -->
-                                                <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" />
-
+                                               
+                                                <div class="relative">
+                                                    <!--textarea
+                                                      v-model="new_comment.details"
+                                                      @input="detectAtSymbol"
+                                                      class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                      rows="5"
+                                                      placeholder="Escribe un comentario..."
+                                                    ></textarea-->
+                                                    <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description"
+                                                    v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" 
+                                                    @input="detectAtSymbol"/>
+                                              
+                                                    <!-- Lista de menciones (solo se muestra cuando se escribe @) -->
+                                                    <div
+                                                      v-if="showSuggestions"
+                                                      class="absolute top-0 left-0 z-10 w-full mt-12 bg-white border rounded-md shadow-lg"
+                                                    >
+                                                    <ul class="flex flex-col mt-3 gap-1 h-48 max-h-48 overflow-y-auto">
+                                                        <li v-for="(userObject, user_index) in searchUser('')" @click="addMention(userObject)">
+                                                            <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
+                                                                <span data-a="" class="p-1" type="button" :tabindex="user_index">
+                                                                    {{ userObject.user.name }}
+                                                                </span>
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                      
+                                                    </div>
+                                                  </div>
                                                 <div class="flex items-center px-3 pt-2 pb-3">
                                                     <div class="flex items-center">
                                                         <button @click="saveNewComment({details: new_comment.details, task_id: task.id, user_id: $page.props.auth.user.id}, task.comments)" type="button" class="inline-flex items-center rounded border border-gray-300 bg-indigo-600 text-white px-2.5 py-1.5 text-xs font-medium shadow-sm hover:bg-gray-50 hover:text-dark focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -573,6 +601,10 @@ export default {
             notificationMessage: '',
             notificationType: 'success',
             isLoadingAttach: false,
+            showSuggestions: false,
+            filteredUsers: [],
+            mentionStartIndex: -1, // Índice donde se detectó el @
+            userMetioned:[]
         }
     },
     components: {
@@ -957,16 +989,38 @@ export default {
         },
         saveNewComment(commentObject, currentComments){
             this.new_comment.details = '';
+            
             commentObject.created_at = this.moment().format('YYYY/MM/DD HH:mm:ss')
             axios.post(this.route('comments.new'), commentObject).then((response) => {
                 if(response.data){
                     currentComments.push(response.data);
                     this.showCommentBox = false;
+                    this.sendTaskNotification(commentObject)
                     this.sendNotification('send.mail.comment', response.data.id)
                 }
             }).catch((error) => {
                 console.log(error)
             })
+        },
+        sendTaskNotification(commentObject){
+            let userList = [];
+            this.userMetioned.forEach(user=>{
+                const atSymbolIndex = commentObject.details?.indexOf(user.name);
+                const find = userList.find(item=> item === user.id)
+                if (atSymbolIndex !== -1, !find) {
+                    userList.push(user.id)
+                } 
+            })
+            const requestAssigne = {
+                users: userList,
+                title:commentObject.details,
+                task:commentObject.task_id,
+                fromUser:commentObject.user_id,
+            }
+            if(userList.length > 0){
+                axios.post(this.route('notification.new'), requestAssigne)
+                .then((res)=>{console.log(res)})
+            }
         },
         sendNotification(uri, id, user_id){
             const data = {id}
@@ -1029,8 +1083,26 @@ export default {
                 check_list.order = order;
                 this.saveCheckList(check_list.id, {order: order});
             });
-        }
+        },
+        detectAtSymbol(event) {
+            const cursorPosition = event.target.selectionStart;
+            const text = event?.data || "";
+            const atSymbolIndex = text.indexOf("@");
+            console.log(text, atSymbolIndex)
+            if (atSymbolIndex !== -1) {
+                this.mentionStartIndex = atSymbolIndex;
+                this.showSuggestions = true;
+            } else {
+                this.showSuggestions = false; // Ocultar la lista si no hay @
+            }
     },
+    addMention(userParam) {
+      let textoModificado = this.new_comment.details.replace("@", `<b>${userParam.user.name}</b> `);
+      this.new_comment.details = textoModificado;
+      this.userMetioned.push(userParam.user)
+      this.showSuggestions = false;
+    },
+      },
     created() {
         this.moment = moment
         this.getTask(this.id)

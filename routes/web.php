@@ -35,6 +35,8 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\WorkSpacesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
+use App\Http\Controllers\TaskNotificationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -367,5 +369,9 @@ Route::get('/google/redirect', [GoogleController::class, 'redirectToGoogle'])->n
 Route::get('/oauth2/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
 Route::get('/google/calendar/{taskId}', [GoogleController::class, 'addEventToCalendar'])->name('google.calendar');
 Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->name('google.drive');
-// New code for installer
+
+//notification
+Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNotificationByUser'])->name('notification.assignees.user')->middleware('auth');
+Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
+
 

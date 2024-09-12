@@ -82,6 +82,64 @@
                                     </g>
                                 </svg>
                             </button>
+                            <div class="relative inline-block">
+                                <!-- Botón de notificación -->
+                                <button
+                                  @click="showDialog = true"
+                                  class="relative inline-flex items-center justify-center p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                  <!-- Icono de campana (notification) -->
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="w-6 h-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.877M5 20h14"
+                                    />
+                                  </svg>
+                            
+                                  <!-- Burbuja de notificación (contador) -->
+                                  <span
+                                    v-if="notificationList.length > 0"
+                                    class="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full ring-2 ring-white"
+                                  >
+                                    {{ notificationList.length }}
+                                  </span>
+                                </button>
+                            
+                                <!-- Dialog de notificaciones -->
+                                <div
+                                  v-if="showDialog"
+                                  class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50"
+                                >
+                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                                    <div class="flex justify-between items-center mb-4">
+                                      <h2 class="text-lg font-bold">Notificaciones</h2>
+                                      <button @click="showDialog = false" class="text-gray-600 hover:text-gray-800">
+                                        ✕
+                                      </button>
+                                    </div>
+                            
+                                    <!-- Lista de notificaciones -->
+                                    <div v-if="notificationList.length > 0" class="space-y-3">
+                                      <div
+                                        v-for="(notification, index) in notificationList"
+                                        :key="index"
+                                        class="p-2 bg-blue-100 border border-blue-200 rounded-lg"
+                                      >Te mencionaron en un comentario: 
+                                        <div  v-html="notification.title"></div>
+                                      </div>
+                                    </div>
+                                    <div v-else class="text-center text-gray-500">No hay notificaciones</div>
+                                  </div>
+                                </div>
+                              </div>
                             <dropdown class="select_user" placement="bottom-end">
                                 <template #default>
                                     <div class="flex items-center cursor-pointer group">
@@ -186,15 +244,23 @@ export default {
             current_page: 'dashboard',
             activeTimerString: '',
             counter: { seconds: 0, timer: this.auth.timer, duration: 0 },
+            notificationList: [],
+            showDialog:false,
         }
     },
     computed: {
+        getNotification(){
+            return this.$page.props.notification;
+        },
         selected_language() {
             return this.$page.props.languages.find(language => language.code === this.$page.props.locale)
         },
         languages_except_selected(){
             return this.$page.props.languages.filter(language => language.code !== this.$page.props.locale)
-        }
+        },
+        getUser(){
+            return this.$page.props.notification;
+        },
     },
     // $page.props.counter
     watch: {
@@ -257,6 +323,11 @@ export default {
             this.counter.duration = response.data;
             this.startTimer(this.counter.timer.started_at)
         },
+        async getNotificationUser(){
+            const {user} = this.auth;
+            const response = await axios.get(this.route('notification.assignees.user', user.id));
+            this.notificationList = response.data
+        },
     },
     created() {
         this.moment = moment;
@@ -267,6 +338,8 @@ export default {
         if (this.counter.timer && this.counter.timer.started_at && !this.counter.timer.stopped_at){
             this.getDuration(this.counter.timer.task_id)
         }
+        setInterval(this.getNotificationUser, 60000);
+        
     }
 }
 </script>
