@@ -30,8 +30,21 @@ class TaskNotificationController extends Controller
         return response()->json($response);
     }
 
+    public function wasReadNotification($id){
+        $response = ["succces" => false, "data" => []];
+        $notification = TaskNotification::where('idtask_notification', $id)->update(['wasRead' => true]);//->first();
+        if($notification){
+           $response = ["succces" => true,"data" => $notification];
+        }
+        return response()->json($response);
+    }
+
     public function getNotificationByUser($auth_id){
-        $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
+        $notification = TaskNotification::where('toUser', $auth_id)
+        ->with('task')
+        ->orderBy('idtask_notification', 'desc')
+        ->get()
+        ->toArray();
         return response()->json($notification);
     }
 }

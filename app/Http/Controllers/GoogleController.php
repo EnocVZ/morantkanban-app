@@ -23,8 +23,8 @@ class GoogleController extends Controller
         $this->client->setAuthConfig(storage_path('app/google/credentials.json'));
         $this->client->addScope(Calendar::CALENDAR);
         $this->client->addScope(Drive::DRIVE_FILE);
-        $this->client->setAccessType('offline'); // Necesario para obtener el refresh token
-        $this->client->setPrompt('consent'); // Forzar para asegurar que se obtenga el refresh token
+        $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
         $this->client->setRedirectUri(route('google.callback'));
     }
 
@@ -39,12 +39,10 @@ class GoogleController extends Controller
         $this->client->authenticate($request->code);
         $token = $this->client->getAccessToken();
 
-        // Almacenar el refresh token en un archivo
         if (isset($token['refresh_token'])) {
             file_put_contents(storage_path('app/google/google-refresh-token.json'), json_encode(['refresh_token' => $token['refresh_token'], 'google_token' => $token]));
         }
 
-        // Almacenar el access token en la sesión
         $request->session()->put('google_token', $token);
 
         return redirect()->route('home');
@@ -57,13 +55,11 @@ class GoogleController extends Controller
             $task = Task::find($taskId);
             $endDate = new DateTime($task->due_date);
 
-            // Obtener correos electrónicos de los asignados
             $assignees = Assignee::join('users', 'assignees.user_id', '=', 'users.id')
                 ->where('assignees.task_id', $taskId)
                 ->select('users.email')
                 ->get();
 
-            // Convertir a formato adecuado para Google Calendar
             $attendees = [];
             foreach ($assignees as $assignee) {
                 $attendees[] = ['email' => $assignee->email];
@@ -78,12 +74,11 @@ class GoogleController extends Controller
             if ($token) {
                 $this->client->setAccessToken($token);
 
-                // Verificar si el token de acceso ha expirado
+                
                 if ($this->client->isAccessTokenExpired()) {
                     $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
                     $newToken = $this->client->getAccessToken();
 
-                    // Actualizar el token en el archivo si ha cambiado
                     if (isset($newToken['refresh_token'])) {
                         file_put_contents(storage_path('app/google/google-refresh-token.json'), json_encode(['refresh_token' => $newToken['refresh_token'], 'google_token' => $newToken]));
                     }

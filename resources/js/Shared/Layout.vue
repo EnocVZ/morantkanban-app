@@ -106,10 +106,10 @@
                             
                                   <!-- Burbuja de notificación (contador) -->
                                   <span
-                                    v-if="notificationList.length > 0"
+                                    v-if=" showNotificationWithoutRead.length > 0"
                                     class="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full ring-2 ring-white"
                                   >
-                                    {{ notificationList.length }}
+                                    {{ showNotificationWithoutRead.length }}
                                   </span>
                                 </button>
                             
@@ -131,9 +131,12 @@
                                       <div
                                         v-for="(notification, index) in notificationList"
                                         :key="index"
-                                        class="p-2 bg-blue-100 border border-blue-200 rounded-lg"
+                                        :class="[{'bg-blue-100': notification.wasRead == 0}, 'p-2 border border-blue-200 rounded-lg']"
                                       >Te mencionaron en un comentario: 
                                         <div  v-html="notification.title"></div>
+                                        <button class="border px-2 py-1 rounded text-sm" @click="sendWasRead(notification)">
+                                            Ver
+                                          </button>
                                       </div>
                                     </div>
                                     <div v-else class="text-center text-gray-500">No hay notificaciones</div>
@@ -246,6 +249,7 @@ export default {
             counter: { seconds: 0, timer: this.auth.timer, duration: 0 },
             notificationList: [],
             showDialog:false,
+            intervalId: null
         }
     },
     computed: {
@@ -261,6 +265,10 @@ export default {
         getUser(){
             return this.$page.props.notification;
         },
+        showNotificationWithoutRead(){
+            return  this.notificationList.filter(notification => notification.wasRead == 0)
+        },
+
     },
     // $page.props.counter
     watch: {
@@ -328,6 +336,12 @@ export default {
             const response = await axios.get(this.route('notification.assignees.user', user.id));
             this.notificationList = response.data
         },
+
+        async sendWasRead(notification){
+            const response = await axios.put(this.route('notification.wasread', notification.idtask_notification));
+            window.location.href = this.route('projects.view.board',{uid:  notification.task.project_id, task: notification.task.slug || notification.task.id})
+           
+        },
     },
     created() {
         this.moment = moment;
@@ -338,8 +352,14 @@ export default {
         if (this.counter.timer && this.counter.timer.started_at && !this.counter.timer.stopped_at){
             this.getDuration(this.counter.timer.task_id)
         }
-        setInterval(this.getNotificationUser, 60000);
+        this.getNotificationUser()
+        this.intervalId =  setInterval(this.getNotificationUser, 60000);
         
+    },
+    beforeDestroy() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
     }
+    },
 }
 </script>
