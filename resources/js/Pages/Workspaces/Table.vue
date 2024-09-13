@@ -458,7 +458,7 @@ export default {
                 (task) => task.title && task.title.toLowerCase().includes(this.search)
             );
             //this.filteredTasks = this.tasks.filter(task =>task.title.toLowerCase().include(this.search.toLowerCase()));
-            console.log(this.filteredTasks)
+        
         },
         setDefaultImage(event) {
             event.target.src = "/images/svg/profile.svg";

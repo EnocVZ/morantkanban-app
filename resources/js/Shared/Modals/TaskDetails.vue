@@ -1088,7 +1088,6 @@ export default {
             const cursorPosition = event.target.selectionStart;
             const text = event?.data || "";
             const atSymbolIndex = text.indexOf("@");
-            console.log(text, atSymbolIndex)
             if (atSymbolIndex !== -1) {
                 this.mentionStartIndex = atSymbolIndex;
                 this.showSuggestions = true;

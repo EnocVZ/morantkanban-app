@@ -2139,10 +2139,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-bg-opacity: 1;
   background-color: rgb(253 224 71 / var(--tw-bg-opacity));
 }
-.bg-blue-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(59 130 246 / var(--tw-bg-opacity));
-}
 .bg-opacity-30 {
   --tw-bg-opacity: 0.3;
 }
