@@ -1614,6 +1614,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .max-h-full {
   max-height: 100%;
 }
+.max-h-\[80vh\] {
+  max-height: 80vh;
+}
 .min-h-screen {
   min-height: 100vh;
 }
@@ -1904,6 +1907,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
   --tw-divide-opacity: 1;
   border-color: rgb(226 232 240 / var(--tw-divide-opacity));
+}
+.overflow-auto {
+  overflow: auto;
 }
 .overflow-hidden {
   overflow: hidden;

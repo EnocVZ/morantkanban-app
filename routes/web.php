@@ -374,5 +374,5 @@ Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->nam
 Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNotificationByUser'])->name('notification.assignees.user')->middleware('auth');
 Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
 Route::put('notification/read/{id}', [TaskNotificationController::class, 'wasReadNotification'])->name('notification.wasread')->middleware('auth');
-
+Route::delete('notification/remove/{id}', [TaskNotificationController::class, 'deleteNotification'])->name('notification.delete')->middleware('auth');
 

@@ -368,17 +368,39 @@
                                                         <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{ moment(comment.created_at).format('MMMM D, YYYY [at] h:mm a') }}</span>
                                                         <div class="ml-auto">
                                                             <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="$page.props.auth.user.id === comment.user.id">
-                                                                <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="comment.modify = true" />
+                                                                <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="onloadEditData(comment, comment_i)" />
                                                                 <icon class="w-3 h-3 cursor-pointer" name="trash" @click="deleteComment(comment.id, comment_i, task.comments)" />
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div class="checklist-box2 pt-3 w-full" v-if="comment.modify">
-                                                        <quill-editor ref="editComment" @ready="onEditorReady" class="task__description" v-model:content="comment.details" :options="editorOptions" contentType="html" theme="snow" />
+                                                            <div class="relative">
+                                                            <quill-editor ref="editComment" @ready="onEditorReady" class="task__description"
+                                                            v-model:content="commentEdit" :options="editorOptions" contentType="html" theme="snow" 
+                                                            @input="detectAtSymbol"/>
+                                                    
+                                                            <!-- Lista de menciones (solo se muestra cuando se escribe @) -->
+                                                            <div
+                                                            v-if="showSuggestions"
+                                                            class="absolute top-0 left-0 z-10 w-full mt-12 bg-white border rounded-md shadow-lg"
+                                                            >
+                                                            <ul class="flex flex-col mt-3 gap-1 h-48 max-h-48 overflow-y-auto">
+                                                                <li v-for="(userObject, user_index) in searchUser('')" @click="addMention(userObject)">
+                                                                    <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
+                                                                        <span data-a="" class="p-1" type="button" :tabindex="user_index">
+                                                                            {{ userObject.user.name }}
+                                                                        </span>
+                                                                    </label>
+                                                                </li>
+                                                            </ul>
+                                                            
+                                                            </div>
+                                                        </div>
+                                                        <!--quill-editor ref="editComment" @ready="onEditorReady" class="task__description" v-model:content="comment.details" :options="editorOptions" contentType="html" theme="snow" /-->
                                                         <div class="flex">
                                                             <div class="flex items-center action__buttons mt-2">
-                                                                <button type="button" class="small save" @click="saveComment(comment.id, {details: comment.details});comment.modify = false">
+                                                                <button type="button" class="small save" @click="saveComment(comment);comment.modify = false">
                                                                     {{ __('Save') }}</button>
                                                                 <button @click="comment.modify = false" type="button" class="small cancel">
                                                                     {{ __('Cancel') }}</button>
@@ -604,7 +626,8 @@ export default {
             showSuggestions: false,
             filteredUsers: [],
             mentionStartIndex: -1, // Índice donde se detectó el @
-            userMetioned:[]
+            userMetioned:[],
+            commentEdit:""
         }
     },
     components: {
@@ -972,8 +995,12 @@ export default {
                 console.log(error)
             })
         },
-        saveComment(id, commentObject){
-            axios.post(this.route('comment.update', id), { details: commentObject.details }).catch((error) => {
+        saveComment(commentObject){
+         commentObject.details = this.commentEdit
+          console.log(commentObject)
+            axios.post(this.route('comment.update', commentObject.id), { details: commentObject.details }).then(rsp=>{
+               this.sendTaskNotification(commentObject)
+            }).catch((error) => {
                 console.log(error)
             })
         },
@@ -1094,13 +1121,25 @@ export default {
             } else {
                 this.showSuggestions = false; // Ocultar la lista si no hay @
             }
-    },
-    addMention(userParam) {
-      let textoModificado = this.new_comment.details.replace("@", `<b>${userParam.user.name}</b> `);
-      this.new_comment.details = textoModificado;
-      this.userMetioned.push(userParam.user)
-      this.showSuggestions = false;
-    },
+        },
+         addMention(userParam) {
+            let textoModificado = ""
+            if(this.commentEdit.length > 0){
+               textoModificado = this.commentEdit.replace("@", `<b>${userParam.user.name}</b> `);
+               this.commentEdit = textoModificado;
+
+            }else{
+               textoModificado = this.new_comment.details.replace("@", `<b>${userParam.user.name}</b> `);
+               this.new_comment.details = textoModificado;
+            }
+            this.userMetioned.push(userParam.user)
+            this.showSuggestions = false;
+         },
+         onloadEditData(commetn, comentIndex){
+            const taskList = this.task.comments;
+            commetn.modify = true
+            this.commentEdit = commetn.details
+         }
       },
     created() {
         this.moment = moment

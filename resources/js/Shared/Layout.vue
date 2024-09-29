@@ -118,7 +118,7 @@
                                   v-if="showDialog"
                                   class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50"
                                 >
-                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-auto">
                                     <div class="flex justify-between items-center mb-4">
                                       <h2 class="text-lg font-bold">Notificaciones</h2>
                                       <button @click="showDialog = false" class="text-gray-600 hover:text-gray-800">
@@ -132,11 +132,15 @@
                                         v-for="(notification, index) in notificationList"
                                         :key="index"
                                         :class="[{'bg-blue-100': notification.wasRead == 0}, 'p-2 border border-blue-200 rounded-lg']"
-                                      >Te mencionaron en un comentario: 
+                                        >Te mencionaron en un comentario: 
                                         <div  v-html="notification.title"></div>
                                         <button class="border px-2 py-1 rounded text-sm" @click="sendWasRead(notification)">
                                             Ver
                                           </button>
+                                          <!-- Botón para eliminar el comentario -->
+                                        <button class="border px-2 py-1 rounded text-sm bg-red-500 text-white ml-2" @click="deleteNotification(notification.idtask_notification)">
+                                            Eliminar
+                                        </button>
                                       </div>
                                     </div>
                                     <div v-else class="text-center text-gray-500">No hay notificaciones</div>
@@ -342,6 +346,11 @@ export default {
             window.location.href = this.route('projects.view.board',{uid:  notification.task.project_id, task: notification.task.slug || notification.task.id})
            
         },
+        deleteNotification(id){
+            const response =  axios.delete(this.route('notification.delete', id)).then(v=>{
+                this.getNotificationUser()
+            });
+      }
     },
     created() {
         this.moment = moment;
