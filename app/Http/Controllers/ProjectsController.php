@@ -16,6 +16,7 @@ use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\Workspace;
+use App\Models\TaskNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -127,7 +128,7 @@ class ProjectsController extends Controller {
 
     public function noProject(){
         return Inertia::render('Projects/Na', [
-            'title' => 'No hay espacio de tranajo',
+            'title' => 'No hay espacio de trabajo',
             'notice' => 'Aún no ha asignado ningún espacio de trabajo. Póngase en contacto con el administrador'
         ]);
     }
@@ -141,6 +142,7 @@ class ProjectsController extends Controller {
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
+        $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
         foreach ($board_lists as &$listItem){
             $list_index[$listItem['id']] = $loopIndex;
             $listItem['tasks'] = [];
@@ -175,6 +177,7 @@ class ProjectsController extends Controller {
             'filters' => $requests,
             'project' => $project,
             'tasks' => $tasks,
+            'notification'=>$notification,
         ]);
     }
 

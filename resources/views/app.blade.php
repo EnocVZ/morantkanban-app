@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta content="ProTask - Online Ticket Support" name="description" />
+    <meta content="KanbanApp - Soporte de tickets en línea" name="description" />
     <meta name="website" content="https://w3bd.com" />
     <meta name="email" content="info@w3bd.com" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
