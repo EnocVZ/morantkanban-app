@@ -20,4 +20,9 @@ class TaskNotification extends Model
     public function task(){
         return $this->belongsTo(Task::class, 'task');
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 }

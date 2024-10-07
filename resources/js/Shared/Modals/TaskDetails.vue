@@ -997,7 +997,6 @@ export default {
         },
         saveComment(commentObject){
          commentObject.details = this.commentEdit
-          console.log(commentObject)
             axios.post(this.route('comment.update', commentObject.id), { details: commentObject.details }).then(rsp=>{
                this.sendTaskNotification(commentObject)
             }).catch((error) => {
@@ -1046,7 +1045,7 @@ export default {
             }
             if(userList.length > 0){
                 axios.post(this.route('notification.new'), requestAssigne)
-                .then((res)=>{console.log(res)})
+                .then((res)=>{this.userMetioned = []})
             }
         },
         sendNotification(uri, id, user_id){

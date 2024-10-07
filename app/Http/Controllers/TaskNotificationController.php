@@ -10,6 +10,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 use App\Models\User;
+use App\Models\Task;
 
 class TaskNotificationController extends Controller
 {
@@ -30,8 +31,13 @@ class TaskNotificationController extends Controller
            $notification = TaskNotification::create($payload);
            $notification->save();
         }
+        $task = Task::where('id', $request['task'])
+        ->with('project')
+        ->with('project.workspace')
+        ->first();
         $usuarios = $this->getUserMail($users);
-        $this->enviarCorreo($usuarios, "Te mencionaron en un comentario", $request['title']);
+        $html = "<b>Espacio de trabajo</b>: {$task->project->workspace->name} <b>Proyecto</b>: {$task->project->title} <b>Tarea</b>: {$task->title} <br/> <span>Comentario:</span><br>{$request['title']}";
+        $this->enviarCorreo($usuarios, "Te mencionaron en un comentario", $html);
        $response = ["succces" => true];
         return response()->json($response);
     }
@@ -55,6 +61,8 @@ class TaskNotificationController extends Controller
         
         $notification = TaskNotification::where('toUser', $auth_id)
         ->with('task')
+        ->with('task.project')
+        ->with('task.project.workspace')
         ->orderBy('idtask_notification', 'desc')
         ->get()
         ->toArray();

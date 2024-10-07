@@ -118,7 +118,7 @@
                                   v-if="showDialog"
                                   class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50"
                                 >
-                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-auto">
+                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-[80vh] max-h-[80vh] overflow-auto">
                                     <div class="flex justify-between items-center mb-4">
                                       <h2 class="text-lg font-bold">Notificaciones</h2>
                                       <button @click="showDialog = false" class="text-gray-600 hover:text-gray-800">
@@ -132,7 +132,11 @@
                                         v-for="(notification, index) in notificationList"
                                         :key="index"
                                         :class="[{'bg-blue-100': notification.wasRead == 0}, 'p-2 border border-blue-200 rounded-lg']"
-                                        >Te mencionaron en un comentario: 
+                                        >
+                                        <span>Te mencionaron en un comentario:</span><br/>
+                                        <b>Espacio de trabajo:</b> {{notification.task.project.workspace.name}} <b>Proyecto:</b> {{notification.task.project.title}}
+                                        <br/>
+                                        <span>Comentario:</span>
                                         <div  v-html="notification.title"></div>
                                         <button class="border px-2 py-1 rounded text-sm" @click="sendWasRead(notification)">
                                             Ver
