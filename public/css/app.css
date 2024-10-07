@@ -1608,14 +1608,14 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .max-h-\[200px\] {
   max-height: 200px;
 }
+.max-h-\[80vh\] {
+  max-height: 80vh;
+}
 .max-h-\[calc\(100\%-350px\)\] {
   max-height: calc(100% - 350px);
 }
 .max-h-full {
   max-height: 100%;
-}
-.max-h-\[80vh\] {
-  max-height: 80vh;
 }
 .min-h-screen {
   min-height: 100vh;
@@ -1743,6 +1743,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .max-w-xs {
   max-width: 20rem;
+}
+.max-w-\[80vh\] {
+  max-width: 80vh;
 }
 .flex-1 {
   flex: 1 1 0%;
