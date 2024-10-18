@@ -12,6 +12,8 @@ use DateTimeZone;
 use App\Models\Assignee;
 use Google_Service_Calendar;
 use Google_Service_Calendar_Event;
+use Google_Service_Drive;
+use Google_Service_Drive_DriveFile;
 
 class GoogleController extends Controller
 {
@@ -113,7 +115,7 @@ class GoogleController extends Controller
         return response()->json($response);
     }
 
-    public function uploadFileToDrive()
+    public function uploadFile($proyectFolder, Request $request)
     {
         $tokenData = json_decode(file_get_contents(storage_path('app/google/google-refresh-token.json')), true);
         $refreshToken = $tokenData['refresh_token'];
@@ -121,62 +123,38 @@ class GoogleController extends Controller
 
         if ($token) {
             $this->client->setAccessToken($token);
-
-            // Verificar si el token de acceso ha expirado
             if ($this->client->isAccessTokenExpired()) {
                 $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
                 $newToken = $this->client->getAccessToken();
-
-                // Actualizar el token en el archivo si ha cambiado
                 if (isset($newToken['refresh_token'])) {
                     file_put_contents(storage_path('app/google/google-refresh-token.json'), json_encode(['refresh_token' => $newToken['refresh_token'], 'google_token' => $newToken]));
                 }
             }
 
-            $driveService = new Drive($this->client);
+            $driveService = new Google_Service_Drive($this->client);
 
-            $folderName = "Task";
+            // Crear la carpeta principal
+            $parentFolderName = 'morantkanban';
+            $parentFolderId = $this->createFolder($driveService, $parentFolderName);
 
-            // Buscar si la carpeta ya existe
-            $query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false";
-            $response = $driveService->files->listFiles([
-                'q' => $query,
-                'spaces' => 'drive',
-                'fields' => 'files(id, name)'
+            // Crear la subcarpeta dentro de la carpeta principal
+            $subFolderId = $this->createFolder($driveService, $proyectFolder, $parentFolderId);
+
+            // Subir el archivo a la subcarpeta
+            $fileMetadata = new Google_Service_Drive_DriveFile([
+                'name' => $request->file('file')->getClientOriginalName(),
+                'parents' => [$subFolderId]
             ]);
+            $content = file_get_contents($request->file('file')->path());
 
-            $files = $response->files;
-
-            if (count($files) > 0) {
-                // Si la carpeta existe, usar su ID
-                $folderId = $files[0]->id;
-            } else {
-                // Si la carpeta no existe, crearla
-                $folderMetadata = new Drive\DriveFile([
-                    'name' => $folderName,
-                    'mimeType' => 'application/vnd.google-apps.folder'
-                ]);
-
-                $folder = $driveService->files->create($folderMetadata, [
-                    'fields' => 'id'
-                ]);
-                $folderId = $folder->id;
-            }
-
-            // Subir el archivo a la carpeta
-            $file = new Drive\DriveFile();
-            $file->setName('664cc7875a805-john-lennon.jpg');
-            $file->setMimeType('application/octet-stream');
-            $file->setParents([$folderId]);
-
-            $content = file_get_contents(public_path('files/tasks/664cc7875a805-john-lennon.jpg'));
-            $uploadedFile = $driveService->files->create($file, [
+            $file = $driveService->files->create($fileMetadata, [
                 'data' => $content,
+                'mimeType' => $request->file('file')->getMimeType(),
                 'uploadType' => 'multipart',
                 'fields' => 'id'
             ]);
 
-            $fileId = $uploadedFile->id;
+            $fileId = $file->id;
 
             // Cambiar permisos para hacerlo público
             $permission = new Drive\Permission();
@@ -188,11 +166,42 @@ class GoogleController extends Controller
             $fileMetadata = $driveService->files->get($fileId, ['fields' => 'webViewLink, webContentLink']);
             $fileUrl = $fileMetadata->webViewLink; // o webContentLink dependiendo de lo que necesites
 
-            return $fileUrl;
+            return ["error"=>false,'fileId' => $fileUrl, 'message' => 'Archivo subido con éxito.'];
         }
 
-        //return redirect()->route('google.redirect');
+        return ["error"=>true,'message' => 'Token no válido.'];
     }
+
+    private function createFolder($driveService, $folderName, $parentFolderId = null)
+    {
+        // Verificar si la carpeta ya existe
+        $query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false";
+        if ($parentFolderId) {
+            $query .= " and '$parentFolderId' in parents";
+        }
+        $response = $driveService->files->listFiles([
+            'q' => $query,
+            'spaces' => 'drive',
+            'fields' => 'files(id, name)'
+        ]);
+        $files = $response->files;
+
+        // Crear la carpeta si no existe
+        if (count($files) > 0) {
+            return $files[0]->id;
+        } else {
+            $folderMetadata = new Google_Service_Drive_DriveFile([
+                'name' => $folderName,
+                'mimeType' => 'application/vnd.google-apps.folder',
+                'parents' => $parentFolderId ? [$parentFolderId] : []
+            ]);
+            $folder = $driveService->files->create($folderMetadata, [
+                'fields' => 'id'
+            ]);
+            return $folder->id;
+        }
+    }
+    
 
 
 }
