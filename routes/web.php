@@ -141,6 +141,8 @@ Route::get('task/list/count/{id}', [TasksController::class, 'countListItemsById'
 Route::get('task/other/data/{task_id}/{project_id}', [TasksController::class, 'taskOtherData'])->name('task.other.data')->middleware('auth');
 Route::post('task/attachment/add/{id}', [TasksController::class, 'addAttachment'])->name('task.attachment.add')->middleware('auth');
 Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttachment'])->name('task.attachment.delete')->middleware('auth');
+Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
+
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');

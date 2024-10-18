@@ -259,6 +259,32 @@
                                         </div>
                                     </div>
                                     <div class="pl-8 pt-4">
+                                        <div class="bg-white p-8 rounded w-full max-w-md mx-auto" v-show="showAttachFile">
+                                            <form >
+                                              <div class="mb-4">
+                                                <label for="fileName" class="block text-gray-700  mb-2">Nombre del archivo:</label>
+                                                <input type="text" v-model="formAttachFile.name" id="fileName" class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ej. Archivo.pdf">
+                                              </div>
+                                              <div class="mb-4">
+                                                <label for="fileLink" class="block text-gray-700  mb-2">Enlace:</label>
+                                                <input type="url" v-model="formAttachFile.link" id="fileLink" class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="https://example.com">
+                                              </div>
+                                              <div class="loader" v-show="showLoadAttachLink">
+                                                <!-- Aquí puedes personalizar tu loader, por ejemplo, un spinner -->
+                                                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                                </svg>
+                                              </div>
+                                              <div class="flex items-center action__buttons mt-2" v-show="!showLoadAttachLink">
+                                                <button type="button" class="small save"
+                                                @click="saveAttachLink">Adjuntar</button>
+                                                <button @click="showAttachFile = false" type="button" class="small cancel">{{ __('Cancel') }}</button>
+                                              </div>
+                                              
+                                            </form>
+                                          </div>
+                                          
                                         <div class="flex flex-col gap-2 text-sm">
                                             <div v-for="(attachment, a_index) in task.attachments" class="__attachment flex gap-3 py-4 hover:bg-gray-100">
                                                 <div class="preview" :aria-label="attachment.name">
@@ -518,6 +544,10 @@
                                             </template>
                                             
                                         </label>
+                                        <button @click="showAttachFile = true" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
+                                            <icon class="mr-2 h-4 w-4" name="undo" />
+                                            Adjuntar desde un link
+                                        </button>
                                         <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <icon class="mr-2 h-4 w-4 " name="archive" />
                                             {{ __('Archive') }}
@@ -627,7 +657,13 @@ export default {
             filteredUsers: [],
             mentionStartIndex: -1, // Índice donde se detectó el @
             userMetioned:[],
-            commentEdit:""
+            commentEdit:"",
+            showAttachFile: false,
+            showLoadAttachLink: false,
+            formAttachFile: {
+                name:"",
+                link:""
+            }
         }
     },
     components: {
@@ -1138,7 +1174,30 @@ export default {
             const taskList = this.task.comments;
             commetn.modify = true
             this.commentEdit = commetn.details
-         }
+         },
+         async saveAttachLink(){
+            this.showLoadAttachLink = true
+             axios.post(this.route('task.attachment.link', this.task.id), this.formAttachFile,{
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }).then(res=>{
+                this.task.attachments.push(res.data)
+                this.formAttachFile = {
+                    name:"",
+                    link:""
+                }
+                this.showAttachFile = false;
+                
+            }).catch(e=>{
+                this.notificationType = "error";
+                this.notificationMessage = "No se puede guardar los datos";
+                this.$refs.toast.showToast();
+            }).finally(()=>{
+                this.showLoadAttachLink = false
+            })
+            
+        },
       },
     created() {
         this.moment = moment

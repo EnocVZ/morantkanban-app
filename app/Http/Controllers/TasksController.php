@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Mavinoo\Batch\Batch;
+use App\Http\Controllers\GoogleController;
 
 class TasksController extends Controller
 {
@@ -163,6 +164,11 @@ class TasksController extends Controller
 
     public function addAttachment($id, Request $request){
         $attachment = [];
+        $objGoogle = new GoogleController;
+        $task = Task::where('id', $id)
+        ->with('project')
+        ->with('project.workspace')
+        ->first();
         if($request->file('file')){
             $file = $request->file('file');
             $allowedMimeTypes = [
@@ -182,7 +188,13 @@ class TasksController extends Controller
             $file_name_origin = $file->getClientOriginalName();
             $file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
             $size = $file->getSize();
-            $file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
+            $responseUrl = $objGoogle->uploadFile($task->project->title, $request);
+            
+            if($responseUrl['error']){
+                return response()->json(['error' => true, 'mesagge'=>$responseUrl['message']]);
+            }
+            $file_path = $responseUrl['fileId'];
+            //$file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
             $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name_origin, 'user_id' => auth()->id(), 'size' => $size, 'path' => $file_path, 'width' => $width, 'height' => $height]);
         }
         return response()->json($attachment);
@@ -201,5 +213,11 @@ class TasksController extends Controller
         $string = str_replace(' ', '-', $string);
         $string = filter_var($string, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         return preg_replace('/-+/', '-', $string);
+    }
+
+    public function addAttachmentFromLink($id, Request $request){
+        $requests = $request->all();
+        $attachment = Attachment::create(['task_id' => $id, 'name' => $requests['name'], 'user_id' => auth()->id(), 'size' => null, 'path' => $requests['link'], 'width' => null, 'height' => null]);
+        return response()->json($attachment);
     }
 }
