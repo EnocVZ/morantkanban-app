@@ -80,21 +80,22 @@ class TaskNotificationController extends Controller
     }
 
     
-function enviarCorreo($destinatarios, $asunto, $cuerpoHTML, $cuerpoTextoPlano="", $remitente = 'tu_correo@gmail.com', $nombreRemitente = 'Tu Nombre') {
+function enviarCorreo($destinatarios, $asunto, $cuerpoHTML, $cuerpoTextoPlano="") {
     $mail = new PHPMailer(true);
-
+    $remitente = "contacto@morant.com.mx";
+    $nombreRemitente="Notificaciones Kanban Morant";
     try {
         // Configuración del servidor SMTP de Gmail
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';          // Servidor SMTP de Gmail
         $mail->SMTPAuth = true;                  // Habilitar autenticación SMTP
-        $mail->Username = 'mikecastle707@gmail.com'; // Tu dirección de correo de Gmail
-        $mail->Password = 'avrb pgsl ikaa rnsf';       // Tu contraseña o contraseña de aplicación (si tienes 2FA activado)
+        $mail->Username = $remitente; // Tu dirección de correo de Gmail
+        $mail->Password = 'yutk emvm rmbw uypy';       // Tu contraseña o contraseña de aplicación (si tienes 2FA activado)
         $mail->SMTPSecure = 'tls';               // Habilitar encriptación TLS
         $mail->Port = 587;                       // Puerto SMTP para TLS (465 para SSL)
 
         // Configuración del remitente
-       # $mail->setFrom($remitente, $nombreRemitente);
+        $mail->setFrom($remitente, $nombreRemitente);
 
         // Agregar destinatarios (puede ser un array con múltiples destinatarios)
         foreach ($destinatarios as $correo) {
@@ -114,5 +115,5 @@ function enviarCorreo($destinatarios, $asunto, $cuerpoHTML, $cuerpoTextoPlano=""
         echo "El correo no pudo ser enviado. Error: {$mail->ErrorInfo}";
         
     }
-}
+    }
 }

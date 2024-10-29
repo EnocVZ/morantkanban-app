@@ -32,6 +32,7 @@ class GoogleController extends Controller
 
     public function redirectToGoogle()
     {
+        $this->client->setPrompt('select_account');
         $authUrl = $this->client->createAuthUrl();
         return redirect()->away($authUrl);
     }
