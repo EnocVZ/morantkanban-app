@@ -142,7 +142,18 @@ class TasksController extends Controller
     }
 
     public function getJsonTask($taskUid){
-        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)->with('project')->with('timer')->with('cover')->with('list')->with('checklists')->with('comments.user')->with('attachments')->with('assignees')->with('taskLabels.label')->withCount('checklistDone')->first();
+        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)
+        ->with('project')
+        ->with('timer')
+        ->with('cover')
+        ->with('list')
+        ->with('checklists')
+        ->with('comments.user')
+        ->with('attachments')
+        ->with('assignees')
+        ->with('createdby')
+        ->with('taskLabels.label')
+        ->withCount('checklistDone')->first();
         return response()->json($task);
     }
 

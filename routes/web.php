@@ -371,10 +371,10 @@ Route::get('/google/redirect', [GoogleController::class, 'redirectToGoogle'])->n
 Route::get('/oauth2/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
 Route::get('/google/calendar/{taskId}', [GoogleController::class, 'addEventToCalendar'])->name('google.calendar');
 Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->name('google.drive');
+Route::get('/list-folders/{parentFolderId?}', [GoogleController::class, 'listFolders'])->name('google.folders');
 
 //notification
 Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNotificationByUser'])->name('notification.assignees.user')->middleware('auth');
 Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
 Route::put('notification/read/{id}', [TaskNotificationController::class, 'wasReadNotification'])->name('notification.wasread')->middleware('auth');
 Route::delete('notification/remove/{id}', [TaskNotificationController::class, 'deleteNotification'])->name('notification.delete')->middleware('auth');
-

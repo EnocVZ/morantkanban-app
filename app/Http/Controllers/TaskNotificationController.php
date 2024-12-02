@@ -93,6 +93,7 @@ function enviarCorreo($destinatarios, $asunto, $cuerpoHTML, $cuerpoTextoPlano=""
         $mail->Password = 'yutk emvm rmbw uypy';       // Tu contraseña o contraseña de aplicación (si tienes 2FA activado)
         $mail->SMTPSecure = 'tls';               // Habilitar encriptación TLS
         $mail->Port = 587;                       // Puerto SMTP para TLS (465 para SSL)
+        $mail->CharSet = 'UTF-8';
 
         // Configuración del remitente
         $mail->setFrom($remitente, $nombreRemitente);
