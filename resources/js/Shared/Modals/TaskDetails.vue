@@ -565,6 +565,41 @@
                                     
                                 </section>
 
+                                <section class="py-3">
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Creado por:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div>
+                                            <div class="px-2 py-2 text-sm">
+                                             {{task.createdby.name}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <section class="py-3">
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Fecha creacion:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div>
+                                            <div class="px-2 py-2 text-sm">
+                                                {{ moment(task.created_at).format('YYYY-MM-DD h:mm A') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Ultima modifición:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div>
+                                            <div class="px-2 py-2 text-sm">
+                                                {{ moment(task.updated_at).format('YYYY-MM-DD h:mm A') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
                             </aside>
                         </div>
                     </div>

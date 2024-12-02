@@ -147,5 +147,8 @@ class Task extends Model
             }
         });
     }
-}
 
+    public function createdby() {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}

@@ -23,8 +23,10 @@ class GoogleController extends Controller
     {
         $this->client = new GoogleClient();
         $this->client->setAuthConfig(storage_path('app/google/credentials.json'));
+        
         $this->client->addScope(Calendar::CALENDAR);
         $this->client->addScope(Drive::DRIVE_FILE);
+        
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
         $this->client->setRedirectUri(route('google.callback'));
@@ -203,6 +205,60 @@ class GoogleController extends Controller
         }
     }
     
+    
+    public function listFolders($parentFolderId = null)
+{
+    try {
+        // Leer tokens desde el archivo
+        $tokenFile = storage_path('app/google/google-refresh-token.json');
+        if (!file_exists($tokenFile)) {
+            return response()->json(['error' => true, 'message' => 'Archivo de tokens no encontrado.']);
+        }
+
+        $tokenData = json_decode(file_get_contents($tokenFile), true);
+        if (!isset($tokenData['google_token'], $tokenData['refresh_token'])) {
+            return response()->json(['error' => true, 'message' => 'Tokens inválidos o mal configurados.']);
+        }
+
+        $this->client->setAccessToken($tokenData['google_token']);
+
+        // Renovar token si es necesario
+        if ($this->client->isAccessTokenExpired()) {
+            $this->client->fetchAccessTokenWithRefreshToken($tokenData['refresh_token']);
+            $newToken = $this->client->getAccessToken();
+
+            if (isset($newToken['refresh_token'])) {
+                file_put_contents($tokenFile, json_encode([
+                    'refresh_token' => $newToken['refresh_token'],
+                    'google_token' => $newToken,
+                ]));
+            }
+        }
+
+        $this->client->addScope(Google_Service_Drive::DRIVE_METADATA_READONLY);
+        $service = new Google_Service_Drive($this->client);
+        $results = $service->files->listFiles(['fields' => 'nextPageToken, files(id, name)']);
+
+        $folders = [];
+        foreach ($results->getFiles() as $file) {
+            if ($file->mimeType == 'application/vnd.google-apps.folder') {
+                $folders[] = $file;
+            }
+        }
+
+        return response()->json($results);
+
+    } catch (\Google_Service_Exception $e) {
+        // Manejo de errores específicos de Google API
+        $error = json_decode($e->getMessage(), true);
+        $errorMessage = $error['error']['message'] ?? 'Error desconocido en Google Drive.';
+        return response()->json(['error' => true, 'message' => "Error en Google API: $errorMessage"]);
+
+    } catch (\Exception $e) {
+        // Manejo de errores generales
+        return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+    }
+}
 
 
 }
