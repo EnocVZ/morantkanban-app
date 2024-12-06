@@ -142,6 +142,7 @@ Route::get('task/other/data/{task_id}/{project_id}', [TasksController::class, 't
 Route::post('task/attachment/add/{id}', [TasksController::class, 'addAttachment'])->name('task.attachment.add')->middleware('auth');
 Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttachment'])->name('task.attachment.delete')->middleware('auth');
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
+Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
 
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');

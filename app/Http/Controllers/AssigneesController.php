@@ -4,18 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Assignee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 use App\Models\User;
 use App\Models\Task;
+use App\Models\TaskNotification;
+
 
 
 class AssigneesController extends Controller
 {
     public function assignUserToTask(Request $request){
         $requestData = $request->all();
+        $user_id = Auth()->id();
         $assignee = Assignee::where($requestData)->first();
         if(!empty($assignee)){
             $assignee->delete();
@@ -28,6 +32,16 @@ class AssigneesController extends Controller
             $user = User::where('id', $requestData['user_id'])
             ->first();
             $assignee = Assignee::create($requestData);
+            $payload = [
+                'fromUser' => $user_id,
+                'task' => $requestData['task_id'],
+                'title' => '<p><strong>Nueva tarea asignada</p></strong>',
+                'toUser' => $requestData['user_id'],
+                'wasRead' => false,
+                'notification_type'=>2
+            ];
+           $notification = TaskNotification::create($payload);
+           $notification->save();
             $assignee->load('user');
             $html = "
                 <!DOCTYPE html>

@@ -391,7 +391,9 @@
                                                         <h2 v-if="comment.user" class="flex text-sm font-medium leading-none">
                                                             {{ comment.user.first_name + ' ' + comment.user.last_name }}
                                                         </h2>
-                                                        <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{ moment(comment.created_at).format('MMMM D, YYYY [at] h:mm a') }}</span>
+                                                        <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{formatDate(comment.created_at)}}</span>
+                                                        <icon v-show="comment.was_read == 1" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3" name="like_up"/>
+                                                        <icon v-show="comment.was_read == 0" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3 cursor-pointer" name="like_upout" @click="saveReadComment(comment)"/>
                                                         <div class="ml-auto">
                                                             <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="$page.props.auth.user.id === comment.user.id">
                                                                 <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="onloadEditData(comment, comment_i)" />
@@ -570,32 +572,42 @@
                                         Creado por:
                                     </h2>
                                     <div class="relative" modal="true">
-                                        <div>
-                                            <div class="px-2 py-2 text-sm">
-                                             {{task.createdby.name}}
-                                            </div>
+                                        <div class="px-2 py-1 text-sm">
+                                        {{task.createdby.name}}
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Fecha creación:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ formatDate(task.created_at) }}
                                         </div>
                                     </div>
                                 </section>
                                 <section class="py-3">
                                     <h2 class="px-2 text-sm font-medium">
-                                        Fecha creacion:
+                                        Lista actual:
                                     </h2>
                                     <div class="relative" modal="true">
-                                        <div>
-                                            <div class="px-2 py-2 text-sm">
-                                                {{ moment(task.created_at).format('YYYY-MM-DD h:mm A') }}
-                                            </div>
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ task.list.title }}
                                         </div>
                                     </div>
                                     <h2 class="px-2 text-sm font-medium">
-                                        Ultima modifición:
+                                        Último movimiento de lista:
+                                    </h2>
+                                    <div class="relative" modal="true" v-show="task.updatedlist_at">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ formatDate(task.updatedlist_at) }}
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Usuario que movió de lista:
                                     </h2>
                                     <div class="relative" modal="true">
-                                        <div>
-                                            <div class="px-2 py-2 text-sm">
-                                                {{ moment(task.updated_at).format('YYYY-MM-DD h:mm A') }}
-                                            </div>
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ task.user_update_list?.name }}
                                         </div>
                                     </div>
                                 </section>
@@ -1074,6 +1086,15 @@ export default {
                 console.log(error)
             })
         },
+        saveReadComment(commentObject){
+            console.log(commentObject)
+         commentObject.was_read = 1;
+            axios.post(this.route('comment.update', commentObject.id), { was_read: 1 }).then(rsp=>{
+              // this.sendTaskNotification(commentObject)
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
         saveNewCheckList(checkListObject, currentCheckList){
             this.new_chek_list.title = '';
             axios.post(this.route('check_list.new'), checkListObject).then((response) => {
@@ -1233,6 +1254,20 @@ export default {
             })
             
         },
+        formatDate(date){
+            // Configurar el idioma español
+            moment.updateLocale('es', {
+                months: [
+                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                ]
+            });
+
+            // Formato de fecha deseado
+            const fecha = moment(date);
+            const formato = fecha.format("DD MMMM YY, h:mma");
+            return formato
+        }
       },
     created() {
         this.moment = moment
