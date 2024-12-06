@@ -109,48 +109,117 @@
                                     v-if=" showNotificationWithoutRead.length > 0"
                                     class="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full ring-2 ring-white"
                                   >
-                                    {{ showNotificationWithoutRead.length }}
+                                    {{ countNotification }}
                                   </span>
                                 </button>
                             
-                                <!-- Dialog de notificaciones -->
-                                <div
-                                  v-if="showDialog"
-                                  class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50"
-                                >
-                                  <div class="bg-white p-6 rounded-lg shadow-lg max-w-[80vh] max-h-[80vh] overflow-auto">
-                                    <div class="flex justify-between items-center mb-4">
-                                      <h2 class="text-lg font-bold">Notificaciones</h2>
-                                      <button @click="showDialog = false" class="text-gray-600 hover:text-gray-800">
-                                        ✕
+                                <div v-if="showDialog" class="fixed top-0 right-0 w-96 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
+                                    <!-- Encabezado -->
+                                    <div class="p-4 border-b flex justify-between items-center">
+                                      <h2 class="text-xl font-semibold text-gray-800">Notificaciones</h2>
+                                      <!-- Botón de Salir -->
+                                      <button
+                                        @click="showDialog = false"
+                                        class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        aria-label="Cerrar"
+                                      >
+                                        ✖
                                       </button>
                                     </div>
-                            
-                                    <!-- Lista de notificaciones -->
-                                    <div v-if="notificationList.length > 0" class="space-y-3">
-                                      <div
-                                        v-for="(notification, index) in notificationList"
-                                        :key="index"
-                                        :class="[{'bg-blue-100': notification.wasRead == 0}, 'p-2 border border-blue-200 rounded-lg']"
+                                
+                                    <!-- Filtros de notificaciones>
+                                    <div-- class="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
+                                      <div class="flex space-x-4">
+                                        <button
+                                          v-for="tab in tabs"
+                                          :key="tab"
+                                          @click="activeTab = tab"
+                                          :class="{
+                                            'text-blue-600 border-b-2 border-blue-600': activeTab === tab,
+                                            'text-gray-500': activeTab !== tab
+                                          }"
+                                          class="px-2 py-1 text-sm font-medium focus:outline-none"
                                         >
-                                        <span>Te mencionaron en un comentario:</span><br/>
-                                        <b>Espacio de trabajo:</b> {{notification.task.project.workspace.name}} <b>Proyecto:</b> {{notification.task.project.title}}
-                                        <br/>
-                                        <span>Comentario:</span>
-                                        <div  v-html="notification.title"></div>
-                                        <button class="border px-2 py-1 rounded text-sm" @click="sendWasRead(notification)">
-                                            Ver
-                                          </button>
-                                          <!-- Botón para eliminar el comentario -->
-                                        <button class="border px-2 py-1 rounded text-sm bg-red-500 text-white ml-2" @click="deleteNotification(notification.idtask_notification)">
-                                            Eliminar
+                                          {{ tab }}
                                         </button>
                                       </div>
+                                    </div-->
+                                
+                                    <!-- Barra de búsqueda>
+                                    <div class="p-4 border-b">
+                                      <input
+                                        type="text"
+                                        v-model="searchQuery"
+                                        placeholder="Buscar notificaciones"
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                                      />
+                                    </div -->
+                                
+                                    <!-- Lista de notificaciones -->
+                                    <div class="overflow-y-auto h-full">
+                                        <div
+                                            v-for="(notification, index) in taskToExpire"
+                                            :key="index"
+                                            :class="['bg-gray-200 flex items-start p-4 border-b hover:bg-gray-300']"
+                                            >
+                                            <!-- Imagen del usuario -->
+                                            <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                <span >EX</span>
+                                            </div>
+                                            </div>
+                                
+                                            <!-- Contenido de la notificación -->
+                                            <div class="ml-4 flex-1">
+                                            <p class="text-sm">
+                                                <span class="font-semibold text-red-600">La tarea expira mañana</span></p>
+                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.project.workspace.name }}</p>
+                                            <p class="text-xs text-gray-400">Proyecto: {{ notification.project.title }}</p>
+                                            <div  v-html="notification.title"/>
+                                            <button @click="sendWasRead(notification, false)" class="text-[14px] text-blue-500">ver</button>
+                                            </div>
+                                            
+                                      </div>
+                                        <div
+                                            v-for="(notification, index) in notificationList"
+                                            :key="index"
+                                            :class="[{'bg-gray-100': notification.wasRead == 0}, 'flex items-start p-4 border-b hover:bg-gray-200']"
+                                            >
+                                            <!-- Imagen del usuario -->
+                                            <div class="flex-shrink-0">
+                                            <div :class="[{'bg-blue-500': notification.notification_type == 1,
+                                                            'bg-green-500': notification.notification_type == 2},
+                                                            'h-10 w-10 rounded-full flex items-center justify-center text-white font-bold']">
+                                                <span v-if="notification.notification_type == 1">CM</span>
+                                                <span v-if="notification.notification_type == 2">AS</span>
+                                            </div>
+                                            </div>
+                                
+                                            <!-- Contenido de la notificación -->
+                                            <div class="ml-4 flex-1">
+                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.task.project.workspace.name }}</p>
+                                            <p class="text-xs text-gray-400">Proyecto: {{ notification.task.project.title }}</p>
+                                            <div  v-html="notification.title"/>
+                                            <button @click="sendWasRead(notification)" class="text-[14px] text-blue-500">ver</button>
+                                            </div>
+                                
+                                            <!-- Botón de eliminar -->
+                                            <div class="ml-2">
+                                                <button
+                                                    @click="deleteNotification(notification.idtask_notification)"
+                                                    class="text-red-500 hover:text-red-700 focus:outline-none"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                      </div>
+                                      <div v-if="notificationList.length === 0" class="text-center text-gray-500 py-8">
+                                        No hay notificaciones.
+                                      </div>
                                     </div>
-                                    <div v-else class="text-center text-gray-500">No hay notificaciones</div>
-                                  </div>
-                                </div>
-                              </div>
+                                  </div><!--end mo0dal-->
+
+                                </div>      
                             <dropdown class="select_user" placement="bottom-end">
                                 <template #default>
                                     <div class="flex items-center cursor-pointer group">
@@ -257,8 +326,12 @@ export default {
             counter: { seconds: 0, timer: this.auth.timer, duration: 0 },
             notificationList: [],
             showDialog:false,
-            intervalId: null
-        }
+            intervalId: null,
+            taskToExpire:[],
+            tabs: ["All", "Unread", "I was mentioned", "Assigned to me"],
+            activeTab: "All",
+            searchQuery: "",
+                }
     },
     computed: {
         getNotification(){
@@ -276,7 +349,9 @@ export default {
         showNotificationWithoutRead(){
             return  this.notificationList.filter(notification => notification.wasRead == 0)
         },
-
+        countNotification(){
+            return this.showNotificationWithoutRead.length + this.taskToExpire.length;
+        }
     },
     // $page.props.counter
     watch: {
@@ -341,13 +416,25 @@ export default {
         },
         async getNotificationUser(){
             const {user} = this.auth;
+            this.getTaskToExpire()
             const response = await axios.get(this.route('notification.assignees.user', user.id));
             this.notificationList = response.data
+            
+        },
+        async getTaskToExpire(){
+            const {user} = this.auth;
+            const response = await axios.get(this.route('task.list.expre', user.id));
+            this.taskToExpire = response.data
         },
 
-        async sendWasRead(notification){
-            const response = await axios.put(this.route('notification.wasread', notification.idtask_notification));
-            window.location.href = this.route('projects.view.board',{uid:  notification.task.project_id, task: notification.task.slug || notification.task.id})
+        async sendWasRead(notification, updateRow = true){
+            if(updateRow){
+                const response = await axios.put(this.route('notification.wasread', notification.idtask_notification));
+                window.location.href = this.route('projects.view.board',{uid:  notification.task.project_id, task:  notification.task.id})
+            }else{
+                window.location.href = this.route('projects.view.board',{uid:  notification.project_id, task:  notification.id})
+            }
+            
            
         },
         deleteNotification(id){
@@ -376,3 +463,9 @@ export default {
     },
 }
 </script>
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.6s ease-in-out;
+}
+</style>

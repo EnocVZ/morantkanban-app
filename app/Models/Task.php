@@ -151,4 +151,7 @@ class Task extends Model
     public function createdby() {
         return $this->belongsTo(User::class, 'user_id');
     }
+    public function userUpdateList() {
+        return $this->belongsTo(User::class, 'userupdate_list');
+    }
 }

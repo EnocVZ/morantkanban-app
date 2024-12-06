@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Mavinoo\Batch\Batch;
 use App\Http\Controllers\GoogleController;
+use Carbon\Carbon;
 
 class TasksController extends Controller
 {
@@ -152,6 +153,7 @@ class TasksController extends Controller
         ->with('attachments')
         ->with('assignees')
         ->with('createdby')
+        ->with('userUpdateList')
         ->with('taskLabels.label')
         ->withCount('checklistDone')->first();
         return response()->json($task);
@@ -230,5 +232,18 @@ class TasksController extends Controller
         $requests = $request->all();
         $attachment = Attachment::create(['task_id' => $id, 'name' => $requests['name'], 'user_id' => auth()->id(), 'size' => null, 'path' => $requests['link'], 'width' => null, 'height' => null]);
         return response()->json($attachment);
+    }
+
+    public function getTaskToExpire($user_id){
+        $timezone = 'America/Mexico_City';
+        $tasks = Task::whereDate('due_date', Carbon::tomorrow($timezone)) // Filtrar por fecha actual
+                ->whereHas('assignees', function ($query) use ($user_id) {
+                    $query->where('user_id', $user_id); // Filtrar por usuario asignado
+                })
+                ->with('project')
+                ->with('project.workspace')
+                ->get()
+                ->toArray(); // Convertir a un array si es necesario
+        return response()->json($tasks);
     }
 }

@@ -39,7 +39,7 @@
                   </div>
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
                       <template #item="{ element, index }">
-                          <div @click="taskDetailsPopup(element.slug || element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
+                          <div @click="taskDetailsPopup(element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
                               <div v-if="element.show_more" class="absolute right-7 top-1 w-30 z-999 bg-gray-100">
                                   <button @click="makeArchive($event, element.id, listItem.tasks, index)" class="m__archive">
                                       <icon class="mr-2 h-4 w-4 " name="archive" />
@@ -348,9 +348,16 @@ export default {
         afterDrop(e){
             const new_list = this.newSortedItems(e, 'to');
             let previous_list = [];
+            const resquest = {
+                updatedlist_at: new Date(),
+                list_id: e.to.dataset.id,
+                userupdate_list: this.auth.user.id
+            };
+
             if(!!e.pullMode){
                 previous_list = this.newSortedItems(e, 'from');
-                this.saveTask(e.item.dataset.id, { list_id: e.to.dataset.id })
+
+                this.saveTask(e.item.dataset.id, resquest)
             }
             const list_items = new_list.concat(previous_list);
             this.saveOrder(list_items)
