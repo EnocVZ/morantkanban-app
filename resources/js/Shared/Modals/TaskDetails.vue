@@ -284,12 +284,11 @@
                                               
                                             </form>
                                           </div>
-                                          
                                         <div class="flex flex-col gap-2 text-sm">
                                             <div v-for="(attachment, a_index) in task.attachments" class="__attachment flex gap-3 py-4 hover:bg-gray-100">
                                                 <div class="preview" :aria-label="attachment.name">
-                                                    <div v-if="['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="" :style="{'backgroundImage': `url(${attachment.path})`}" :alt="attachment.name" />
-                                                    <div v-else>{{ attachment.name.split('.').pop() }}</div>
+                                                    <div v-if="['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment?.name?.split('.').pop())" class="" :style="{'backgroundImage': `url(${attachment.path})`}" :alt="attachment.name" />
+                                                    <div v-else>{{ attachment?.name?.split('.').pop() }}</div>
                                                 </div>
                                                 <div class="flex flex-col gap-2 w-full">
                                                     <div class="font-bold"><a :href="attachment.path" target="_blank">{{ attachment.name }}</a></div>
@@ -775,28 +774,32 @@ export default {
             });
         },
         async uploadAttachment(e, is_comment){
-            this.isLoadingAttach = true
-            e.preventDefault();
             const file = e.target.files[0];
-            const obj = await this.uploadFile(file).catch((err)=>{
+            //e.preventDefault();
+            if(file){
+                this.isLoadingAttach = true
+                const obj = await this.uploadFile(file).catch((err) => {
                 this.notificationType = "error";
-                this.notificationMessage = "Se excede el tamaño 1MB";
+                this.notificationMessage = "No se puede subir el archivo";
                 this.$refs.toast.showToast();
                 this.isLoadingAttach = false
-            })
-            this.isLoadingAttach = false
-            if(obj && obj.error){
-                this.notificationType = "error";
-                this.notificationMessage = "Se aceptan solo formatos imagen, video, doc/pdf/text";
-                this.$refs.toast.showToast();
-            }else{
-                this.task.attachments.push(obj)
-                if(is_comment){
-                    const name = ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(obj.name.split('.').pop())?`<img src="${obj.path}" alt="${obj.name}" />`:`${obj.name}`;
-                    const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
-                    this.new_comment.details = this.new_comment.details || '' + link;
+                })
+                
+                this.isLoadingAttach = false
+                if(obj && obj.error){
+                    this.notificationType = "error";
+                    this.notificationMessage = obj.mesagge;
+                    this.$refs.toast.showToast();
+                }else{
+                    this.task.attachments.push(obj)
+                    if(is_comment){
+                        const name = ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(obj.name.split('.').pop())?`<img src="${obj.path}" alt="${obj.name}" />`:`${obj.name}`;
+                        const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
+                        this.new_comment.details = this.new_comment.details || '' + link;
+                    }
                 }
             }
+            
            
             
         },
