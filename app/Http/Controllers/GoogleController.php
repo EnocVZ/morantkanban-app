@@ -128,7 +128,7 @@ class GoogleController extends Controller
         return response()->json($response);
     }
 
-    public function uploadFile($proyectFolder, Request $request)
+    public function uploadFile($proyectFolder, Request $request, $folderId)
     {
         
 
@@ -143,12 +143,12 @@ class GoogleController extends Controller
             $parentFolderId = $this->createFolder($driveService, $parentFolderName);
 
             // Crear la subcarpeta dentro de la carpeta principal
-            $subFolderId = $this->createFolder($driveService, $proyectFolder, $parentFolderId);
+            #$subFolderId = $this->createFolder($driveService, $proyectFolder, $parentFolderId);
 
             // Subir el archivo a la subcarpeta
             $fileMetadata = new Google_Service_Drive_DriveFile([
                 'name' => $request->file('file')->getClientOriginalName(),
-                'parents' => [$subFolderId]
+                'parents' => [$folderId]
             ]);
             $content = file_get_contents($request->file('file')->path());
 
@@ -208,75 +208,6 @@ class GoogleController extends Controller
     }
     
     
-    public function listFolders2($parentFolderId = null)
-{
-    try {
-        $token = $this->refreshGoogleToken();
-        if (!$token) {
-            throw new \Exception("Se necesita sesión de Google");
-        }
-
-        // Configurar el servicio de Google Drive
-        $service = new Google_Service_Drive($this->client);
-
-        // Parámetros de consulta para carpetas
-        $query = "mimeType = 'application/vnd.google-apps.folder' and trashed = false";
-        if ($parentFolderId) {
-            $query .= " and '$parentFolderId' in parents";
-        }
-
-        $parameters = [
-            'q' => $query,
-            'fields' => 'files(id, name, parents)',
-            'corpora' => 'allDrives',
-            'includeItemsFromAllDrives' => true,
-            'supportsAllDrives' => true,
-        ];
-
-        // Obtener las carpetas
-        $results = $service->files->listFiles($parameters);
-
-        $foldersWithFiles = [];
-        $foldersWithoutFiles = [];
-
-        foreach ($results->getFiles() as $folder) {
-            $folderId = $folder->getId();
-
-            // Consultar archivos dentro de la carpeta
-            $fileQuery = "'$folderId' in parents";
-            $files = $service->files->listFiles([
-                'q' => $fileQuery,
-                'fields' => 'files(id)',
-                'corpora' => 'allDrives',
-                'includeItemsFromAllDrives' => true,
-                'supportsAllDrives' => true,
-            ])->getFiles();
-
-            if (!empty($files)) {
-                $foldersWithFiles[] = ['id' => $folderId, 'name' => $folder->getName()];
-            } else {
-                $foldersWithoutFiles[] = ['id' => $folderId, 'name' => $folder->getName()];
-            }
-        }
-
-        return response()->json([
-            'error' => false,
-            'folders_with_files' => $foldersWithFiles,
-            'folders_without_files' => $foldersWithoutFiles,
-            'message' => 'Carpetas listadas con éxito.'
-        ]);
-
-    } catch (\Google_Service_Exception $e) {
-        // Manejo de errores específicos de Google API
-        $error = json_decode($e->getMessage(), true);
-        $errorMessage = $error['error']['message'] ?? 'Error desconocido en Google Drive.';
-        return response()->json(['error' => true, 'message' => "Error en Google API: $errorMessage"]);
-
-    } catch (\Exception $e) {
-        // Manejo de errores generales
-        return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
-    }
-}
 
 public function listFolders($parentFolderId)
 {
@@ -287,6 +218,13 @@ public function listFolders($parentFolderId)
 
         // Inicializar el servicio de Google Drive
         $service = new Google_Service_Drive($this->client);
+
+        if($parentFolderId == "default"){
+            // Crear la carpeta principal
+            $parentFolderName = 'defaultkanbanfolder';
+            $parentFolderId = $this->createFolder($service, $parentFolderName);
+        }
+        
 
         // Consulta para buscar carpetas con el padre especificado
         $query = "mimeType = 'application/vnd.google-apps.folder' and trashed = false and '$parentFolderId' in parents";
@@ -319,7 +257,7 @@ public function listFolders($parentFolderId)
 
         return response()->json([
             'error' => false,
-            'folders' => $folders,
+            'data' => $folders,
         ]);
 
     } catch (\Google_Service_Exception $e) {

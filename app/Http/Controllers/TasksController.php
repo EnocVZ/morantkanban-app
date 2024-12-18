@@ -175,7 +175,7 @@ class TasksController extends Controller
         return response()->json(['labels' => $labels, 'lists' => $lists, 'timer' => $timer, 'duration' => $duration, 'projects' => $projects, 'team_members' => $teamMembers]);
     }
 
-    public function addAttachment($id, Request $request){
+    public function addAttachment($id, $folderId, Request $request){
         $attachment = [];
         $objGoogle = new GoogleController;
         $task = Task::where('id', $id)
@@ -201,7 +201,7 @@ class TasksController extends Controller
             $file_name_origin = $file->getClientOriginalName();
             $file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
             $size = $file->getSize();
-            $responseUrl = $objGoogle->uploadFile($task->project->title, $request);
+            $responseUrl = $objGoogle->uploadFile($task->project->title, $request, $folderId);
             
             if($responseUrl['error']){
                 return response()->json(['error' => true, 'mesagge'=>$responseUrl['message']]);
