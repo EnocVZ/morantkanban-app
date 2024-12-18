@@ -66,7 +66,13 @@
 
                 <h2 class="text mb-8 px-2 mt-6 text-[20px] font-medium">Proyecto</h2>
 
-                <create-project v-if="create_project" @create-project="create_project = false" />
+                <create-project v-if="create_project || editProject" 
+                    @create-project="closeOption"
+                    :edit="editProject"
+                    :projectSelected="projectSelected"
+                    @onSave="onUpdate"
+                
+                 />
 
                 <ul class="project__list">
                     <li class="w-full py-1 px-2" v-if="!!this.$page.props.auth.user.role.create_project">
@@ -86,6 +92,9 @@
                                 <button class="flex w-7 h-7 items-center justify-center" @click="saveProject($event, project)">
                                     <icon v-if="!!project.star" name="star" class="w-5 h-5 fill-yellow-500 text-yellow-500 hover:fill-none hover:scale-125" />
                                     <icon v-else name="star" class="w-5 h-5 opacity-0 text-white group-hover:opacity-100 hover:text-yellow-500 hover:scale-125" />
+                                </button>
+                                <button class="flex w-7 h-7 items-center justify-center" @click="onClickEdit($event, project, project_index)">
+                                    <icon  name="edit" class="w-5 h-5 fill-white   hover:scale-125" />
                                 </button>
                             </div>
                         </Link>
@@ -145,6 +154,9 @@ export default {
             form: {
                 search: '',
             },
+            editProject:false,
+            projectSelected:{},
+            project_index:-1
         }
     },
     computed: {
@@ -177,6 +189,24 @@ export default {
                 // this.getProjects();
             });
         },
+        onClickEdit(e,project, project_index){
+            this.project_index = project_index
+            this.editProject = true
+            this.projectSelected = project
+            e.preventDefault();
+        },
+        onUpdate(data){
+            const item = this.projects[this.project_index];
+            item.background = data.background
+            item.description = data.description
+            item.title = data.title
+            item.folderKey = data.folderKey
+            this.closeOption(this.projects[this.project_index])
+        },
+        closeOption(){
+            this.create_project = false
+            this.editProject = false
+        }
     },
 }
 </script>

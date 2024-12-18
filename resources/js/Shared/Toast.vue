@@ -18,7 +18,7 @@ export default {
     },
     onClose: {
       type: Function,
-      default: ()=>{},
+      default: () => {},
     },
   },
   data() {
@@ -36,10 +36,10 @@ export default {
     hideToast() {
       this.visible = false;
     },
-    closeOnClick(){
+    closeOnClick() {
       this.hideToast();
       this.onClose();
-    }
+    },
   },
 };
 </script>
@@ -47,15 +47,15 @@ export default {
 <style scoped>
 .toast {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 20px; /* Mueve el toast a la parte superior */
+  right: 20px; /* Alinea el toast a la derecha */
   padding: 16px;
   border-radius: 8px;
   color: white;
   opacity: 0.9;
   cursor: pointer;
   transition: opacity 0.3s ease;
+  z-index: 1000;
 }
 .toast.success {
   background-color: #38a169;

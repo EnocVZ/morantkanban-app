@@ -20,6 +20,12 @@
                 </div>
                 <div v-else>
                     <div class="content">
+                        <FolderSelection v-if="exploreFolder" 
+                            :loaderUpload="isLoadingAttach"
+                            @onUploadFile="uploadAttachment"
+                            @close="exploreFolder = false"
+                            :project="task.project"
+                            />
                         <toast ref="toast" :type="notificationType" >{{notificationMessage}}</toast>
                         <div v-if="task.cover" ref="t__cover" class="t__cover" :style="{backgroundImage: 'url('+task.cover.path+')'}"></div>
                         <div v-if="task.is_archive" class="archive___task">
@@ -526,25 +532,11 @@
 
                                 <section class="py-3">
                                     <div class="mt-2 space-y-2 px-1">
-                                        <label class="flex cursor-pointer w-full items-center rounded bg-gray-200 td__btn hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                                            <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt,.xlsx,.xlsm,.xlsb" @change="uploadAttachment($event)" class="hidden" type="file"/>
-                                            <template v-if="!isLoadingAttach">
-                                                <icon class="mr-2 h-4 w-4 " name="attachment"/>
-                                                <span>
-                                                    {{ __('Attachment') }}
-                                                </span>
-                                            </template>
-                                            <template v-else>
-                                                <svg class="animate-spin h-4 w-4 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                                </svg>
-                                                <span>
-                                                  Cargando...
-                                                </span>
-                                            </template>
-                                            
-                                        </label>
+                                        <button @click="exploreGoogleFolder()" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
+                                            <icon class="mr-2 h-4 w-4 " name="attachment"/>
+                                            Adjuntar
+                                        </button>
+                                    
                                         <button @click="showAttachFile = true" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4" name="undo" />
                                             Adjuntar desde un link
@@ -636,6 +628,7 @@ import FlashMessages from '@/Shared/FlashMessages'
 import Toast from '@/Shared/Toast';
 //import { useToast } from "vue-toastification";
 import draggable from 'vuedraggable'
+import FolderSelection from '@/Shared/Modals/FolderSelection'
 
 export default {
     props: {
@@ -709,11 +702,12 @@ export default {
             formAttachFile: {
                 name:"",
                 link:""
-            }
+            },
+            exploreFolder: false,
         }
     },
     components: {
-        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast,draggable
+        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast,draggable, FolderSelection
     },
     computed: {
         sortedTasks:()=> {
@@ -773,40 +767,44 @@ export default {
                 }
             });
         },
-        async uploadAttachment(e, is_comment){
+        async uploadAttachment(e, is_comment, folderId){
             const file = e.target.files[0];
             //e.preventDefault();
             if(file){
                 this.isLoadingAttach = true
-                const obj = await this.uploadFile(file).catch((err) => {
+                const obj = await this.uploadFile(file, folderId)
+                .catch((err) => {
                 this.notificationType = "error";
                 this.notificationMessage = "No se puede subir el archivo";
-                this.$refs.toast.showToast();
-                this.isLoadingAttach = false
+                }).finally(()=>{
+                    this.isLoadingAttach = false
                 })
                 
-                this.isLoadingAttach = false
                 if(obj && obj.error){
                     this.notificationType = "error";
                     this.notificationMessage = obj.mesagge;
-                    this.$refs.toast.showToast();
+                    
+                    
                 }else{
                     this.task.attachments.push(obj)
+                    this.notificationType = "success";
+                    this.notificationMessage = "Se cargo el archivo correctamente";
                     if(is_comment){
                         const name = ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(obj.name.split('.').pop())?`<img src="${obj.path}" alt="${obj.name}" />`:`${obj.name}`;
                         const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
                         this.new_comment.details = this.new_comment.details || '' + link;
                     }
                 }
+                this.$refs.toast.showToast();
             }
             
            
             
         },
-        async uploadFile(file){
+        async uploadFile(file, folderId){
             let formData = new FormData();
             formData.append("file", file);
-            const resp = await axios.post(this.route('task.attachment.add', this.task.id), formData,{
+            const resp = await axios.post(this.route('task.attachment.add', {id:this.task.id, folderId: folderId}), formData,{
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -1270,6 +1268,9 @@ export default {
             const fecha = moment(date);
             const formato = fecha.format("DD MMMM YY, h:mma");
             return formato
+        },
+        exploreGoogleFolder(){
+            this.exploreFolder = true
         }
       },
     created() {
