@@ -26,9 +26,9 @@ class AuthenticatedSessionController extends Controller
      * @return \Inertia\Response
      */
     public function create() {
-       # $is_demo = (int)config('app.demo');
-       # $enable_registration = Setting::where('slug', 'enable_registration')->first();
-        return Inertia::render('Auth/Login', ['is_demo' => false, 'enable_registration' => false]);
+        $is_demo = (int)config('app.demo');
+        $enable_registration = Setting::where('slug', 'enable_registration')->first();
+        return Inertia::render('Auth/Login', ['is_demo' => $is_demo, 'enable_registration' => $enable_registration]);
     }
 
     public function register() {
