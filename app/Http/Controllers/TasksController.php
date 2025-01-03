@@ -193,7 +193,7 @@ class TasksController extends Controller
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             ];
             $contentType = $file->getClientmimeType();
-
+            var_dump($contentType);
             if(! in_array($contentType, $allowedMimeTypes) ){
                 return response()->json(['error' => true, 'message'=>'Tipo de archivo no permitido']);
             }
