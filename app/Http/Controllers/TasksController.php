@@ -182,21 +182,25 @@ class TasksController extends Controller
         ->with('project')
         ->with('project.workspace')
         ->first();
+
         if($request->file('file')){
+            
             $file = $request->file('file');
-            $allowedMimeTypes = [
-                'image/jpeg','image/gif','image/png','image/bmp','image/svg+xml', 'image/tiff',
-                'video/x-flv', 'video/mp4', 'application/x-mpegURL', 'video/3gpp', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv',
-                'text/plain', 'audio/wav', 'audio/aac', 'audio/mpeg', 'video/mpeg',
-                'application/pdf', 'application/vnd.ms-powerpoint', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/csv',
-                'application/vnd.ms-excel', 
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            // Lista de extensiones permitidas
+            $allowedExtensions = [
+                'jpeg', 'jpg', 'gif', 'png', 'bmp', 'svg', 'tiff', 'flv', 'mp4', 'm3u8',
+                '3gp', 'mov', 'avi', 'wmv', 'txt', 'wav', 'aac', 'mp3', 'mpeg', 'pdf',
+                'ppt', 'doc', 'docx', 'csv', 'xls', 'xlsx'
             ];
-            $contentType = $file->getClientmimeType();
-            var_dump($contentType);
-            if(! in_array($contentType, $allowedMimeTypes) ){
-                return response()->json(['error' => true, 'message'=>'Tipo de archivo no permitido']);
+
+            // Obtener la extensión del archivo
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            // Validar si la extensión está permitida
+            if (!in_array($extension, $allowedExtensions)) {
+                return response()->json(['error' => true, 'message' => 'Tipo de archivo no permitido']);
             }
+
             list($width, $height) = getimagesize($file);
             $file_name_origin = $file->getClientOriginalName();
             $file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
