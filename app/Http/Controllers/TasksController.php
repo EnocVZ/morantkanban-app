@@ -195,7 +195,7 @@ class TasksController extends Controller
             $contentType = $file->getClientmimeType();
 
             if(! in_array($contentType, $allowedMimeTypes) ){
-                return response()->json(['error' => true]);
+                return response()->json(['error' => true, 'message'=>'Tipo de archivo no permitido']);
             }
             list($width, $height) = getimagesize($file);
             $file_name_origin = $file->getClientOriginalName();
@@ -204,7 +204,7 @@ class TasksController extends Controller
             $responseUrl = $objGoogle->uploadFile($task->project->title, $request, $folderId);
             
             if($responseUrl['error']){
-                return response()->json(['error' => true, 'mesagge'=>$responseUrl['message']]);
+                return response()->json(['error' => true, 'message'=>$responseUrl['message']]);
             }
             $file_path = $responseUrl['fileId'];
             //$file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
