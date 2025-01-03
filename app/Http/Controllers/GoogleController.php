@@ -212,6 +212,7 @@ class GoogleController extends Controller
 public function listFolders($parentFolderId)
 {
     try {
+       
         // Refrescar el token de Google y autenticar al cliente
         $token = $this->refreshGoogleToken();
         if (!$token) throw new Exception("Se necesita sesión de Google");

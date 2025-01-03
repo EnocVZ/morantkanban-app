@@ -776,13 +776,14 @@ export default {
                 .catch((err) => {
                 this.notificationType = "error";
                 this.notificationMessage = "No se puede subir el archivo";
+                return {error: true, message: "No se puede subir el archivo"}
                 }).finally(()=>{
                     this.isLoadingAttach = false
                 })
                 
                 if(obj && obj.error){
                     this.notificationType = "error";
-                    this.notificationMessage = obj.mesagge;
+                    this.notificationMessage = obj.message;
                     
                     
                 }else{
