@@ -173,7 +173,7 @@ class GoogleController extends Controller
 
             return ["error"=>false,'fileId' => $fileUrl, 'message' => 'Archivo subido con éxito.'];
         } catch (\Exception $th) {
-            return ["error"=>true,'message' => "Problemas con la sesión de google"];
+            return ["error"=>true,'message' => "Problemas al cargar el archivo a drive"];
         }
     }
 

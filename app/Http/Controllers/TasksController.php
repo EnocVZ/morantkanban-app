@@ -176,40 +176,40 @@ class TasksController extends Controller
     }
 
     public function addAttachment($id, $folderId, Request $request){
-        $attachment = [];
-        $objGoogle = new GoogleController;
-        $task = Task::where('id', $id)
-        ->with('project')
-        ->with('project.workspace')
-        ->first();
-        if($request->file('file')){
+        try {
+            $attachment = [];
+            $objGoogle = new GoogleController;
+            $task = Task::where('id', $id)
+            ->with('project')
+            ->with('project.workspace')
+            ->first();
+
             $file = $request->file('file');
-            $allowedMimeTypes = [
-                'image/jpeg','image/gif','image/png','image/bmp','image/svg+xml', 'image/tiff',
-                'video/x-flv', 'video/mp4', 'application/x-mpegURL', 'video/3gpp', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv',
-                'text/plain', 'audio/wav', 'audio/aac', 'audio/mpeg', 'video/mpeg',
-                'application/pdf', 'application/vnd.ms-powerpoint', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/csv',
-                'application/vnd.ms-excel', 'application/octet-stream',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            ];
-            $contentType = $file->getClientmimeType();
-            if(!in_array($contentType, $allowedMimeTypes) ){
-                return response()->json(['error' => true, 'message'=>'Tipo de archivo no permitido']);
+            if ($file && $file->getError() === UPLOAD_ERR_INI_SIZE) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'El archivo es demasiado grande'
+                ]);
+            }else if($file){
+                $file = $request->file('file');
+                list($width, $height) = getimagesize($file);
+                $file_name_origin = $file->getClientOriginalName();
+                #$file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
+                $size = $file->getSize();
+                $responseUrl = $objGoogle->uploadFile($task->project->title, $request, $folderId);
+                
+                if($responseUrl['error']){
+                    return response()->json(['error' => true, 'message'=>$responseUrl['message']]);
+                }
+                $file_path = $responseUrl['fileId'];
+                //$file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
+                $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name_origin, 'user_id' => auth()->id(), 'size' => $size, 'path' => $file_path, 'width' => $width, 'height' => $height]);
             }
-            list($width, $height) = getimagesize($file);
-            $file_name_origin = $file->getClientOriginalName();
-            $file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
-            $size = $file->getSize();
-            $responseUrl = $objGoogle->uploadFile($task->project->title, $request, $folderId);
-            
-            if($responseUrl['error']){
-                return response()->json(['error' => true, 'message'=>$responseUrl['message']]);
-            }
-            $file_path = $responseUrl['fileId'];
-            //$file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
-            $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name_origin, 'user_id' => auth()->id(), 'size' => $size, 'path' => $file_path, 'width' => $width, 'height' => $height]);
+            return response()->json($attachment);
+        } catch (\Exception $e) {
+            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
         }
-        return response()->json($attachment);
+        
     }
 
     public function removeAttachment($id){
