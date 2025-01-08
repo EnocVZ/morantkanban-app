@@ -165,7 +165,7 @@ Route::post('checklist/delete/{id}', [CheckListsController::class, 'deleteItem']
 Route::post('comments/delete/{id}', [CommentsController::class, 'deleteItem'])->name('comment.delete')->middleware('auth');
 Route::post('comments/new', [CommentsController::class, 'saveNew'])->name('comments.new')->middleware('auth');
 Route::post('comments/update/{id}', [CommentsController::class, 'update'])->name('comment.update')->middleware('auth');
-
+Route::post('comments/readcomment/{id}', [CommentsController::class, 'readComment'])->name('comment.readcomment')->middleware('auth');
 
 /** Status Routing */
 

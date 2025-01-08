@@ -80,9 +80,9 @@
                                       </div>
                                   </div>
                                   <div class="pop__assignee">
-                                      <span v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                          <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
-                                          <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
+                                      <span v-for="assignee in element.assignees" :aria-label="assignee?.user?.name" class="block rounded-full h-6 w-6">
+                                          <img v-if="assignee?.user?.photo_path" class="h-full w-full rounded-full" :alt="assignee?.user?.name" :src="assignee?.user?.photo_path" />
+                                          <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee?.user?.name" />
                                         </span>
                                   </div>
                               </div>

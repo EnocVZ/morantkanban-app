@@ -976,7 +976,7 @@ export default {
                     if(checked){
                         this.task.assignees.push(response.data);
                         if(response.data.id && response.data.user && response.data.user.id){
-                            this.sendNotification('send.mail.task_user_added', response.data.id, response.data.user.id);
+                           // this.sendNotification('send.mail.task_user_added', response.data.id, response.data.user.id);
                         }
                     }else{
                         const findIndex = this.task.assignees.findIndex(a => a.user_id === id);
@@ -1090,8 +1090,9 @@ export default {
         },
         saveReadComment(commentObject){
             console.log(commentObject)
-         commentObject.was_read = 1;
-            axios.post(this.route('comment.update', commentObject.id), { was_read: 1 }).then(rsp=>{
+            commentObject.was_read = 1;
+            const payload = { task_id:commentObject.task_id, was_read: 1, toUser: commentObject.user_id }
+            axios.post(this.route('comment.readcomment', commentObject.id), payload).then(rsp=>{
               // this.sendTaskNotification(commentObject)
             }).catch((error) => {
                 console.log(error)
