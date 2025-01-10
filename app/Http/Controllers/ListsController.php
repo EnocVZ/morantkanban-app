@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\BoardList;
 use App\Models\Project;
 use App\Models\Task;
@@ -38,8 +39,13 @@ class ListsController extends Controller
     }
 
     public function jsonRemoveArchive($id){
-        BoardList::where('id', $id)->update(['is_archive' => 0]);
-        return response()->json(['success' => true]);
+        try {
+            BoardList::where('id', $id)->update(['is_archive' => 0]);
+            Task::where('list_id', $id)->update(['is_archive' => 0]);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message'=>$e->getMessage()]);
+        }
     }
 
     public function all(){
