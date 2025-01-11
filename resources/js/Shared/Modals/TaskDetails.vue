@@ -767,45 +767,112 @@ export default {
                 }
             });
         },
-        async uploadAttachment(e, is_comment, folderId){
+
+        async uploadFileDrive(file, folderId) {
+            let response = { error: true, message: "" };
+
+            try {
+                const responseToken = await axios.get(this.route('google.token')).then((response) => response.data)
+                let accessToken = "";
+                if (!responseToken.data.error) {
+                    accessToken = responseToken.data.access_token;
+                } else {
+                    return response
+                }
+
+                
+                // Metadatos del archivo
+                const metadata = {
+                    name: file.name,
+                    mimeType: file.type,
+                    parents: [folderId], // Especifica la carpeta de destino
+                };
+
+                // Crear el formulario para subir el archivo
+                const formData = new FormData();
+                formData.append(
+                    'metadata',
+                    new Blob([JSON.stringify(metadata)], { type: 'application/json' })
+                );
+                formData.append('file', file);
+                const responseUpload = await axios.post(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'multipart/related',
+                        },
+                        params: {
+                            fields: 'id, name, webViewLink, webContentLink', // Solicita los campos deseados
+                        },
+                    }
+                );
+
+                const { id, webViewLink, webContentLink } = responseUpload.data;
+                await this.setPublicPermission(id, accessToken);
+                response.error = false;
+                response.data = webViewLink
+                const saveImage = await this.uploadFile(webViewLink, file.name)
+                return saveImage
+            } catch (error) {
+                response.message = error.message;
+                return response
+            }
+            
+        },
+        async setPublicPermission(fileId, accessToken) {
+            try {
+                const response = await axios.post(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+                    {
+                        role: 'reader', // Permiso de solo lectura
+                        type: 'anyone', // Acceso público para cualquiera con el enlace
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+
+            } catch (error) {
+                console.error('Error al configurar permisos públicos:', error);
+            }
+        },
+        async uploadAttachment(e, is_comment, folderId) {
             const file = e.target.files[0];
             //e.preventDefault();
-            if(file){
+            if (file) {
                 this.isLoadingAttach = true
-                const obj = await this.uploadFile(file, folderId)
-                .catch((err) => {
-                this.notificationType = "error";
-                this.notificationMessage = "No se puede subir el archivo";
-                return {error: true, message: "No se puede subir el archivo"}
-                }).finally(()=>{
+                let obj = await this.uploadFileDrive(file, folderId).finally(() => {
                     this.isLoadingAttach = false
                 })
-                
-                if(obj && obj.error){
+
+                if (obj && obj.error) {
                     this.notificationType = "error";
                     this.notificationMessage = obj.message;
-                    
-                    
-                }else{
+
+                } else {
                     this.task.attachments.push(obj)
                     this.notificationType = "success";
                     this.notificationMessage = "Se cargo el archivo correctamente";
-                    if(is_comment){
-                        const name = ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(obj.name.split('.').pop())?`<img src="${obj.path}" alt="${obj.name}" />`:`${obj.name}`;
+                    if (is_comment) {
+                        const name = ['jpeg', 'png', 'gif', 'jpg', 'svg', 'webp', 'bmp'].includes(obj.name.split('.').pop()) ? `<img src="${obj.path}" alt="${obj.name}" />` : `${obj.name}`;
                         const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
                         this.new_comment.details = this.new_comment.details || '' + link;
                     }
                 }
                 this.$refs.toast.showToast();
             }
-            
-           
-            
+
+
+
         },
-        async uploadFile(file, folderId){
-            let formData = new FormData();
-            formData.append("file", file);
-            const resp = await axios.post(this.route('task.attachment.add', {id:this.task.id, folderId: folderId}), formData,{
+        async uploadFile(url, fileName){
+            const resp = await axios.post(this.route('task.attachment.add', {id:this.task.id}), {url: url, name:fileName},{
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },

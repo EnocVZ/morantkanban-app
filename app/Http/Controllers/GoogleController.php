@@ -273,5 +273,20 @@ public function listFolders($parentFolderId)
     }
 }
 
+    public function getGoogleToken()
+    {
+        try {
+            $token = $this->refreshGoogleToken();
+            if(!$token)new Exception("Se necesita sesión de Google");
+            
+            $tokenData = json_decode(file_get_contents(storage_path('app/google/google-refresh-token.json')), true);
+            $tokenAcc = $tokenData['google_token'];
+            $tokenx = $this->client->getAccessToken();
+            return response()->json(['error' => false, 'data' => $tokenx]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
 
 }
