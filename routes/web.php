@@ -139,7 +139,7 @@ Route::post('task/update/{taskUid}', [TasksController::class, 'updateTask'])->na
 Route::post('task/update/list/{project_id}', [TasksController::class, 'updateTaskListByProjectId'])->name('task.update.list')->middleware('auth');
 Route::get('task/list/count/{id}', [TasksController::class, 'countListItemsById'])->name('task.list.count')->middleware('auth');
 Route::get('task/other/data/{task_id}/{project_id}', [TasksController::class, 'taskOtherData'])->name('task.other.data')->middleware('auth');
-Route::post('task/attachment/add/{id}/{folderId}', [TasksController::class, 'addAttachment'])->name('task.attachment.add')->middleware('auth');
+Route::post('task/attachment/add/{id}', [TasksController::class, 'addAttachment'])->name('task.attachment.add')->middleware('auth');
 Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttachment'])->name('task.attachment.delete')->middleware('auth');
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
@@ -373,6 +373,7 @@ Route::get('/oauth2/callback', [GoogleController::class, 'handleGoogleCallback']
 Route::get('/google/calendar/{taskId}', [GoogleController::class, 'addEventToCalendar'])->name('google.calendar')->middleware('auth');
 Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->name('google.drive')->middleware('auth');
 Route::get('/list-folders/{parentFolderId?}', [GoogleController::class, 'listFolders'])->name('google.folders')->middleware('auth');
+Route::get('/getToken', [GoogleController::class, 'getGoogleToken'])->name('google.token')->middleware('auth');
 
 //notification
 Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNotificationByUser'])->name('notification.assignees.user')->middleware('auth');

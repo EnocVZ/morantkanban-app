@@ -175,8 +175,9 @@ class TasksController extends Controller
         return response()->json(['labels' => $labels, 'lists' => $lists, 'timer' => $timer, 'duration' => $duration, 'projects' => $projects, 'team_members' => $teamMembers]);
     }
 
-    public function addAttachment($id, $folderId, Request $request){
+    public function addAttachment($id, Request $request){
         try {
+            $requests = $request->all();
             $attachment = [];
             $objGoogle = new GoogleController;
             $task = Task::where('id', $id)
@@ -184,27 +185,10 @@ class TasksController extends Controller
             ->with('project.workspace')
             ->first();
 
-            $file = $request->file('file');
-            if ($file && $file->getError() === UPLOAD_ERR_INI_SIZE) {
-                return response()->json([
-                    'error' => true,
-                    'message' => 'El archivo es demasiado grande'
-                ]);
-            }else if($file){
-                $file = $request->file('file');
-                list($width, $height) = getimagesize($file);
-                $file_name_origin = $file->getClientOriginalName();
-                #$file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
-                $size = $file->getSize();
-                $responseUrl = $objGoogle->uploadFile($task->project->title, $request, $folderId);
-                
-                if($responseUrl['error']){
-                    return response()->json(['error' => true, 'message'=>$responseUrl['message']]);
-                }
-                $file_path = $responseUrl['fileId'];
-                //$file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
-                $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name_origin, 'user_id' => auth()->id(), 'size' => $size, 'path' => $file_path, 'width' => $width, 'height' => $height]);
-            }
+            $file_path = $requests['url'];
+            $file_name = $requests['name'];
+            $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name, 'user_id' => auth()->id(), 'size' => 0, 'path' => $file_path, 'width' => 0, 'height' => 0]);
+       
             return response()->json($attachment);
         } catch (\Exception $e) {
             return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
