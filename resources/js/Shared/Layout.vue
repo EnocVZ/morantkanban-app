@@ -202,8 +202,8 @@
                                 
                                             <!-- Contenido de la notificación -->
                                             <div class="ml-4 flex-1">
-                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.task.project.workspace.name }}</p>
-                                            <p class="text-xs text-gray-400">Proyecto: {{ notification.task.project.title }}</p>
+                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification?.task?.project?.workspace?.name || "Ninguno"}}</p>
+                                            <p class="text-xs text-gray-400">Proyecto: {{ notification?.task?.project?.title || "Ninguno"}}</p>
                                             <div  v-html="notification.title"/>
                                             <button @click="sendWasRead(notification)" class="text-[14px] text-blue-500">ver</button>
                                             </div>
