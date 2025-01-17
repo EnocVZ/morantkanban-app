@@ -17,6 +17,8 @@ use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\TaskNotification;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
@@ -205,9 +207,6 @@ class WorkSpacesController extends Controller
             foreach ($tasks as $task){
                 $attachments = Attachment::where('task_id', $task->id)->get();
                 foreach ($attachments as $attachment){
-                    if(!empty($attachment->path) && File::exists(public_path($attachment->path))){
-                        File::delete(public_path($attachment->path));
-                    }
                     $attachment->delete();
                 }
                 CheckList::where('task_id', $task->id)->delete();
@@ -215,6 +214,7 @@ class WorkSpacesController extends Controller
                 Comment::where('task_id', $task->id)->delete();
                 Assignee::where('task_id', $task->id)->delete();
                 TaskLabel::where('task_id', $task->id)->delete();
+                TaskNotification::where('task', $task->id)->delete();
                 $task->delete();
             }
             $project->delete();

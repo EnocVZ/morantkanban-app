@@ -169,7 +169,7 @@ class TasksController extends Controller
         $labels = Label::get();
         $lists = BoardList::withCount('tasks')->get();
         $projects = Project::get();
-        $teamMembers = TeamMember::with('user')->groupBy('user_id')->where('workspace_id', $project->workspace_id)->get();
+        $teamMembers = TeamMember::withOrderedUsers($project->workspace_id)->with('user')->get();
         $timer = Timer::running()->mine()->where('task_id', '!=', $task_id)->first() ?? null;
         $duration = Timer::where('task_id', $task_id)->sum('duration');
         return response()->json(['labels' => $labels, 'lists' => $lists, 'timer' => $timer, 'duration' => $duration, 'projects' => $projects, 'team_members' => $teamMembers]);
