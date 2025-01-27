@@ -1184,7 +1184,6 @@ export default {
                     currentComments.push(response.data);
                     this.showCommentBox = false;
                     this.sendTaskNotification(commentObject)
-                    this.sendNotification('send.mail.comment', response.data.id)
                 }
             }).catch((error) => {
                 console.log(error)

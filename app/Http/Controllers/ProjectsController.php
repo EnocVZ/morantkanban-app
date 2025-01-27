@@ -74,7 +74,11 @@ class ProjectsController extends Controller {
     }
 
     public function jsonAll($workspace_id){
-        $projects = Project::where('workspace_id', $workspace_id)->with('background')->with('star')->get();
+        $projects = Project::where('workspace_id', $workspace_id)
+        ->with('background')
+        ->with('star')
+        ->orderBy('title')
+        ->get();
         return response()->json($projects);
     }
 
