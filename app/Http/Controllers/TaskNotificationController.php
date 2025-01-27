@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Illuminate\Support\Facades\File;
 
 use App\Models\User;
 use App\Models\Task;
+use App\Helpers\MailerHelper;
 
 class TaskNotificationController extends Controller
 {
@@ -20,11 +22,12 @@ class TaskNotificationController extends Controller
         $requests = $request->all();
         $users = $request['users'];
         unset($request['users']);
+        $userName = Auth()->user()->name;
         foreach ($users as $key => $value) {
             $payload = [
                 'fromUser' => $request['fromUser'],
                 'task' => $request['task'],
-                'title' => $request['title'],
+                'title' => "{$userName}<strong> comento: </strong>{$request['title']}",
                 'toUser' => $value,
                 'wasRead' => false
             ];
@@ -36,8 +39,20 @@ class TaskNotificationController extends Controller
         ->with('project.workspace')
         ->first();
         $usuarios = $this->getUserMail($users);
-        $html = "<b>Espacio de trabajo</b>: {$task->project->workspace->name} <b>Proyecto</b>: {$task->project->title} <b>Tarea</b>: {$task->title} <br/> <span>Comentario:</span><br>{$request['title']}";
-        $this->enviarCorreo($usuarios, "Te mencionaron en un comentario", $html);
+        
+        $htmlTemplate = File::get(public_path('html/email_templates/new_comment.html'));
+        $variables = [
+            '{title}' => "Te mencionaron en un comentario",
+            '{workspacename}' => $task->project->workspace->name,
+            '{proyect}' => $task->project->title,
+            '{task}' => $task->title,
+            '{comment}' => $request['title']
+        ];
+        
+        // Reemplazar las variables en el template
+        $html = str_replace(array_keys($variables), array_values($variables), $htmlTemplate);
+    
+        $mailResponse =  MailerHelper::sendMail($usuarios, "{$userName} te mencionó en un comentario", $html);
        $response = ["succces" => true];
         return response()->json($response);
     }
@@ -79,42 +94,4 @@ class TaskNotificationController extends Controller
         return response()->json($result);
     }
 
-    
-function enviarCorreo($destinatarios, $asunto, $cuerpoHTML, $cuerpoTextoPlano="") {
-    $mail = new PHPMailer(true);
-    $remitente = "contacto@morant.com.mx";
-    $nombreRemitente="Notificaciones Kanban Morant";
-    try {
-        // Configuración del servidor SMTP de Gmail
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';          // Servidor SMTP de Gmail
-        $mail->SMTPAuth = true;                  // Habilitar autenticación SMTP
-        $mail->Username = $remitente; // Tu dirección de correo de Gmail
-        $mail->Password = 'yutk emvm rmbw uypy';       // Tu contraseña o contraseña de aplicación (si tienes 2FA activado)
-        $mail->SMTPSecure = 'tls';               // Habilitar encriptación TLS
-        $mail->Port = 587;                       // Puerto SMTP para TLS (465 para SSL)
-        $mail->CharSet = 'UTF-8';
-
-        // Configuración del remitente
-        $mail->setFrom($remitente, $nombreRemitente);
-
-        // Agregar destinatarios (puede ser un array con múltiples destinatarios)
-        foreach ($destinatarios as $correo) {
-            $mail->addAddress($correo);
-        }
-
-        // Contenido del correo
-        $mail->isHTML(true);                                      // Indicar que el mensaje tiene formato HTML
-        $mail->Subject = $asunto;                                 // Asunto del correo
-        $mail->Body    = $cuerpoHTML;                             // Cuerpo del correo en formato HTML
-        $mail->AltBody = $cuerpoTextoPlano;                       // Cuerpo del correo en texto plano (alternativo)
-
-        // Enviar el correo
-        $mail->send();
-        echo 'Correo enviado exitosamente.';
-    } catch (Exception $e) {
-        echo "El correo no pudo ser enviado. Error: {$mail->ErrorInfo}";
-        
-    }
-    }
 }
