@@ -9,6 +9,7 @@ use App\Models\Task;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Mavinoo\Batch\Batch;
+use App\Helpers\MethodHelper;
 
 class ListsController extends Controller
 {
@@ -67,4 +68,14 @@ class ListsController extends Controller
         $list = BoardList::create($requests);
         return response()->json($list);
     }
+
+    public function getBoarListByProject($project_id){
+        try {
+            $lists = BoardList::where('project_id', $project_id)->get();
+            return MethodHelper::successResponse($lists);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
 }
+

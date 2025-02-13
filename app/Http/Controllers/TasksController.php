@@ -229,4 +229,27 @@ class TasksController extends Controller
                 ->toArray(); // Convertir a un array si es necesario
         return response()->json($tasks);
     }
+
+    public function newTaskWithDetail(Request $request){
+        try {
+            $requestData = $request->all();
+            $checkList = $requestData['checkList'];
+            unset($requestData['checkList']);
+            $task = Task::create($requestData);
+
+            $slug = $this->clean($task->title);
+            
+            $task->slug = $slug;
+            $task->save();
+            foreach ($checkList as $key => $value) {
+                $checkList = CheckList::create(['task_id' => $task->id, 'title' => $value]);
+                $checkList->save();
+            }
+
+            #$task->load('lastAssignee')->load('taskLabels.label')->loadCount('checklistDone')->loadCount('comments')->loadCount('checklists')->loadCount('attachments')->loadCount('assignees');
+            return response()->json($task);
+        } catch (\Exception $e) {
+            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
 }

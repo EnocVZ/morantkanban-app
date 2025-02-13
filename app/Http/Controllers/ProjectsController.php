@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
 
 class ProjectsController extends Controller {
     public function index(){
@@ -448,5 +449,14 @@ class ProjectsController extends Controller {
             $project->delete();
         }
         return Redirect::route('workspace.view', $workspace_id);
+    }
+
+    public function getProjectByWorkspace($id){
+        try {
+            $project = Project::where('workspace_id', $id)->get()->toArray();
+            return MethodHelper::successResponse($project);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
     }
 }

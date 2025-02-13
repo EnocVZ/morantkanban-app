@@ -23,8 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
 
-class WorkSpacesController extends Controller
+class WorkSpacesController extends Controller 
 {
     //
     public function index(){
@@ -225,5 +226,14 @@ class WorkSpacesController extends Controller
             $project->delete();
         }
         return Redirect::route('dashboard');
+    }
+
+    public function allWorkSpace(){
+        try {
+            $workspaces = Workspace::all();
+            return MethodHelper::successResponse($workspaces);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
     }
 }

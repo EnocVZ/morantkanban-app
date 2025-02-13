@@ -564,7 +564,7 @@
                                     </h2>
                                     <div class="relative" modal="true">
                                         <div class="px-2 py-1 text-sm">
-                                        {{task.createdby.name}}
+                                        {{task?.createdby?.name}}
                                         </div>
                                     </div>
                                     <h2 class="px-2 text-sm font-medium">
