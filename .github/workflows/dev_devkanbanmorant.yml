@@ -64,9 +64,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.__clientidsecretname__ }}
-          tenant-id: ${{ secrets.__tenantidsecretname__ }}
-          subscription-id: ${{ secrets.__subscriptionidsecretname__ }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4122EB24F94947B18E344EA6A47A2D7A }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CC63357FB28A4D98AEACB3736885C410 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3B1EC6C064CC417AA8949B2A706DFD6D }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -75,4 +75,3 @@ jobs:
           app-name: 'devkanbanmorant'
           slot-name: 'Production'
           package: .
-          
