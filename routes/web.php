@@ -34,6 +34,9 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\WorkSpacesController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoogleController;
+use App\Http\Controllers\TaskNotificationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +141,9 @@ Route::get('task/list/count/{id}', [TasksController::class, 'countListItemsById'
 Route::get('task/other/data/{task_id}/{project_id}', [TasksController::class, 'taskOtherData'])->name('task.other.data')->middleware('auth');
 Route::post('task/attachment/add/{id}', [TasksController::class, 'addAttachment'])->name('task.attachment.add')->middleware('auth');
 Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttachment'])->name('task.attachment.delete')->middleware('auth');
+Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
+Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
+
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
@@ -159,7 +165,7 @@ Route::post('checklist/delete/{id}', [CheckListsController::class, 'deleteItem']
 Route::post('comments/delete/{id}', [CommentsController::class, 'deleteItem'])->name('comment.delete')->middleware('auth');
 Route::post('comments/new', [CommentsController::class, 'saveNew'])->name('comments.new')->middleware('auth');
 Route::post('comments/update/{id}', [CommentsController::class, 'update'])->name('comment.update')->middleware('auth');
-
+Route::post('comments/readcomment/{id}', [CommentsController::class, 'readComment'])->name('comment.readcomment')->middleware('auth');
 
 /** Status Routing */
 
@@ -361,5 +367,16 @@ Route::group(['prefix' => 'update', 'as' => 'LaravelUpdater::', 'middleware' => 
     // run, the middleware sends a 404.
     Route::get('final', [UpdateController::class, 'finish'])->name('final');
 });
-// New code for installer
 
+Route::get('/google/redirect', [GoogleController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('/oauth2/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
+Route::get('/google/calendar/{taskId}', [GoogleController::class, 'addEventToCalendar'])->name('google.calendar')->middleware('auth');
+Route::get('/google/drive', [GoogleController::class, 'uploadFileToDrive'])->name('google.drive')->middleware('auth');
+Route::get('/list-folders/{parentFolderId?}', [GoogleController::class, 'listFolders'])->name('google.folders')->middleware('auth');
+Route::get('/getToken', [GoogleController::class, 'getGoogleToken'])->name('google.token')->middleware('auth');
+
+//notification
+Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNotificationByUser'])->name('notification.assignees.user')->middleware('auth');
+Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
+Route::put('notification/read/{id}', [TaskNotificationController::class, 'wasReadNotification'])->name('notification.wasread')->middleware('auth');
+Route::delete('notification/remove/{id}', [TaskNotificationController::class, 'deleteNotification'])->name('notification.delete')->middleware('auth');

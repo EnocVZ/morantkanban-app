@@ -1,14 +1,15 @@
 {
     "name": "laravel/laravel",
     "type": "project",
-    "description": "ProTask - project management system.",
-    "keywords": ["ProTask", "project management", "task management"],
+    "description": "Kanban - project management system.",
+    "keywords": ["Kanban", "project management", "task management"],
     "license": "MIT",
     "require": {
         "php": "^8.1",
         "ext-exif": "*",
         "ext-gd": "*",
         "doctrine/dbal": "^3.0",
+        "google/apiclient": "2.15.0",
         "fakerphp/faker": "^1.9.1",
         "guzzlehttp/guzzle": "^7.0.1",
         "inertiajs/inertia-laravel": "^0.6.11",

@@ -1,18 +1,33 @@
 <template>
-  <div class="h-full ">
+  <div class="sec-cont">
       <Head :title="__(title)" />
+      <div class="mr-4 w-full max-w-md">
+        <div class="flex items-center">
+            <div class="flex w-full bg-white rounded shadow">
+                <input class="relative px-6 py-3 w-full rounded focus:shadow-outline"
+                autocomplete="off"
+                type="text" name="search" :placeholder="__('Search...')" v-model="form.search" @input="filterTasks"
+                v-show="!form.user"/>
+            </div>
+        </div>
+    </div>
+      
       <div class="flex flex-col flex-grow-1 flex-shrink-1 h-full">
           <div class="flex flex-col task__table overflow-y-auto h-full">
               <div class="inline-block min-w-full h-full py-4 align-middle md:px-3 lg:px-4">
+                
                   <div class="table__view">
                       <table>
                           <thead>
                           <tr>
                               <th scope="col" class="w-[20px]">
                               </th>
+                              <th scope="col" class=" w-[17%]">
+                                {{ __('Project') }}
+                            </th>
                               <th scope="col" class="">
                                   <button class="flex items-center gap-x-3 focus:outline-none">
-                                      <span>{{ __('Task') }}</span>
+                                      <span>{{ __('Tareas') }}</span>
                                   </button>
                               </th>
 
@@ -25,7 +40,7 @@
                               </th>
 
                               <th scope="col" class=" w-[17%]">
-                                  {{ __('Users') }}
+                                {{ __('Assignees') }}
                               </th>
 
                               <th scope="col" class="w-[17%]">
@@ -33,7 +48,7 @@
                               </th>
 
                               <th scope="col" class="relative w-[50px]">
-                                  <span class="sr-only">Edit</span>
+                                  <span class="sr-only">--</span>
                               </th>
                           </tr>
                           </thead>
@@ -41,17 +56,20 @@
                               <template #item="{ element, index }">
                                   <tr class="list-group-item group" :data-id="element.id">
                                       <td class="pl-2 pr-1 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
-                                          <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
+                                          <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project?.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
                                       </td>
                                       <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
+                                        <h2 class="font-medium t__title text-pretty">{{ element.project?.title }}</h2>
+                                    </td>
+                                      <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                           <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: element.project.slug || element.project.id, task: element.slug || element.id})" :data-id="element.id">
-                                              <icon v-if="element.timer" name="blink" class="w-2 h-2" />
-                                              <h2 class="font-medium t__title text-pretty">{{ element.title }}</h2>
+                                              <!-- <icon v-if="element.timer" name="blink" class="w-2 h-2" /> -->
+                                              <h2 class="font-medium t__title text-pretty">{{ element?.title }}</h2>
                                           </Link>
                                       </td>
                                       <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
-                                              {{ element.list.title }}
+                                              {{ element.list?.title }}
                                           </div>
                                       </td>
                                       <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
@@ -70,7 +88,12 @@
                                       <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
                                           <div class="flex items-center" v-if="element.assignees.length">
                                               <div v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                                  <img class="h-full w-full border border-white rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
+                                                <!--div class="logo flex justify-center items-center w-9 h-9 rounded-full bg-indigo-600 text-lg">
+                                                    {{ assignee.user.name.charAt(0) }}
+                                                </div-->
+                                                <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                                <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
+                                                
                                               </div>
                                               <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />
@@ -109,7 +132,7 @@
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                          <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
                                           </button>
                                       </td>
@@ -118,18 +141,21 @@
                           </draggable>
                           <tbody v-if="!tasks.length">
                           <tr>
-                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found!') }}</td>
+                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!</td>
                           </tr>
                           </tbody>
                       </table>
                       <!-- List Popup Board -->
                       <!-- List Popup Assignee -->
+
+                      <!-- descomentar cuando se necesite mostrar -->
+
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showAssigneeBox">
-                          <h4 class="text-center mb-3 font-bold">Assignee</h4>
+                          <h4 class="text-center mb-3 font-bold">Participantes</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showAssigneeBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input id="w_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search users" />
+                          <input id="w_t_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar" />
                           <ul class="flex flex-col mt-3 gap-1 h-48 max-h-[200px] overflow-y-auto">
                               <li v-for="(userObject, user_index) in searchUser(user_search)">
                                   <label :for="'w_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
@@ -143,14 +169,18 @@
                               </li>
                           </ul>
                       </div>
+
+
                       <!-- List Popup Assignee -->
+                      
+                      
                       <!-- Label Search -->
                       <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow" :style="{top: selected.top, left: selected.left}" v-if="showLabelBox">
-                          <h4 class="text-center mb-3 font-bold">Labels</h4>
+                          <h4 class="text-center mb-3 font-bold">Etiquetas</h4>
                           <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                               <icon class=" w-4 h-4" name="close" />
                           </div>
-                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search labels" />
+                          <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar etiquetas" />
                           <ul class="flex flex-col mt-3 gap-3 max-h-[200px] overflow-y-auto">
                               <li v-for="(lab, lab_index) in searchLabel(label_search)">
                                   <label class="flex gap-1">
@@ -162,7 +192,7 @@
                                   </label>
                               </li>
                           </ul>
-                          <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Create a new label </button>
+                          <button class="w-full mt-4 px-3 py-2 rounded cursor-pointer bg-gray-300 hover:opacity-80" @click="showLabelBox = false; showEditLabelBox = true; label = {}"> Crear nueva etiqueta </button>
                       </div>
                       <!-- Label Search -->
                   </div>
@@ -186,11 +216,12 @@ import moment from 'moment'
 import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import axios from 'axios'
+import SearchInput from '@/Shared/SearchInput'
 
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu },
+    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput },
   layout: Layout,
     props: {
         auth: Object,
@@ -225,11 +256,14 @@ export default {
             labels: null,
             team_members: null,
             form: {
+                search: '',
                 user: this.filters.user,
                 due: this.filters.due,
                 label: this.filters.label,
                 task: this.filters.task ?? null,
             },
+            search: '',
+            filteredTasks: []
         }
     },
     watch: {
@@ -414,6 +448,21 @@ export default {
                 this.taskDetailsOpen = true;
             }
         },
+        filterTasks() {
+            
+          /**  this.filteredTasks = this.tasks.filter(task => 
+                task.title.toLowerCase().includes(this.search.toLowerCase())
+            );
+            **/
+            this.filteredTasks = this.tasks.filter(
+                (task) => task.title && task.title.toLowerCase().includes(this.search)
+            );
+            //this.filteredTasks = this.tasks.filter(task =>task.title.toLowerCase().include(this.search.toLowerCase()));
+        
+        },
+        setDefaultImage(event) {
+            event.target.src = "/images/svg/profile.svg";
+        }
     },
 }
 </script>

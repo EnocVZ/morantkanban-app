@@ -18,32 +18,32 @@
                       <div class="flex w-full text-sm font-semibold">
                           <span class="px-2 py-1 w-full" contenteditable="true" @keyup.enter="saveListTitle($event, listItem.id)" @blur="saveListTitle($event, listItem.id)">{{ listItem.title }}</span>
                       </div>
-                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total Tasks">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
+                      <span class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30" aria-label="Total de tareas">{{ getDoneCount(listItem)+'/'+listItem.tasks.length }}</span>
                       <button @click="listItem.show_more = !listItem.show_more" class="flex items-center justify-center w-6 h-6 ml-auto text-indigo-500 rounded hover:bg-[#091e4224]">
                           <icon class="w-5 w-5" name="more-h" />
                       </button>
                       <div v-if="listItem.show_more" class="absolute right-9 top-2 w-30 z-999 bg-white py-3 rounded shadow">
                           <button v-if="listIndex!==0" @click="moveList(listIndex, 'minus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="move_left" />
-                              Move Left
+                              Mover a la izquierda
                           </button>
                           <button v-if="listIndex !== lists.length - 1" @click="moveList(listIndex, 'plus');listItem.show_more = false;" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                              Move Right
+                              Mover a la derecha
                               <icon class="ml-2 h-4 w-4 " name="move_right" />
                           </button>
                           <button @click="makeListArchive($event, listItem.id, listIndex)" class="flex w-full items-center hover:bg-gray-200 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                               <icon class="mr-2 h-4 w-4 " name="archive" />
-                              Archive
+                              Archivar
                           </button>
                       </div>
                   </div>
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
                       <template #item="{ element, index }">
-                          <div @click="taskDetailsPopup(element.slug || element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
+                          <div @click="taskDetailsPopup(element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
                               <div v-if="element.show_more" class="absolute right-7 top-1 w-30 z-999 bg-gray-100">
                                   <button @click="makeArchive($event, element.id, listItem.tasks, index)" class="m__archive">
                                       <icon class="mr-2 h-4 w-4 " name="archive" />
-                                      Archive
+                                      Archivar
                                   </button>
                               </div>
                               <button @click="visibleShowMore($event, element)" class="hidden show__more group-hover:flex">
@@ -57,10 +57,11 @@
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
                                   <div class="card__footer">
-                                      <div v-if="element.due_date" aria-label="Due date" class="__item due" :class="getDue(element)">
+                                      <div v-if="element.due_date" aria-label="Fecha entrega" class="__item due" :class="getDue(element)">
                                           <icon class="w-4 h-4" name="time" />
                                           <span class="pl-[2px] pr-[4px] leading-none"> {{ moment(element.due_date).format('MMM D') }} </span>
                                       </div>
+                                      <!--
                                       <div class="__item" v-if="element.description" aria-label="This task has a description.">
                                           <icon class="w-4 h-4" name="details" />
                                       </div>
@@ -68,19 +69,21 @@
                                           <icon class="w-4 h-4" name="comment" />
                                           <span class="ml-1 leading-none"> {{ element.comments_count }} </span>
                                       </div>
-                                      <div class="__item" v-if="element.attachments_count" aria-label="Attachments">
+                                      -->
+                                      <div class="__item" v-if="element.attachments_count" aria-label="Adjuntos">
                                           <icon class="w-4 h-4" name="attachment" />
                                           <span class="ml-1 leading-none"> {{ element.attachments_count }} </span>
                                       </div>
-                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist items" :class="{'completed': element.checklist_done_count === element.checklists_count}">
+                                      <div class="__item check" v-if="element.checklists_count" aria-label="Checklist" :class="{'completed': element.checklist_done_count === element.checklists_count}">
                                           <icon class="w-4 h-4" name="checklist" />
                                           <span class="ml-1 leading-none"> {{ element.checklist_done_count+'/'+element.checklists_count }} </span>
                                       </div>
                                   </div>
                                   <div class="pop__assignee">
-                                      <span v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                          <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
-                                      </span>
+                                      <span v-for="assignee in element.assignees" :aria-label="assignee?.user?.name" class="block rounded-full h-6 w-6">
+                                          <img v-if="assignee?.user?.photo_path" class="h-full w-full rounded-full" :alt="assignee?.user?.name" :src="assignee?.user?.photo_path" />
+                                          <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee?.user?.name" />
+                                        </span>
                                   </div>
                               </div>
                           </div>
@@ -89,13 +92,13 @@
                           <div class="add_new pt-1">
                               <div v-if="!listItem.new_task_open" class="group mb-1.5 flex cursor-pointer items-center rounded py-2 hover:bg-white ltr:pl-2 rtl:pr-2" @click="openNewTask(listItem)">
                                   <icon class="w-4 w-4 text-indigo-500" name="add" />
-                                  <span class="block text-sm text-gray-500">Add a task</span>
+                                  <span class="block text-sm text-gray-500">Agregar tarea</span>
                               </div>
                               <div class="mb-2" v-show="listItem.new_task_open">
-                                  <input autofocus :id="'new_task_input_id_'+listItem.id" :ref="'new_task_input_'+listItem.id" type="text" v-model="new_task.title" class="block text-sm font-medium w-full px-4 py-3 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter a title for this task" @keyup="$event.keyCode === 13?submitNewTask(listItem, listIndex):''">
+                                  <input autofocus :id="'new_task_input_id_'+listItem.id" :ref="'new_task_input_'+listItem.id" type="text" v-model="new_task.title" class="block text-sm font-medium w-full px-4 py-3 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Introduzca un título para esta tarea" @keyup="$event.keyCode === 13?submitNewTask(listItem, listIndex):''">
                                   <div class="pl-1 mt-2 flex">
                                       <button @click="submitNewTask(listItem, listIndex)" class="inline-flex items-center border font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-white border-transparent bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 px-2.5 py-1.5 text-xs rounded">
-                                          Add task
+                                        Agregar tarea
                                       </button>
                                       <button @click="listItem.new_task_open = false" class="inline-flex items-center border font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 border-gray-300 bg-white hover:bg-gray-50 focus:ring-indigo-500 px-2.5 py-1 text-xs rounded ltr:ml-1 rtl:mr-1">
                                           <icon class="w-4 h-4" name="close" />
@@ -110,13 +113,13 @@
                   <div class="add_new" :class="{'active': new_list_open}">
                       <div v-if="!new_list_open" class="group p-3 flex cursor-pointer items-center rounded" @click="openNewList()">
                           <icon class="w-4 w-4" name="add" />
-                          <span class="block text-sm">{{ __('Add a new list') }}</span>
+                          <span class="block text-sm">{{ __('Agregar una nueva lista') }}</span>
                       </div>
                       <div class="p-3" v-show="new_list_open">
-                          <input autofocus type="text" :id="'new_list_input_id_'+lists.length" :ref="'new_list_input_'+lists.length" v-model="new_list.title" class="block text-sm font-medium w-full px-2 py-2 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter list title..." @keyup="$event.keyCode === 13?submitNewList($event):''">
+                          <input autofocus type="text" :id="'new_list_input_id_'+lists.length" :ref="'new_list_input_'+lists.length" v-model="new_list.title" class="block text-sm font-medium w-full px-2 py-2 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Introduce el título de la lista..." @keyup="$event.keyCode === 13?submitNewList($event):''">
                           <div class="mt-2 flex">
                               <button @click="submitNewList($event)" class="inline-flex items-center border font-medium shadow-sm text-white border-transparent bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 text-xs rounded">
-                                  Add list
+                                  Agregar lista
                               </button>
                               <button @click="new_list_open = false" class="inline-flex items-center border font-medium shadow-sm text-gray-700 border-gray-300 bg-white hover:bg-gray-50 px-2.5 py-1 text-xs rounded ltr:ml-1 rtl:mr-1">
                                   Cancel
@@ -345,9 +348,16 @@ export default {
         afterDrop(e){
             const new_list = this.newSortedItems(e, 'to');
             let previous_list = [];
+            const resquest = {
+                updatedlist_at: new Date(),
+                list_id: e.to.dataset.id,
+                userupdate_list: this.auth.user.id
+            };
+
             if(!!e.pullMode){
                 previous_list = this.newSortedItems(e, 'from');
-                this.saveTask(e.item.dataset.id, { list_id: e.to.dataset.id })
+
+                this.saveTask(e.item.dataset.id, resquest)
             }
             const list_items = new_list.concat(previous_list);
             this.saveOrder(list_items)

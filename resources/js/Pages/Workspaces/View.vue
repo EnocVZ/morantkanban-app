@@ -18,7 +18,7 @@
                     <div class="flex relative">
                         <button v-if="workspace.member.role === 'admin'" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
-                            Invite Workspace members
+                            Agregar participantes
                         </button>
                         <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
                     </div>
@@ -27,10 +27,10 @@
                     </button>
                     <div v-if="show_more" class="absolute right-7 top-[50%] w-30 z-999 bg-gray-100">
                         <button @click="edit_workspace_option = true" class="flex w-full items-center bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                            <icon class="mr-2 h-4 w-4" name="edit" /> Edit Workspace
+                            <icon class="mr-2 h-4 w-4" name="edit" /> Editar espacio de trabajo
                         </button>
                         <button @click="delete_workspace_popup = true" class="flex w-full items-center bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                            <icon class="mr-2 h-4 w-4" name="trash" /> Delete Workspace
+                            <icon class="mr-2 h-4 w-4" name="trash" /> Eliminar espacio de trabajo
                         </button>
                     </div>
                 </div>
@@ -64,15 +64,21 @@
                 </div>
                 <div class="flex px-2 w-full border-b my-5"></div>
 
-                <h2 class="text mb-8 px-2 mt-6 text-[20px] font-medium">Projects</h2>
+                <h2 class="text mb-8 px-2 mt-6 text-[20px] font-medium">Proyecto</h2>
 
-                <create-project v-if="create_project" @create-project="create_project = false" />
+                <create-project v-if="create_project || editProject" 
+                    @create-project="closeOption"
+                    :edit="editProject"
+                    :projectSelected="projectSelected"
+                    @onSave="onUpdate"
+                
+                 />
 
                 <ul class="project__list">
                     <li class="w-full py-1 px-2" v-if="!!this.$page.props.auth.user.role.create_project">
                         <button @click="create_project = true" class="p-2 group flex w-full rounded justify-between bg-cover bg-[#091e420f] hover:bg-[#091e4224]">
                             <div class="flex flex-col h-24 w-full justify-center text-[16px] font-bold text-[#172b4d]">
-                                Create new project
+                                Crear nuevo proyecto
                             </div>
                         </button>
                     </li>
@@ -87,6 +93,9 @@
                                     <icon v-if="!!project.star" name="star" class="w-5 h-5 fill-yellow-500 text-yellow-500 hover:fill-none hover:scale-125" />
                                     <icon v-else name="star" class="w-5 h-5 opacity-0 text-white group-hover:opacity-100 hover:text-yellow-500 hover:scale-125" />
                                 </button>
+                                <button class="flex w-7 h-7 items-center justify-center" @click="onClickEdit($event, project, project_index)">
+                                    <icon  name="edit" class="w-5 h-5 fill-white   hover:scale-125" />
+                                </button>
                             </div>
                         </Link>
                     </li>
@@ -96,7 +105,7 @@
 
         <delete-confirmation
             v-if="delete_workspace_popup" @popup="delete_workspace_popup = false" @confirm="deleteWorkspace()"
-            details="Deleting workspace will delete all of the projects including board list. Are you sure you want to delete this workspace?"
+            details="Al eliminar el espacio de trabajo, se eliminarán todos los proyectos, incluida la lista de tableros. ¿Está seguro de que desea eliminar este espacio de trabajo?"
         />
     </div>
 </template>
@@ -145,6 +154,9 @@ export default {
             form: {
                 search: '',
             },
+            editProject:false,
+            projectSelected:{},
+            project_index:-1
         }
     },
     computed: {
@@ -177,6 +189,24 @@ export default {
                 // this.getProjects();
             });
         },
+        onClickEdit(e,project, project_index){
+            this.project_index = project_index
+            this.editProject = true
+            this.projectSelected = project
+            e.preventDefault();
+        },
+        onUpdate(data){
+            const item = this.projects[this.project_index];
+            item.background = data.background
+            item.description = data.description
+            item.title = data.title
+            item.folderKey = data.folderKey
+            this.closeOption(this.projects[this.project_index])
+        },
+        closeOption(){
+            this.create_project = false
+            this.editProject = false
+        }
     },
 }
 </script>

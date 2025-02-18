@@ -2,6 +2,7 @@ import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import VueApexCharts from "vue3-apexcharts"
 
+
 const clickOutside = {
     beforeMount: (el, binding) => {
         el.clickOutsideEvent = event => {
@@ -24,13 +25,14 @@ createInertiaApp({
         showSpinner: true,
     },
     resolve: name => require(`./Pages/${name}`),
-    title: title => title ? `${title}`:`Pro Task`,
+    title: title => title ? `${title}`:`Kanban app`,
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .mixin({ methods: { route : route } })
             .mixin(require('./base'))
             .use(plugin)
             .use(VueApexCharts)
+           
             .directive("click-outside", clickOutside)
             .mount(el)
     },

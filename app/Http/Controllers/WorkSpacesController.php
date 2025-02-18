@@ -17,12 +17,15 @@ use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\TaskNotification;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
 
-class WorkSpacesController extends Controller
+class WorkSpacesController extends Controller 
 {
     //
     public function index(){
@@ -46,7 +49,12 @@ class WorkSpacesController extends Controller
     }
     public function jsonAll(){
         $user_id = auth()->id();
-        $workSpaces = Workspace::where('user_id', $user_id)->orWhereHas('member')->with('member')->get()->toArray();
+        $workSpaces = Workspace::where('user_id', $user_id)
+        ->orWhereHas('member')
+        ->with('member')
+        ->orderBy('name')
+        ->get()
+        ->toArray();
         return response()->json($workSpaces);
     }
 
@@ -110,7 +118,7 @@ class WorkSpacesController extends Controller
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/View', [
-            'title' => 'Projects | '.$workspace->name,
+            'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects
         ]);
@@ -123,7 +131,7 @@ class WorkSpacesController extends Controller
         }
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/Members', [
-            'title' => 'Members | '.$workspace->name,
+            'title' => 'Participantes | '.$workspace->name,
             'workspace' => $workspace,
             'projects' => $projects,
             'team_members' => TeamMember::where('workspace_id', $workspace->id)
@@ -132,10 +140,12 @@ class WorkSpacesController extends Controller
                 ->paginate(10)
                 ->withQueryString()
                 ->through(function ($member) {
+                    $name = $member->user->first_name.' '.$member->user->last_name;
+                    $photo_path = $member->user->photo_path;
                     return [
                         'id' => $member->id,
-                        'name' => $member->user->first_name.' '.$member->user->last_name,
-                        'photo' => $member->user->photo_path,
+                        'name' => $name,
+                        'photo' => $photo_path,
                         'role' => $member->role,
                         'workspace_id' => $member->workspace_id,
                         'user_id' => $member->user_id,
@@ -166,7 +176,7 @@ class WorkSpacesController extends Controller
             $loopIndex+= 1;
         }
         return Inertia::render('Workspaces/Table', [
-            'title' => 'Tasks | '.$workspace->name,
+            'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,
@@ -203,9 +213,6 @@ class WorkSpacesController extends Controller
             foreach ($tasks as $task){
                 $attachments = Attachment::where('task_id', $task->id)->get();
                 foreach ($attachments as $attachment){
-                    if(!empty($attachment->path) && File::exists(public_path($attachment->path))){
-                        File::delete(public_path($attachment->path));
-                    }
                     $attachment->delete();
                 }
                 CheckList::where('task_id', $task->id)->delete();
@@ -213,10 +220,20 @@ class WorkSpacesController extends Controller
                 Comment::where('task_id', $task->id)->delete();
                 Assignee::where('task_id', $task->id)->delete();
                 TaskLabel::where('task_id', $task->id)->delete();
+                TaskNotification::where('task', $task->id)->delete();
                 $task->delete();
             }
             $project->delete();
         }
         return Redirect::route('dashboard');
+    }
+
+    public function allWorkSpace(){
+        try {
+            $workspaces = Workspace::all();
+            return MethodHelper::successResponse($workspaces);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
     }
 }

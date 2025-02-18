@@ -3,6 +3,7 @@
     <div class="task__details">
         <div class="wrapper" id="modal">
             <div role="alert" class="container">
+                
                 <div v-if="loading" class="content">
                     <div role="status" class="td__loader">
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div><div class="i__r" /></div>
@@ -14,11 +15,18 @@
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
                         <div class="__f"><div><div class="i__1" /><div class="i__2" /></div></div>
-                        <span class="sr-only">Loading...</span>
+                        <span class="sr-only">Cargando...</span>
                     </div>
                 </div>
                 <div v-else>
                     <div class="content">
+                        <FolderSelection v-if="exploreFolder" 
+                            :loaderUpload="isLoadingAttach"
+                            @onUploadFile="uploadAttachment"
+                            @close="exploreFolder = false"
+                            :project="task.project"
+                            />
+                        <toast ref="toast" :type="notificationType" >{{notificationMessage}}</toast>
                         <div v-if="task.cover" ref="t__cover" class="t__cover" :style="{backgroundImage: 'url('+task.cover.path+')'}"></div>
                         <div v-if="task.is_archive" class="archive___task">
                             <icon name="archive" />
@@ -76,7 +84,7 @@
                                         <h2 class="__t" contenteditable="true" @keypress="saveTitle($event)" @blur="saveTitle($event)">
                                             {{ task.title }}
                                         </h2>
-                                        <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span>
+                                        <!-- <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
 
                                         <div class="flex flex-col mt-5">
                                             <span class="text-xs font-bold mb-1">{{ __('Labels') }}</span>
@@ -92,7 +100,7 @@
                                     <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showLabelBox = false" >
                                         <icon class=" w-4 h-4" name="close" />
                                     </div>
-                                    <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search labels" />
+                                    <input v-model="label_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar" />
                                     <ul class="flex flex-col mt-3 gap-3 max-h-[200px] overflow-y-auto">
                                         <li v-for="(lab, lab_index) in searchLabel(label_search)">
                                             <label class="flex gap-1">
@@ -134,7 +142,7 @@
                                         <icon @click="toggleDetails()" class="w-4 h-4 ml-auto cursor-pointer" name="edit" />
                                     </div>
                                     <div class="__details">
-                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Add more details...'"></div>
+                                        <div v-if="!editDescription" class="prose pt-4 text-sm cursor-pointer" @click="toggleDetails()" v-html="task.description || 'Añade más detalles...'"></div>
                                         <section class="mt-4" v-if="editDescription">
                                             <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="task.description" :options="editorOptions" contentType="html" theme="snow" />
                                             <div class="mt-2">
@@ -159,7 +167,47 @@
 
                                     <div class="pl-8 pt-4">
                                         <div class="space-y-4">
-                                            <div v-for="(check_list, c_index) in task.checklists" class="group relative flex items-center">
+                                            <draggable v-model="task.checklists" item-key="id" class="group relative" @end="onEndDrag()">
+                                                <template #item="{ element, index }">
+                                                  <div class="checklist-item relative flex items-center mb-4">
+                                                    <!-- Check and Label -->
+                                                    <div class=" items-center checklist-box2" v-if="!element.modify" >
+                                                      <input class="inp-cbx" :id="'cbx-' + element.id" :checked="!!element.is_done" 
+                                                             @click="element.is_done = $event.target.checked; saveCheckList(element.id, { is_done: element.is_done })" 
+                                                             type="checkbox" style="display: none;" />
+                                                      <label class="cbx  items-center" :for="'cbx-' + element.id">
+                                                        <span>
+                                                          <icon class="w-5 h-4" name="checklist_box_2" />
+                                                        </span>
+                                                        <span class="text-sm ml-3">{{ element.title }}</span>
+                                                      </label>
+                                                    </div>
+                                              
+                                                    <!-- Action Buttons (Edit/Delete) -->
+                                                    <div class="absolute bottom-0 flex right-0 space-x-2" v-if="!element.modify">
+                                                      <icon class="w-4 h-4 cursor-pointer" name="edit" @click="modifyCheck(element)" />
+                                                      <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(element.id, index, task.checklists)" />
+                                                    </div>
+                                              
+                                                    <!-- Edit Mode -->
+                                                    <div class="checklist-box2 w-full" v-if="element.modify">
+                                                      <input :id="'modify_'+element.id" 
+                                                             class="border rounded p-2 text-sm bg-white w-full" 
+                                                             v-model="element.title" 
+                                                             @keyup.enter="modifyCheckListSubmit(element, index, task.checklists)" />
+                                                      <div class="justify-end mt-2 space-x-2">
+                                                        <button type="button" class="small save" @click="modifyCheckListSubmit(element, index, task.checklists)">
+                                                          {{ __('Save') }}
+                                                        </button>
+                                                        <button type="button" class="small cancel" @click="element.modify = false">
+                                                          {{ __('Cancel') }}
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </template>
+                                              </draggable>
+                                            <!--div v-for="(check_list, c_index) in task.checklists" class="group relative flex items-center">
                                                 <div class="checklist-box2" v-if="!check_list.modify">
                                                     <input class="inp-cbx" :id="'cbx-' + check_list.id" :checked="!!check_list.is_done" @click="check_list.is_done = $event.target.checked;saveCheckList(check_list.id, {is_done: check_list.is_done})" type="checkbox" style="display: none;"/>
                                                     <label class="cbx" :for="'cbx-' + check_list.id">
@@ -168,6 +216,10 @@
                                                         </span>
                                                         <span class="text-sm">{{ check_list.title }}</span>
                                                     </label>
+                                                    <div class="absolute right-0 hidden pl-12 group-hover:flex" v-if="!check_list.modify">
+                                                        <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
+                                                        <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
+                                                    </div>
                                                 </div>
                                                 <div class="checklist-box2 pl-6 w-full" v-if="check_list.modify">
                                                     <input :id="'modify_'+check_list.id" class="border rounded p-2 text-sm bg-white w-full" v-model="check_list.title" @keyup="$event.keyCode === 13?modifyCheckListSubmit(check_list, c_index, task.checklists):''" />
@@ -180,11 +232,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="!check_list.modify">
-                                                    <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
-                                                    <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
-                                                </div>
-                                            </div>
+                                                
+                                            </div -->
                                             <div v-show="newCheckList" class="group relative flex">
                                                 <div class="checklist-box2 pl-6 w-full">
                                                     <input class="border rounded p-2 text-sm bg-white w-full" ref="ncl" v-model="new_chek_list.title" @keyup="inputNewChecklistAction(new_chek_list, $event)" />
@@ -216,22 +265,47 @@
                                         </div>
                                     </div>
                                     <div class="pl-8 pt-4">
+                                        <div class="bg-white p-8 rounded w-full max-w-md mx-auto" v-show="showAttachFile">
+                                            <form >
+                                              <div class="mb-4">
+                                                <label for="fileName" class="block text-gray-700  mb-2">Nombre del archivo:</label>
+                                                <input type="text" v-model="formAttachFile.name" id="fileName" class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ej. Archivo.pdf">
+                                              </div>
+                                              <div class="mb-4">
+                                                <label for="fileLink" class="block text-gray-700  mb-2">Enlace:</label>
+                                                <input type="url" v-model="formAttachFile.link" id="fileLink" class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="https://example.com">
+                                              </div>
+                                              <div class="loader" v-show="showLoadAttachLink">
+                                                <!-- Aquí puedes personalizar tu loader, por ejemplo, un spinner -->
+                                                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                                </svg>
+                                              </div>
+                                              <div class="flex items-center action__buttons mt-2" v-show="!showLoadAttachLink">
+                                                <button type="button" class="small save"
+                                                @click="saveAttachLink">Adjuntar</button>
+                                                <button @click="showAttachFile = false" type="button" class="small cancel">{{ __('Cancel') }}</button>
+                                              </div>
+                                              
+                                            </form>
+                                          </div>
                                         <div class="flex flex-col gap-2 text-sm">
                                             <div v-for="(attachment, a_index) in task.attachments" class="__attachment flex gap-3 py-4 hover:bg-gray-100">
                                                 <div class="preview" :aria-label="attachment.name">
-                                                    <div v-if="['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="" :style="{'backgroundImage': `url(${attachment.path})`}" :alt="attachment.name" />
-                                                    <div v-else>{{ attachment.name.split('.').pop() }}</div>
+                                                    <div v-if="['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment?.name?.split('.').pop())" class="" :style="{'backgroundImage': `url(${attachment.path})`}" :alt="attachment.name" />
+                                                    <div v-else>{{ attachment?.name?.split('.').pop() }}</div>
                                                 </div>
                                                 <div class="flex flex-col gap-2 w-full">
                                                     <div class="font-bold"><a :href="attachment.path" target="_blank">{{ attachment.name }}</a></div>
                                                     <div class="flex gap-3">
-                                                        <span :aria-label="moment(attachment.created_at).format('MMMM D, YYYY h:mm A')">{{ moment(attachment.created_at).format('[Added] MMM D, YYYY [at] h:mm A') }} </span>
+                                                        <span :aria-label="moment(attachment.created_at).format('MMMM D, YYYY h:mm A')">{{ moment(attachment.created_at).format('[Agregado] MMM D, YYYY [at] h:mm A') }} </span>
                                                         -
                                                         <span class="flex underline cursor-pointer" @click="deleteAttachment(attachment.id, a_index)">{{ __('Delete') }}</span>
                                                     </div>
                                                     <div class="flex gap-3">
-                                                        <div v-if="!task.cover && ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="cover" @click="makeCover(task, attachment)"><icon name="image" /> {{ __('Make Cover') }}</div>
-                                                        <div v-if="task.cover && task.cover.id === attachment.id" class="cover" @click="removeCover(task)"><icon name="image" /> {{ __('Remove Cover') }}</div>
+                                                        <!--div v-if="!task.cover && ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(attachment.name.split('.').pop())" class="cover" @click="makeCover(task, attachment)"><icon name="image" /> {{ __('Make Cover') }}</div>
+                                                        <div v-if="task.cover && task.cover.id === attachment.id" class="cover" @click="removeCover(task)"><icon name="image" /> {{ __('Remove Cover') }}</div -->
                                                         <a class="cover" :href="attachment.path" target="_blank"><icon name="link_external" /> {{ __('Open') }}</a>
                                                     </div>
                                                 </div>
@@ -241,7 +315,7 @@
                                 </section>
 
                                 <section class="mt-8">
-                                    <div>
+                                     <div>
                                         <div class="flex">
                                             <icon class="w-4 h-4 mr-3 mt-1" name="comments" />
                                             <div class="flex-1 border-b pb-2">
@@ -260,9 +334,37 @@
                                             </div>
 
                                             <form v-if="showCommentBox" class="mt-1 mb-4 rounded-md border border-gray-300" enctype="multipart/form-data">
-<!--                                                <textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea>-->
-                                                <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description" v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" />
-
+                                               <!--textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea -->
+                                               
+                                                <div class="relative">
+                                                    <!--textarea
+                                                      v-model="new_comment.details"
+                                                      @input="detectAtSymbol"
+                                                      class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                      rows="5"
+                                                      placeholder="Escribe un comentario..."
+                                                    ></textarea-->
+                                                    <quill-editor ref="editDescription" @ready="onEditorReady" class="task__description"
+                                                    v-model:content="new_comment.details" :options="editorOptions" contentType="html" theme="snow" 
+                                                    @input="detectAtSymbol"/>
+                                              
+                                                    <!-- Lista de menciones (solo se muestra cuando se escribe @) -->
+                                                    <div
+                                                      v-if="showSuggestions"
+                                                      class="absolute top-0 left-0 z-10 w-full mt-12 bg-white border rounded-md shadow-lg"
+                                                    >
+                                                    <ul class="flex flex-col mt-3 gap-1 h-48 max-h-48 overflow-y-auto">
+                                                        <li v-for="(userObject, user_index) in searchUser('')" @click="addMention(userObject)">
+                                                            <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
+                                                                <span data-a="" class="p-1" type="button" :tabindex="user_index">
+                                                                    {{ userObject.user.name }}
+                                                                </span>
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                      
+                                                    </div>
+                                                  </div>
                                                 <div class="flex items-center px-3 pt-2 pb-3">
                                                     <div class="flex items-center">
                                                         <button @click="saveNewComment({details: new_comment.details, task_id: task.id, user_id: $page.props.auth.user.id}, task.comments)" type="button" class="inline-flex items-center rounded border border-gray-300 bg-indigo-600 text-white px-2.5 py-1.5 text-xs font-medium shadow-sm hover:bg-gray-50 hover:text-dark focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -294,20 +396,44 @@
                                                         <h2 v-if="comment.user" class="flex text-sm font-medium leading-none">
                                                             {{ comment.user.first_name + ' ' + comment.user.last_name }}
                                                         </h2>
-                                                        <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{ moment(comment.created_at).format('MMMM D, YYYY [at] h:mm a') }}</span>
+                                                        <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{formatDate(comment.created_at)}}</span>
+                                                        <icon v-show="comment.was_read == 1" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3" name="like_up"/>
+                                                        <icon v-show="comment.was_read == 0" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3 cursor-pointer" name="like_upout" @click="saveReadComment(comment)"/>
                                                         <div class="ml-auto">
                                                             <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="$page.props.auth.user.id === comment.user.id">
-                                                                <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="comment.modify = true" />
+                                                                <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="onloadEditData(comment, comment_i)" />
                                                                 <icon class="w-3 h-3 cursor-pointer" name="trash" @click="deleteComment(comment.id, comment_i, task.comments)" />
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div class="checklist-box2 pt-3 w-full" v-if="comment.modify">
-                                                        <quill-editor ref="editComment" @ready="onEditorReady" class="task__description" v-model:content="comment.details" :options="editorOptions" contentType="html" theme="snow" />
+                                                            <div class="relative">
+                                                            <quill-editor ref="editComment" @ready="onEditorReady" class="task__description"
+                                                            v-model:content="commentEdit" :options="editorOptions" contentType="html" theme="snow" 
+                                                            @input="detectAtSymbol"/>
+                                                    
+                                                            <!-- Lista de menciones (solo se muestra cuando se escribe @) -->
+                                                            <div
+                                                            v-if="showSuggestions"
+                                                            class="absolute top-0 left-0 z-10 w-full mt-12 bg-white border rounded-md shadow-lg"
+                                                            >
+                                                            <ul class="flex flex-col mt-3 gap-1 h-48 max-h-48 overflow-y-auto">
+                                                                <li v-for="(userObject, user_index) in searchUser('')" @click="addMention(userObject)">
+                                                                    <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
+                                                                        <span data-a="" class="p-1" type="button" :tabindex="user_index">
+                                                                            {{ userObject.user.name }}
+                                                                        </span>
+                                                                    </label>
+                                                                </li>
+                                                            </ul>
+                                                            
+                                                            </div>
+                                                        </div>
+                                                        <!--quill-editor ref="editComment" @ready="onEditorReady" class="task__description" v-model:content="comment.details" :options="editorOptions" contentType="html" theme="snow" /-->
                                                         <div class="flex">
                                                             <div class="flex items-center action__buttons mt-2">
-                                                                <button type="button" class="small save" @click="saveComment(comment.id, {details: comment.details});comment.modify = false">
+                                                                <button type="button" class="small save" @click="saveComment(comment);comment.modify = false">
                                                                     {{ __('Save') }}</button>
                                                                 <button @click="comment.modify = false" type="button" class="small cancel">
                                                                     {{ __('Cancel') }}</button>
@@ -324,7 +450,7 @@
 
                             <aside class="w-60 divide-y divide-gray-200 px-6 py-6">
                                 <section class="py-3">
-                                    <h2 class="px-2 text-sm font-medium">
+                                    <!-- <h2 class="px-2 text-sm font-medium">
                                         {{ __('Move Task') }}
                                     </h2>
 
@@ -335,7 +461,7 @@
                                                 <icon class="w-3.5 h-3.5 ml-auto cursor-pointer" name="arrow-down" />
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </section>
                                 <section class="py-3.5">
                                     <div class="flex items-center px-2">
@@ -370,11 +496,11 @@
                                         </div>
                                     </div>
 
-                                    <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
+                                    <!-- <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
                                       <span v-for="assignee in task.assignees" :aria-label="assignee.user.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
                                           <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
                                       </span>
-                                    </div>
+                                    </div> -->
                                 </section>
                                 <section class="py-4">
                                     <h2 class="px-2 text-sm font-medium">
@@ -398,7 +524,7 @@
                                     <div class="relative" modal="true">
                                         <div>
                                             <div class="group mt-2 flex cursor-pointer items-center rounded-md px-2 py-1.5">
-                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Select Date" :is-24="false" />
+                                                <Datepicker v-model="task.due_date" @update:model-value="saveTask({sendGoogle:true, due_date: moment(task.due_date).format('YYYY-MM-DD HH:mm')})" placeholder="Seleccione fecha" :is-24="false" :clearable="false" />
                                             </div>
                                         </div>
                                     </div>
@@ -406,23 +532,74 @@
 
                                 <section class="py-3">
                                     <div class="mt-2 space-y-2 px-1">
-                                        <label class="flex cursor-pointer w-full items-center rounded bg-gray-200 td__btn hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
-                                            <input accept="image/png, image/jpeg, image/gif,.doc,.docx,.pdf,.txt" @change="uploadAttachment($event)" class="hidden" type="file"/>
-                                            <icon class="mr-2 h-4 w-4 " name="attachment" />
-                                            {{ __('Attachment') }}
-                                        </label>
+                                        <button @click="exploreGoogleFolder()" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
+                                            <icon class="mr-2 h-4 w-4 " name="attachment"/>
+                                            Adjuntar
+                                        </button>
+                                    
+                                        <button @click="showAttachFile = true" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
+                                            <icon class="mr-2 h-4 w-4" name="undo" />
+                                            Adjuntar desde un link
+                                        </button>
                                         <button v-if="!this.task.is_archive" @click="saveTask({ is_archive: 1 });this.task.is_archive = true" class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
                                             <icon class="mr-2 h-4 w-4 " name="archive" />
                                             {{ __('Archive') }}
                                         </button>
                                         <button v-else @click="saveTask({ is_archive: 0 });this.task.is_archive = false" class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4" name="undo" />
-                                            {{ __('Revert Back') }}
+                                            {{ __('Unarchive') }}
                                         </button>
-                                        <button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
+                                        <!--button v-if="this.task.is_archive" @click="deleteTask()" class="flex w-full text-white items-center td__btn py-1.5 text-xs font-medium rounded bg-red-600 hover:bg-red-700 px-3 py-2">
                                             <icon class="mr-2 h-4 w-4 fill-white" name="dash" />
                                             {{ __('Delete') }}
-                                        </button>
+                                        </button-->
+                                    </div>
+                                    
+                                    
+                                </section>
+
+                                <section class="py-3">
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Creado por:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div class="px-2 py-1 text-sm">
+                                        {{task?.createdby?.name}}
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Fecha creación:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ formatDate(task.created_at) }}
+                                        </div>
+                                    </div>
+                                </section>
+                                <section class="py-3">
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Lista actual:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ task.list.title }}
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Último movimiento de lista:
+                                    </h2>
+                                    <div class="relative" modal="true" v-show="task.updatedlist_at">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ formatDate(task.updatedlist_at) }}
+                                        </div>
+                                    </div>
+                                    <h2 class="px-2 text-sm font-medium">
+                                        Usuario que movió de lista:
+                                    </h2>
+                                    <div class="relative" modal="true">
+                                        <div class="px-2 py-1 text-sm">
+                                            {{ task.user_update_list?.name }}
+                                        </div>
                                     </div>
                                 </section>
 
@@ -433,6 +610,7 @@
             </div>
         </div>
     </div>
+    
 </template>
 
 <script>
@@ -446,6 +624,11 @@ import 'moment-duration-format';
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import axios from 'axios'
+import FlashMessages from '@/Shared/FlashMessages'
+import Toast from '@/Shared/Toast';
+//import { useToast } from "vue-toastification";
+import draggable from 'vuedraggable'
+import FolderSelection from '@/Shared/Modals/FolderSelection'
 
 export default {
     props: {
@@ -458,6 +641,7 @@ export default {
     emits: {closeModal: null},
     data() {
         return {
+            //toast: ()=>{},
             showAssigneeBox: false,
             editDescription: false,
             showCommentBox: false,
@@ -503,13 +687,32 @@ export default {
                     },
                     // imageDrop: true,
                 }
-            }
+            },
+            snackbar: true,
+            notificationMessage: '',
+            notificationType: 'success',
+            isLoadingAttach: false,
+            showSuggestions: false,
+            filteredUsers: [],
+            mentionStartIndex: -1, // Índice donde se detectó el @
+            userMetioned:[],
+            commentEdit:"",
+            showAttachFile: false,
+            showLoadAttachLink: false,
+            formAttachFile: {
+                name:"",
+                link:""
+            },
+            exploreFolder: false,
         }
     },
     components: {
-        Icon, Loader, Link, Datepicker, QuillEditor, Head
+        Icon, Loader, Link, Datepicker, QuillEditor, Head,Toast,draggable, FolderSelection
     },
     computed: {
+        sortedTasks:()=> {
+            return this.task.checklists.sort((a, b) => a.order - b.order);
+        },
 
     },
     methods: {
@@ -564,25 +767,112 @@ export default {
                 }
             });
         },
-        async uploadAttachment(e, is_comment){
-            e.preventDefault();
-            const file = e.target.files[0];
-            const obj = await this.uploadFile(file)
-            if(obj && obj.error){
-                alert('Please upload image, video, doc/pdf/text file format only!');
-            }else{
-                this.task.attachments.push(obj)
-                if(is_comment){
-                    const name = ['jpeg','png','gif','jpg','svg','webp','bmp'].includes(obj.name.split('.').pop())?`<img src="${obj.path}" alt="${obj.name}" />`:`${obj.name}`;
-                    const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
-                    this.new_comment.details = this.new_comment.details || '' + link;
+
+        async uploadFileDrive(file, folderId) {
+            let response = { error: true, message: "" };
+
+            try {
+                const responseToken = await axios.get(this.route('google.token')).then((response) => response.data)
+                let accessToken = "";
+                if (!responseToken.data.error) {
+                    accessToken = responseToken.data.access_token;
+                } else {
+                    return response
                 }
+
+                
+                // Metadatos del archivo
+                const metadata = {
+                    name: file.name,
+                    mimeType: file.type,
+                    parents: [folderId], // Especifica la carpeta de destino
+                };
+
+                // Crear el formulario para subir el archivo
+                const formData = new FormData();
+                formData.append(
+                    'metadata',
+                    new Blob([JSON.stringify(metadata)], { type: 'application/json' })
+                );
+                formData.append('file', file);
+                const responseUpload = await axios.post(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'multipart/related',
+                        },
+                        params: {
+                            fields: 'id, name, webViewLink, webContentLink', // Solicita los campos deseados
+                        },
+                    }
+                );
+
+                const { id, webViewLink, webContentLink } = responseUpload.data;
+                await this.setPublicPermission(id, accessToken);
+                response.error = false;
+                response.data = webViewLink
+                const saveImage = await this.uploadFile(webViewLink, file.name)
+                return saveImage
+            } catch (error) {
+                response.message = error.message;
+                return response
+            }
+            
+        },
+        async setPublicPermission(fileId, accessToken) {
+            try {
+                const response = await axios.post(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+                    {
+                        role: 'reader', // Permiso de solo lectura
+                        type: 'anyone', // Acceso público para cualquiera con el enlace
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+
+            } catch (error) {
+                console.error('Error al configurar permisos públicos:', error);
             }
         },
-        async uploadFile(file){
-            let formData = new FormData();
-            formData.append("file", file);
-            const resp = await axios.post(this.route('task.attachment.add', this.task.id), formData,{
+        async uploadAttachment(e, is_comment, folderId) {
+            const file = e.target.files[0];
+            //e.preventDefault();
+            if (file) {
+                this.isLoadingAttach = true
+                let obj = await this.uploadFileDrive(file, folderId).finally(() => {
+                    this.isLoadingAttach = false
+                })
+
+                if (obj && obj.error) {
+                    this.notificationType = "error";
+                    this.notificationMessage = obj.message;
+
+                } else {
+                    this.task.attachments.push(obj)
+                    this.notificationType = "success";
+                    this.notificationMessage = "Se cargo el archivo correctamente";
+                    if (is_comment) {
+                        const name = ['jpeg', 'png', 'gif', 'jpg', 'svg', 'webp', 'bmp'].includes(obj.name.split('.').pop()) ? `<img src="${obj.path}" alt="${obj.name}" />` : `${obj.name}`;
+                        const link = `<br/><a href="${obj.path}" target="_blank">${name}</a><br/>`;
+                        this.new_comment.details = this.new_comment.details || '' + link;
+                    }
+                }
+                this.$refs.toast.showToast();
+            }
+
+
+
+        },
+        async uploadFile(url, fileName){
+            const resp = await axios.post(this.route('task.attachment.add', {id:this.task.id}), {url: url, name:fileName},{
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -753,7 +1043,7 @@ export default {
                     if(checked){
                         this.task.assignees.push(response.data);
                         if(response.data.id && response.data.user && response.data.user.id){
-                            this.sendNotification('send.mail.task_user_added', response.data.id, response.data.user.id);
+                           // this.sendNotification('send.mail.task_user_added', response.data.id, response.data.user.id);
                         }
                     }else{
                         const findIndex = this.task.assignees.findIndex(a => a.user_id === id);
@@ -783,8 +1073,26 @@ export default {
             this.goToLink(this.route(this.view === 'table'?'projects.view.table':'projects.view.board', this.task.project_id));
         },
         saveTask(taskObject){
+            const sendGoogle = taskObject.sendGoogle;
+            if(sendGoogle){
+                delete taskObject.sendGoogle;
+            }
             axios.post(this.route('task.update', this.task.id), taskObject).then((response) => {
                 if(response.data){
+                    if(sendGoogle){
+                        axios.get(this.route('google.calendar',this.task.id))
+                        .then((response) => {
+                            const {data} = response;
+                            if(data){
+                                if(data.error){
+                                    this.notificationType = "error";
+                                    this.notificationMessage = "Revisa las credenciales de API google";
+                                    this.$refs.toast.showToast();
+                                }
+                            }
+                        })
+                    }
+                    
                     this.sendNotification('send.mail.task_update', response.data.id)
                 }
             })
@@ -819,11 +1127,13 @@ export default {
             check_list.modify = false
         },
         inputNewChecklistAction(check_list, e){
+            const list = this.task.checklists;
+            const order = list.length + 1;
             if((e && e.keyCode === 13) || !e){
                 if(!check_list.title){
                     this.newCheckList = false;
                 }else{
-                    this.saveNewCheckList({title: check_list.title, task_id: this.task.id}, this.task.checklists);
+                    this.saveNewCheckList({title: check_list.title, task_id: this.task.id, order: order}, this.task.checklists);
                     this.openNewChecklist()
                 }
             }
@@ -837,8 +1147,21 @@ export default {
                 console.log(error)
             })
         },
-        saveComment(id, commentObject){
-            axios.post(this.route('comment.update', id), { details: commentObject.details }).catch((error) => {
+        saveComment(commentObject){
+         commentObject.details = this.commentEdit
+            axios.post(this.route('comment.update', commentObject.id), { details: commentObject.details }).then(rsp=>{
+               this.sendTaskNotification(commentObject)
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
+        saveReadComment(commentObject){
+            console.log(commentObject)
+            commentObject.was_read = 1;
+            const payload = { task_id:commentObject.task_id, was_read: 1, toUser: commentObject.user_id }
+            axios.post(this.route('comment.readcomment', commentObject.id), payload).then(rsp=>{
+              // this.sendTaskNotification(commentObject)
+            }).catch((error) => {
                 console.log(error)
             })
         },
@@ -854,16 +1177,37 @@ export default {
         },
         saveNewComment(commentObject, currentComments){
             this.new_comment.details = '';
+            
             commentObject.created_at = this.moment().format('YYYY/MM/DD HH:mm:ss')
             axios.post(this.route('comments.new'), commentObject).then((response) => {
                 if(response.data){
                     currentComments.push(response.data);
                     this.showCommentBox = false;
-                    this.sendNotification('send.mail.comment', response.data.id)
+                    this.sendTaskNotification(commentObject)
                 }
             }).catch((error) => {
                 console.log(error)
             })
+        },
+        sendTaskNotification(commentObject){
+            let userList = [];
+            this.userMetioned.forEach(user=>{
+                const atSymbolIndex = commentObject.details?.indexOf(user.name);
+                const find = userList.find(item=> item === user.id)
+                if (atSymbolIndex !== -1, !find) {
+                    userList.push(user.id)
+                } 
+            })
+            const requestAssigne = {
+                users: userList,
+                title:commentObject.details,
+                task:commentObject.task_id,
+                fromUser:commentObject.user_id,
+            }
+            if(userList.length > 0){
+                axios.post(this.route('notification.new'), requestAssigne)
+                .then((res)=>{this.userMetioned = []})
+            }
         },
         sendNotification(uri, id, user_id){
             const data = {id}
@@ -916,7 +1260,87 @@ export default {
                 this.$refs.t__cover.style.backgroundColor = await this.bgColor(this.task.cover.path)
             }
         },
-    },
+        onCloseGoogleAlert(){
+            window.open(this.route('google.redirect'), '_blank');
+        },
+        onEndDrag(){
+            const list = this.task.checklists;
+            list.forEach((check_list, key) => {
+                const order = key + 1;
+                check_list.order = order;
+                this.saveCheckList(check_list.id, {order: order});
+            });
+        },
+        detectAtSymbol(event) {
+            const cursorPosition = event.target.selectionStart;
+            const text = event?.data || "";
+            const atSymbolIndex = text.indexOf("@");
+            if (atSymbolIndex !== -1) {
+                this.mentionStartIndex = atSymbolIndex;
+                this.showSuggestions = true;
+            } else {
+                this.showSuggestions = false; // Ocultar la lista si no hay @
+            }
+        },
+         addMention(userParam) {
+            let textoModificado = ""
+            if(this.commentEdit.length > 0){
+               textoModificado = this.commentEdit.replace("@", `<b>${userParam.user.name}</b> `);
+               this.commentEdit = textoModificado;
+
+            }else{
+               textoModificado = this.new_comment.details.replace("@", `<b>${userParam.user.name}</b> `);
+               this.new_comment.details = textoModificado;
+            }
+            this.userMetioned.push(userParam.user)
+            this.showSuggestions = false;
+         },
+         onloadEditData(commetn, comentIndex){
+            const taskList = this.task.comments;
+            commetn.modify = true
+            this.commentEdit = commetn.details
+         },
+         async saveAttachLink(){
+            this.showLoadAttachLink = true
+             axios.post(this.route('task.attachment.link', this.task.id), this.formAttachFile,{
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }).then(res=>{
+                this.task.attachments.push(res.data)
+                this.formAttachFile = {
+                    name:"",
+                    link:""
+                }
+                this.showAttachFile = false;
+                
+            }).catch(e=>{
+                this.notificationType = "error";
+                this.notificationMessage = "No se puede guardar los datos";
+                this.$refs.toast.showToast();
+            }).finally(()=>{
+                this.showLoadAttachLink = false
+            })
+            
+        },
+        formatDate(date){
+            // Configurar el idioma español
+            moment.updateLocale('es', {
+                months: [
+                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                ]
+            });
+
+            // Formato de fecha deseado
+            const fecha = moment(date);
+            const formato = fecha.format("DD MMMM YY, h:mma");
+            return formato
+        },
+        exploreGoogleFolder(){
+            this.exploreFolder = true
+        }
+      },
     created() {
         this.moment = moment
         this.getTask(this.id)
@@ -936,3 +1360,12 @@ export default {
     name: "task-details"
 };
 </script>
+<style scoped>
+.checklist-item {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    position: relative;
+  }
+</style>

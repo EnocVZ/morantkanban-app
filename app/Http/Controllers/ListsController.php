@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\BoardList;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Mavinoo\Batch\Batch;
+use App\Helpers\MethodHelper;
 
 class ListsController extends Controller
 {
@@ -38,8 +40,13 @@ class ListsController extends Controller
     }
 
     public function jsonRemoveArchive($id){
-        BoardList::where('id', $id)->update(['is_archive' => 0]);
-        return response()->json(['success' => true]);
+        try {
+            BoardList::where('id', $id)->update(['is_archive' => 0]);
+            Task::where('list_id', $id)->update(['is_archive' => 0]);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message'=>$e->getMessage()]);
+        }
     }
 
     public function all(){
@@ -61,4 +68,14 @@ class ListsController extends Controller
         $list = BoardList::create($requests);
         return response()->json($list);
     }
+
+    public function getBoarListByProject($project_id){
+        try {
+            $lists = BoardList::where('project_id', $project_id)->get();
+            return MethodHelper::successResponse($lists);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
 }
+

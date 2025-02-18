@@ -36,4 +36,12 @@ class TeamMember extends Model
 //                $query->where('user.first_name', 'like', '%'.$search.'%')->orWhere('task', 'like', '%'.$search.'%');
         });
     }
+    public function scopeWithOrderedUsers($query, $workspaceId)
+    {
+        return $query->join('users', 'users.id', '=', 'team_members.user_id')
+            ->where('team_members.workspace_id', $workspaceId)
+            ->groupBy('team_members.user_id')
+            ->orderBy('users.first_name', 'asc')
+            ->select('team_members.*');
+    }
 }

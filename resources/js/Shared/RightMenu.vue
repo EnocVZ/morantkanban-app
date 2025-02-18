@@ -16,7 +16,7 @@
             </div>
         </div>
         <ul class="buttons" v-if="!show_back_button">
-            <li>
+             <li>
                 <button @click="showItems('tasks')"><icon name="archive" /> {{ __('Archived Tasks') }}</button>
             </li>
             <li>
@@ -25,21 +25,22 @@
             <li v-if="$page.props.auth.user.role.slug === 'admin'" class="border-t mt-2 py-2">
                 <button @click="showItems('backgrounds')"><span class="icon" :style="{backgroundImage: 'url('+project.background.image+')'}" /> {{ __('Change Background') }}</button>
             </li>
-            <li v-if="$page.props.auth.user.role.slug === 'admin'">
+             <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('workspaces')"><icon name="gear" />
                     {{ __('Change Workspace') }}</button>
             </li>
-            <li v-if="$page.props.auth.user.role.slug === 'admin'">
+            <!-- <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="showItems('visibility')"><icon name="display" />
                     {{ __('Change Task Visibility') }}</button>
-            </li>
+            </li> -->
             <li v-if="$page.props.auth.user.role.slug === 'admin'">
                 <button @click="delete_project_confirmation=true"><icon name="trash" />
                     {{ __('Delete Project') }}
                 </button>
             </li>
             <li v-if="$page.props.auth.user.role.slug === 'admin'">
-                <Link :href="route('global')"><icon name="settings" />
+                <Link :href="route('users')"><icon name="settings" />
+                    <!-- global x users -->
                     {{ __('Global Settings') }}
                 </Link>
             </li>
@@ -49,7 +50,7 @@
                 <div @click="$emit('openTask', element.slug || element.id)" :data-id="element.id" class="flow-root p-2 w-full t__box border relative flex flex-col items-start mb-2 bg-white rounded-lg cursor-pointer bg-opacity-90 group hover:bg-opacity-100" draggable="true">
                     <h4 class="text-sm font-medium mb-1">{{ element.title }}</h4>
                     <div class="flex flex-wrap float-left items-center mb-1 text-xs font-medium gap-2 card__footer" :class="{'completed': element.checklist_done_count === element.checklists_count, 'done': element.is_done}">
-                        <div class="flex items-center __item due" v-if="element.due_date" aria-label="Due date">
+                        <div class="flex items-center __item due" v-if="element.due_date" aria-label="Fecha de vencimiento">
                             <icon class="w-4 h-4" name="time" />
                             <span class="pl-[2px] pr-[4px] leading-none"> {{ moment(element.due_date).format('MMM D') }} </span>
                         </div>
@@ -77,7 +78,7 @@
             <div class="item" v-for="list in menu_data.boards">
                 <div class="b__title">{{ list.title }}</div>
                 <button class="btn" @click="sendToBoard(list.id)"><icon class="mr-1 h-3 w-3" name="undo" />
-                    {{ __('Send to board') }}</button>
+                    {{ __('Unarchive') }}</button>
             </div>
             <div class="flex" v-if="!menu_data.boards.length">{{ __('No list found!') }}</div>
         </div>
@@ -116,7 +117,7 @@
         </div>
     </div>
     <delete-confirmation v-if="delete_project_confirmation" @popup="delete_project_confirmation = false" @confirm="deleteProject()"
-                         details="Deleting project will delete all of the tasks including board list. Are you sure you want to delete this project?" />
+                         details="Al eliminar el proyecto se eliminarán todas las tareas, incluida la lista de juntas. ¿Está seguro de que desea eliminar este proyecto?" />
 </template>
 
 
@@ -191,6 +192,8 @@ export default {
         async sendToBoard(id){
             await axios.post(this.route('json.board.remove.archive', id));
             await this.getItem('boards');
+            window.location.href = this.route('projects.view.board', this.project.slug || this.project.id)
+            //this.goToLink(this.route(this.view === 'table'?'projects.view.table':'projects.view.board', task.project.slug || task.project.id))
         },
         async changeWorkSpace(workspace_id){
             await axios.post(this.route('json.workspace.change'), {workspace_id, project_id: this.project.id});
