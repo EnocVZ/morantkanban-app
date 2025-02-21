@@ -288,5 +288,75 @@ public function listFolders($parentFolderId)
         }
     }
 
+    public function uploadMultipleFilesToGoogle(Request $request, $folderId)
+    {
+        try {
+            $token = $this->refreshGoogleToken();
+            if (!$token) {
+                throw new Exception("Se necesita sesión de Google");
+            }
+    
+            $driveService = new Google_Service_Drive($this->client);
+    
+            if (!isset($request->adjunto) || !is_array($request->adjunto)) {
+                return response()->json(["error" => true, "message" => "No se encontraron archivos en la solicitud."], 400);
+            }
+    
+            $uploadedFiles = [];
+    
+            foreach ($request->adjunto as $fileData) {
+                if (!isset($fileData['content']) || !isset($fileData['name']) || !isset($fileData['type'])) {
+                    continue;
+                }
+    
+                $fileContent = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $fileData['content']));
+                if (!$fileContent) {
+                    continue;
+                }
+    
+                $tempFilePath = sys_get_temp_dir() . '/' . $fileData['name'];
+                file_put_contents($tempFilePath, $fileContent);
+    
+                $fileMetadata = new Google_Service_Drive_DriveFile([
+                    'name' => $fileData['name'],
+                    'parents' => [$folderId]
+                ]);
+    
+                $uploadedFile = $driveService->files->create($fileMetadata, [
+                    'data' => file_get_contents($tempFilePath),
+                    'mimeType' => $fileData['type'],
+                    'uploadType' => 'multipart',
+                    'fields' => 'id'
+                ]);
+    
+                unlink($tempFilePath);
+    
+                $fileId = $uploadedFile->id;
+
+                $permission = new Drive\Permission();
+                $permission->setType('anyone');
+                $permission->setRole('reader');
+                $driveService->permissions->create($fileId, $permission);
+    
+                $fileMetadata = $driveService->files->get($fileId, ['fields' => 'webViewLink']);
+                $fileUrl = $fileMetadata->webViewLink;
+    
+                $uploadedFiles[] = [
+                    'fileId' => $fileId,
+                    'name' => $fileData['name'],
+                    'url' => $fileUrl
+                ];
+            }
+    
+            return ["error" => false, "data" => $uploadedFiles, "message" => "Archivos subidos con éxito."];
+    
+        } catch (\Exception $th) {
+            return ["error" => true, "message" => "Problemas al cargar los archivos a Drive. Detalles: " . $th->getMessage()];
+        }
+    }
+    
+
+
+
 
 }

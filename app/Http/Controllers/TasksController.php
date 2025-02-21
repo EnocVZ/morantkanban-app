@@ -235,6 +235,7 @@ class TasksController extends Controller
             $requestData = $request->all();
             $checkList = $requestData['checkList'];
             unset($requestData['checkList']);
+            unset($requestData['adjunto']);
             $task = Task::create($requestData);
 
             $slug = $this->clean($task->title);
@@ -245,9 +246,25 @@ class TasksController extends Controller
                 $checkList = CheckList::create(['task_id' => $task->id, 'title' => $value]);
                 $checkList->save();
             }
-
-            #$task->load('lastAssignee')->load('taskLabels.label')->loadCount('checklistDone')->loadCount('comments')->loadCount('checklists')->loadCount('attachments')->loadCount('assignees');
-            return response()->json($task);
+            $files = [];
+            if($request["adjunto"] == true){
+                $googleController = new GoogleController;
+                $project = Project::where('id', $requestData["project_id"])->first();
+                $filesUpload = $googleController->uploadMultipleFilesToGoogle($request, $project->folderKey);
+                if($filesUpload['error'] == false){
+                    $files = $filesUpload["data"];
+                    foreach ($filesUpload["data"] as $key => $value) {
+                        $attachment = Attachment::create(['task_id' => $task->id, 'name' => $value['name'], 'user_id' => 1, 'size' => 0, 'path' => $value['url'], 'width' => 0, 'height' => 0]);
+                        $attachment->save();
+                    }
+                }
+            }
+            $data = [
+                'task' => $task,
+                'checkList' => $checkList,
+                'attachment' => $files
+            ];
+           return response()->json(['error' => false, 'message' => 'success', 'data' => $data]);
         } catch (\Exception $e) {
             return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
         }
