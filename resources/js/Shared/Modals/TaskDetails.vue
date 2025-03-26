@@ -796,7 +796,7 @@ export default {
                 );
                 formData.append('file', file);
                 const responseUpload = await axios.post(
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
                     formData,
                     {
                         headers: {
@@ -824,7 +824,7 @@ export default {
         async setPublicPermission(fileId, accessToken) {
             try {
                 const response = await axios.post(
-                    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+                    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
                     {
                         role: 'reader', // Permiso de solo lectura
                         type: 'anyone', // Acceso público para cualquiera con el enlace
