@@ -1,15 +1,30 @@
 <template>
-  <div class="h-full ">
+  <div class="sec-cont">
       <Head :title="__(title)" />
+      <div class="mr-4 w-full max-w-md">
+        <div class="flex items-center">
+            <div class="flex w-full bg-white rounded shadow">
+                <input class="relative px-6 py-3 w-full rounded focus:shadow-outline"
+                autocomplete="off"
+                type="text" name="search" :placeholder="__('Search...')" v-model="form.search" @input="filterTasks"
+                v-show="!form.user"/>
+            </div>
+        </div>
+    </div>
+      
       <div class="flex flex-col flex-grow-1 flex-shrink-1 h-full">
           <div class="flex flex-col task__table overflow-y-auto h-full">
               <div class="inline-block min-w-full h-full py-4 align-middle md:px-3 lg:px-4">
+                
                   <div class="table__view">
                       <table>
                           <thead>
                           <tr>
                               <th scope="col" class="w-[20px]">
                               </th>
+                              <th scope="col" class=" w-[17%]">
+                                {{ __('Project') }}
+                            </th>
                               <th scope="col" class="">
                                   <button class="flex items-center gap-x-3 focus:outline-none">
                                       <span>{{ __('Tareas') }}</span>
@@ -25,7 +40,7 @@
                               </th>
 
                               <th scope="col" class=" w-[17%]">
-                                  {{ __('Users') }}
+                                {{ __('Assignees') }}
                               </th>
 
                               <th scope="col" class="w-[17%]">
@@ -33,7 +48,7 @@
                               </th>
 
                               <th scope="col" class="relative w-[50px]">
-                                  <span class="sr-only">Edit</span>
+                                  <span class="sr-only">--</span>
                               </th>
                           </tr>
                           </thead>
@@ -41,17 +56,20 @@
                               <template #item="{ element, index }">
                                   <tr class="list-group-item group" :data-id="element.id">
                                       <td class="pl-2 pr-1 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
-                                          <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
+                                          <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project?.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
                                       </td>
+                                      <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
+                                        <h2 class="font-medium t__title text-pretty">{{ element.project?.title }}</h2>
+                                    </td>
                                       <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                           <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: element.project.slug || element.project.id, task: element.slug || element.id})" :data-id="element.id">
                                               <!-- <icon v-if="element.timer" name="blink" class="w-2 h-2" /> -->
-                                              <h2 class="font-medium t__title text-pretty">{{ element.title }}</h2>
+                                              <h2 class="font-medium t__title text-pretty">{{ element?.title }}</h2>
                                           </Link>
                                       </td>
                                       <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
-                                              {{ element.list.title }}
+                                              {{ element.list?.title }}
                                           </div>
                                       </td>
                                       <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
@@ -70,7 +88,12 @@
                                       <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
                                           <div class="flex items-center" v-if="element.assignees.length">
                                               <div v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                                  <img class="h-full w-full border border-white rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
+                                                <!--div class="logo flex justify-center items-center w-9 h-9 rounded-full bg-indigo-600 text-lg">
+                                                    {{ assignee.user.name.charAt(0) }}
+                                                </div-->
+                                                <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                                <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
+                                                
                                               </div>
                                               <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
                                                   <icon class="w-4 h-4" name="arrow-down" />
@@ -109,16 +132,16 @@
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <!-- <button aria-label="Archive" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                          <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
                                               <icon class="mr-2 h-4 w-4 " name="archive" />
-                                          </button> -->
+                                          </button>
                                       </td>
                                   </tr>
                               </template>
                           </draggable>
                           <tbody v-if="!tasks.length">
                           <tr>
-                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found!') }}</td>
+                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!</td>
                           </tr>
                           </tbody>
                       </table>
@@ -193,11 +216,12 @@ import moment from 'moment'
 import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import axios from 'axios'
+import SearchInput from '@/Shared/SearchInput'
 
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu },
+    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput },
   layout: Layout,
     props: {
         auth: Object,
@@ -232,11 +256,14 @@ export default {
             labels: null,
             team_members: null,
             form: {
+                search: '',
                 user: this.filters.user,
                 due: this.filters.due,
                 label: this.filters.label,
                 task: this.filters.task ?? null,
             },
+            search: '',
+            filteredTasks: []
         }
     },
     watch: {
@@ -421,6 +448,21 @@ export default {
                 this.taskDetailsOpen = true;
             }
         },
+        filterTasks() {
+            
+          /**  this.filteredTasks = this.tasks.filter(task => 
+                task.title.toLowerCase().includes(this.search.toLowerCase())
+            );
+            **/
+            this.filteredTasks = this.tasks.filter(
+                (task) => task.title && task.title.toLowerCase().includes(this.search)
+            );
+            //this.filteredTasks = this.tasks.filter(task =>task.title.toLowerCase().include(this.search.toLowerCase()));
+        
+        },
+        setDefaultImage(event) {
+            event.target.src = "/images/svg/profile.svg";
+        }
     },
 }
 </script>

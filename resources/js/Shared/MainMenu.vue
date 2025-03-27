@@ -1,7 +1,8 @@
 <template>
   <div>
     <div class="menu-item" v-for="(menu_item, m_index) in menu_items" :key="m_index"
-         :class="isUrl(menu_item.url) ? ' active' : ''" v-on="menu_item.submenu?{click: (e) => addActiveClass(e)}:{}">
+         :class="isUrl(menu_item.url) ? ' active' : ''"
+         v-on="menu_item.submenu?{click: (e) => addActiveClass(e)}:{}">
       <Link class="flex items-center group py-3 menu-link" :href="menu_item.route?route(menu_item.route):'#'" :class="{'have-sub-menu': menu_item.submenu}">
         <icon :name="menu_item.icon" class="w-6 h-6 mr-3 rtl:ml-3 menu__icon" />
         <div class="menu__name">{{ __(menu_item.name) }}</div>
@@ -14,6 +15,13 @@
                 <div class="menu__name">{{ __(sub_menu_item.name) }}</div>
             </Link>
         </div>
+    </div>
+    <div class="menu-item">
+      <Link class="flex items-center group py-3 menu-link" @click="loginGoogle()"
+      >
+        <icon :name="'user'" class="w-6 h-6 mr-3 rtl:ml-3 menu__icon" />
+        <div class="menu__name">{{ __('Conectar con google') }}</div>
+      </Link>
     </div>
   </div>
 </template>
@@ -52,6 +60,9 @@ export default {
     },
       addActiveClass(e){
           e.currentTarget.classList.toggle('hover')
+      },
+      loginGoogle(){
+        window.open(this.route('google.redirect'), '_blank');
       }
   },
     created() {

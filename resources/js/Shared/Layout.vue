@@ -60,8 +60,8 @@
                                 <p class="show">
                                     {{ activeTimerString }}
                                 </p>
-                                <button v-if="!!this.activeTimerString" @click="stopTracker()">STOP</button>
-                                <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Task details"><icon class="" name="info" /></Link>
+                                <button v-if="!!this.activeTimerString" @click="stopTracker()">{{ __('STOP') }}</button>
+                                <Link :href="this.route('projects.view.board',{uid: this.counter.timer.task.project_id, task: this.counter.timer.task.slug || this.counter.timer.task.id})" aria-label="Detalles de la tarea"><icon class="" name="info" /></Link>
                             </div>
                             <button class="theme-toggle ml-3 mr-3" id="theme-toggle" title="Tema claro y oscuro" :aria-label="current_mode == 'dark' ? 'Oscuro': 'Claro'" aria-live="polite" @click="switchMode">
                                 <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
@@ -82,6 +82,149 @@
                                     </g>
                                 </svg>
                             </button>
+                            <div class="relative inline-block">
+                                <!-- Botón de notificación -->
+                                <button
+                                  @click="showDialog = true"
+                                  class="relative inline-flex items-center justify-center p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                  <!-- Icono de campana (notification) -->
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="w-6 h-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.877M5 20h14"
+                                    />
+                                  </svg>
+                            
+                                  <!-- Burbuja de notificación (contador) -->
+                                  <span
+                                    v-if=" showNotificationWithoutRead.length > 0"
+                                    class="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full ring-2 ring-white"
+                                  >
+                                    {{ countNotification }}
+                                  </span>
+                                </button>
+                            
+                                <div v-if="showDialog" class="fixed top-0 right-0 w-96 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
+                                    <!-- Encabezado -->
+                                    <div class="p-4 border-b flex justify-between items-center">
+                                      <h2 class="text-xl font-semibold text-gray-800">Notificaciones</h2>
+                                      <!-- Botón de Salir -->
+                                      <button
+                                        @click="showDialog = false"
+                                        class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        aria-label="Cerrar"
+                                      >
+                                        ✖
+                                      </button>
+                                    </div>
+                                
+                                    <!-- Filtros de notificaciones>
+                                    <div-- class="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
+                                      <div class="flex space-x-4">
+                                        <button
+                                          v-for="tab in tabs"
+                                          :key="tab"
+                                          @click="activeTab = tab"
+                                          :class="{
+                                            'text-blue-600 border-b-2 border-blue-600': activeTab === tab,
+                                            'text-gray-500': activeTab !== tab
+                                          }"
+                                          class="px-2 py-1 text-sm font-medium focus:outline-none"
+                                        >
+                                          {{ tab }}
+                                        </button>
+                                      </div>
+                                    </div-->
+                                
+                                    <!-- Barra de búsqueda>
+                                    <div class="p-4 border-b">
+                                      <input
+                                        type="text"
+                                        v-model="searchQuery"
+                                        placeholder="Buscar notificaciones"
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                                      />
+                                    </div -->
+                                
+                                    <!-- Lista de notificaciones -->
+                                    <div class="overflow-y-auto h-full">
+                                        <div
+                                            v-for="(notification, index) in taskToExpire"
+                                            :key="index"
+                                            :class="['bg-gray-200 flex items-start p-4 border-b hover:bg-gray-300']"
+                                            >
+                                            <!-- Imagen del usuario -->
+                                            <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                <span >EX</span>
+                                            </div>
+                                            </div>
+                                
+                                            <!-- Contenido de la notificación -->
+                                            <div class="ml-4 flex-1">
+                                            <p class="text-sm">
+                                                <span class="font-semibold text-red-600">La tarea expira mañana</span></p>
+                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.project.workspace.name }}</p>
+                                            <p class="text-xs text-gray-400">Proyecto: {{ notification.project.title }}</p>
+                                            <div  v-html="notification.title"/>
+                                            <button @click="sendWasRead(notification, false)" class="text-[14px] text-blue-500">ver</button>
+                                            </div>
+                                            
+                                      </div>
+                                        <div
+                                            v-for="(notification, index) in notificationList"
+                                            :key="index"
+                                            :class="[{'bg-gray-100': notification.wasRead == 0}, 'flex items-start p-4 border-b hover:bg-gray-200']"
+                                            >
+                                            <!-- Imagen del usuario -->
+                                            <div class="flex-shrink-0">
+                                            <div :class="[{'bg-blue-500': notification.notification_type == 1,
+                                                            'bg-green-500': notification.notification_type == 2,
+                                                            'bg-gray-700': notification.notification_type == 3},
+                                                            'h-10 w-10 rounded-full flex items-center justify-center text-white font-bold']">
+                                                <span v-if="notification.notification_type == 1">CM</span>
+                                                <span v-if="notification.notification_type == 2">AS</span>
+                                                <span v-if="notification.notification_type == 3"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
+                                                  </svg>
+                                                </span>
+                                            </div>
+                                            </div>
+                                
+                                            <!-- Contenido de la notificación -->
+                                            <div class="ml-4 flex-1">
+                                            <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification?.task?.project?.workspace?.name || "Ninguno"}}</p>
+                                            <p class="text-xs text-gray-400">Proyecto: {{ notification?.task?.project?.title || "Ninguno"}}</p>
+                                            <div  v-html="notification.title"/>
+                                            <button @click="sendWasRead(notification)" class="text-[14px] text-blue-500">ver</button>
+                                            </div>
+                                
+                                            <!-- Botón de eliminar -->
+                                            <div class="ml-2">
+                                                <button
+                                                    @click="deleteNotification(notification.idtask_notification)"
+                                                    class="text-red-500 hover:text-red-700 focus:outline-none"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                      </div>
+                                      <div v-if="notificationList.length === 0" class="text-center text-gray-500 py-8">
+                                        No hay notificaciones.
+                                      </div>
+                                    </div>
+                                  </div><!--end mo0dal-->
+
+                                </div>      
                             <dropdown class="select_user" placement="bottom-end">
                                 <template #default>
                                     <div class="flex items-center cursor-pointer group">
@@ -186,14 +329,33 @@ export default {
             current_page: 'dashboard',
             activeTimerString: '',
             counter: { seconds: 0, timer: this.auth.timer, duration: 0 },
-        }
+            notificationList: [],
+            showDialog:false,
+            intervalId: null,
+            taskToExpire:[],
+            tabs: ["All", "Unread", "I was mentioned", "Assigned to me"],
+            activeTab: "All",
+            searchQuery: "",
+                }
     },
     computed: {
+        getNotification(){
+            return this.$page.props.notification;
+        },
         selected_language() {
             return this.$page.props.languages.find(language => language.code === this.$page.props.locale)
         },
         languages_except_selected(){
             return this.$page.props.languages.filter(language => language.code !== this.$page.props.locale)
+        },
+        getUser(){
+            return this.$page.props.notification;
+        },
+        showNotificationWithoutRead(){
+            return  this.notificationList.filter(notification => notification.wasRead == 0)
+        },
+        countNotification(){
+            return this.showNotificationWithoutRead.length + this.taskToExpire.length;
         }
     },
     // $page.props.counter
@@ -257,6 +419,34 @@ export default {
             this.counter.duration = response.data;
             this.startTimer(this.counter.timer.started_at)
         },
+        async getNotificationUser(){
+            const {user} = this.auth;
+            this.getTaskToExpire()
+            const response = await axios.get(this.route('notification.assignees.user', user.id));
+            this.notificationList = response.data
+            
+        },
+        async getTaskToExpire(){
+            const {user} = this.auth;
+            const response = await axios.get(this.route('task.list.expre', user.id));
+            this.taskToExpire = response.data
+        },
+
+        async sendWasRead(notification, updateRow = true){
+            if(updateRow){
+                const response = await axios.put(this.route('notification.wasread', notification.idtask_notification));
+                window.location.href = this.route('projects.view.board',{uid:  notification.task.project_id, task:  notification.task.id})
+            }else{
+                window.location.href = this.route('projects.view.board',{uid:  notification.project_id, task:  notification.id})
+            }
+            
+           
+        },
+        deleteNotification(id){
+            const response =  axios.delete(this.route('notification.delete', id)).then(v=>{
+                this.getNotificationUser()
+            });
+      }
     },
     created() {
         this.moment = moment;
@@ -267,6 +457,20 @@ export default {
         if (this.counter.timer && this.counter.timer.started_at && !this.counter.timer.stopped_at){
             this.getDuration(this.counter.timer.task_id)
         }
+        this.getNotificationUser()
+        this.intervalId =  setInterval(this.getNotificationUser, 60000);
+        
+    },
+    beforeDestroy() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
     }
+    },
 }
 </script>
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.6s ease-in-out;
+}
+</style>

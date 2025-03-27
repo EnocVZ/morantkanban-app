@@ -13,6 +13,9 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Assignee;
+use App\Models\TeamMember;
+
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -28,7 +31,7 @@ class UsersController extends Controller{
     }
     public function index(){
         return Inertia::render('Users/Index', [
-            'title' => 'Users',
+            'title' => 'Usuarios',
             'filters' => Request::all(['search','role_id']),
             'roles' => Role::orderBy('name')
                 ->get()
@@ -52,7 +55,7 @@ class UsersController extends Controller{
 
     public function create(){
         return Inertia::render('Users/Create',[
-            'title' => 'Create a new user',
+            'title' => 'Crear nuevo usuario',
             'roles' => Role::orderBy('name')
                 ->get()
                 ->map
@@ -182,9 +185,12 @@ class UsersController extends Controller{
 
     private function removeUserFromRelatedTables($userId){
         Note::where('user_id', $userId)->update(['user_id' => null]);
-        Comment::where('user_id', $userId)->update(['user_id' => null]);
-        Attachment::where('user_id', $userId)->update(['user_id' => null]);
-        Task::where('user_id', $userId)->update(['user_id' => null]);
+        Task::where('user_id', $userId)->update(['is_archive' => 1]);
+        Task::where('userupdate_list', $userId)->update(['userupdate_list' => null]);
         Project::where('user_id', $userId)->update(['user_id' => null]);
+        TeamMember::where('user_id', $userId)->delete();
+        Assignee::where('user_id', $userId)->delete();
+        Comment::where('user_id', $userId)->delete();
+        Attachment::where('user_id', $userId)->delete();
     }
 }

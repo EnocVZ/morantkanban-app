@@ -38,7 +38,7 @@
                     <table class="w-full rounded-lg whitespace-nowrap min-w-max w-full table-auto">
                         <thead>
                         <tr class=" text-gray-600 text-sm text-left">
-                            <th class="px-6 pt-3 pb-2">{{ __('ID') }}</th>
+                            <th class="px-6 pt-3 pb-2">ID</th>
                             <th class="px-6 pt-3 pb-2">{{ __('Member') }}</th>
                             <th class="px-6 pt-3 pb-2">{{ __('Role') }}</th>
                             <th class="px-6 pt-3 pb-2">{{ __('Created At') }}</th>

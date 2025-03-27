@@ -16,6 +16,7 @@ use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\Workspace;
+use App\Models\TaskNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,13 +27,13 @@ use Inertia\Inertia;
 class ProjectsController extends Controller {
     public function index(){
         return Inertia::render('Projects/Index', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
         ]);
     }
 
     public function test(){
         return Inertia::render('Projects/Test', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
         ]);
     }
 
@@ -73,7 +74,11 @@ class ProjectsController extends Controller {
     }
 
     public function jsonAll($workspace_id){
-        $projects = Project::where('workspace_id', $workspace_id)->with('background')->with('star')->get();
+        $projects = Project::where('workspace_id', $workspace_id)
+        ->with('background')
+        ->with('star')
+        ->orderBy('title')
+        ->get();
         return response()->json($projects);
     }
 
@@ -127,8 +132,8 @@ class ProjectsController extends Controller {
 
     public function noProject(){
         return Inertia::render('Projects/Na', [
-            'title' => 'No Workspace',
-            'notice' => 'You did not assigned any workspace yet. Please contact with admin'
+            'title' => 'No hay espacio de trabajo',
+            'notice' => 'Aún no ha asignado ningún espacio de trabajo. Póngase en contacto con el administrador'
         ]);
     }
 
@@ -141,6 +146,7 @@ class ProjectsController extends Controller {
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
+        $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
         foreach ($board_lists as &$listItem){
             $list_index[$listItem['id']] = $loopIndex;
             $listItem['tasks'] = [];
@@ -168,13 +174,14 @@ class ProjectsController extends Controller {
         }
 //        dd($board_lists);
         return Inertia::render('Projects/View', [
-            'title' => 'Board | '.$project->title,
+            'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
             'filters' => $requests,
             'project' => $project,
             'tasks' => $tasks,
+            'notification'=>$notification,
         ]);
     }
 
@@ -207,7 +214,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/View', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
             'filters' => $requests,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
@@ -245,7 +252,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Table', [
-            'title' => 'Table | '.$project->title,
+            'title' => 'Lista | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
@@ -281,7 +288,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Table', [
-            'title' => 'Projects',
+            'title' => 'Proyectos',
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,
@@ -350,7 +357,7 @@ class ProjectsController extends Controller {
             $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
         }
         return Inertia::render('Projects/Calendar', [
-            'title' => 'Calendar | '.$project->title,
+            'title' => 'Calendario | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
             'list_index' => $list_index,

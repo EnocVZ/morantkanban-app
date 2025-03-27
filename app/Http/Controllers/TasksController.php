@@ -18,6 +18,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Mavinoo\Batch\Batch;
+use App\Http\Controllers\GoogleController;
+use Carbon\Carbon;
 
 class TasksController extends Controller
 {
@@ -141,7 +143,19 @@ class TasksController extends Controller
     }
 
     public function getJsonTask($taskUid){
-        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)->with('project')->with('timer')->with('cover')->with('list')->with('checklists')->with('comments.user')->with('attachments')->with('assignees')->with('taskLabels.label')->withCount('checklistDone')->first();
+        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)
+        ->with('project')
+        ->with('timer')
+        ->with('cover')
+        ->with('list')
+        ->with('checklists')
+        ->with('comments.user')
+        ->with('attachments')
+        ->with('assignees')
+        ->with('createdby')
+        ->with('userUpdateList')
+        ->with('taskLabels.label')
+        ->withCount('checklistDone')->first();
         return response()->json($task);
     }
 
@@ -155,37 +169,31 @@ class TasksController extends Controller
         $labels = Label::get();
         $lists = BoardList::withCount('tasks')->get();
         $projects = Project::get();
-        $teamMembers = TeamMember::with('user')->groupBy('user_id')->where('workspace_id', $project->workspace_id)->get();
+        $teamMembers = TeamMember::withOrderedUsers($project->workspace_id)->with('user')->get();
         $timer = Timer::running()->mine()->where('task_id', '!=', $task_id)->first() ?? null;
         $duration = Timer::where('task_id', $task_id)->sum('duration');
         return response()->json(['labels' => $labels, 'lists' => $lists, 'timer' => $timer, 'duration' => $duration, 'projects' => $projects, 'team_members' => $teamMembers]);
     }
 
     public function addAttachment($id, Request $request){
-        $attachment = [];
-        if($request->file('file')){
-            $file = $request->file('file');
-            $allowedMimeTypes = [
-                'image/jpeg','image/gif','image/png','image/bmp','image/svg+xml', 'image/tiff',
-                'video/x-flv', 'video/mp4', 'application/x-mpegURL', 'video/3gpp', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv',
-                'text/plain', 'audio/wav', 'audio/aac', 'audio/mpeg', 'video/mpeg',
-                'application/pdf', 'application/vnd.ms-powerpoint', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/csv',
-                'application/vnd.ms-excel', 
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            ];
-            $contentType = $file->getClientmimeType();
+        try {
+            $requests = $request->all();
+            $attachment = [];
+            $objGoogle = new GoogleController;
+            $task = Task::where('id', $id)
+            ->with('project')
+            ->with('project.workspace')
+            ->first();
 
-            if(! in_array($contentType, $allowedMimeTypes) ){
-                return response()->json(['error' => true]);
-            }
-            list($width, $height) = getimagesize($file);
-            $file_name_origin = $file->getClientOriginalName();
-            $file_name = uniqid().'-'.$this->clean(pathinfo($file_name_origin, PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
-            $size = $file->getSize();
-            $file_path = '/files/'.$file->storeAs('tasks', $file_name, ['disk' => 'file_uploads']);
-            $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name_origin, 'user_id' => auth()->id(), 'size' => $size, 'path' => $file_path, 'width' => $width, 'height' => $height]);
+            $file_path = $requests['url'];
+            $file_name = $requests['name'];
+            $attachment = Attachment::create(['task_id' => $id, 'name' => $file_name, 'user_id' => auth()->id(), 'size' => 0, 'path' => $file_path, 'width' => 0, 'height' => 0]);
+       
+            return response()->json($attachment);
+        } catch (\Exception $e) {
+            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
         }
-        return response()->json($attachment);
+        
     }
 
     public function removeAttachment($id){
@@ -201,5 +209,24 @@ class TasksController extends Controller
         $string = str_replace(' ', '-', $string);
         $string = filter_var($string, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         return preg_replace('/-+/', '-', $string);
+    }
+
+    public function addAttachmentFromLink($id, Request $request){
+        $requests = $request->all();
+        $attachment = Attachment::create(['task_id' => $id, 'name' => $requests['name'], 'user_id' => auth()->id(), 'size' => null, 'path' => $requests['link'], 'width' => null, 'height' => null]);
+        return response()->json($attachment);
+    }
+
+    public function getTaskToExpire($user_id){
+        $timezone = 'America/Mexico_City';
+        $tasks = Task::whereDate('due_date', Carbon::tomorrow($timezone)) // Filtrar por fecha actual
+                ->whereHas('assignees', function ($query) use ($user_id) {
+                    $query->where('user_id', $user_id); // Filtrar por usuario asignado
+                })
+                ->with('project')
+                ->with('project.workspace')
+                ->get()
+                ->toArray(); // Convertir a un array si es necesario
+        return response()->json($tasks);
     }
 }

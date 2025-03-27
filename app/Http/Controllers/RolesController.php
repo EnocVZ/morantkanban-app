@@ -15,13 +15,13 @@ class RolesController extends Controller {
 
     public function create(){
         return Inertia::render('Roles/Create',[
-            'title' => 'Create a new role'
+            'title' => 'Nuevo rol'
         ]);
     }
 
     public function index(){
         return Inertia::render('Roles/Index', [
-            'title' => 'User Roles',
+            'title' => 'Rol de usuarios',
             'filters' => Request::all(['search', 'role_id']),
             'roles' => Role::orderByName()
                 ->filter(Request::all(['search']))
