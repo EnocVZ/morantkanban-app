@@ -84,7 +84,7 @@
                                         <h2 class="__t" contenteditable="true" @keypress="saveTitle($event)" @blur="saveTitle($event)">
                                             {{ task.title }}
                                         </h2>
-                                        <!-- <span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
+                                        <!--<span class="text-xs">in list <span class="cursor-pointer underline" @click="displayMoveCard()">{{ task.list.title }}</span> </span> -->
 
                                         <div class="flex flex-col mt-5">
                                             <span class="text-xs font-bold mb-1">{{ __('Labels') }}</span>
@@ -479,7 +479,7 @@
                                                 <div class="absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded" @click="showAssigneeBox = false" >
                                                     <icon class=" w-4 h-4" name="close" />
                                                 </div>
-                                                <input id="t_d_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Search User" />
+                                                <input id="t_d_s_u" v-model="user_search" class="border-[2px] px-2 py-1 border-gray-400 rounded-[3px]" placeholder="Buscar usuario" />
                                                 <ul class="flex flex-col mt-3 gap-1 h-48 max-h-48 overflow-y-auto">
                                                     <li v-for="(userObject, user_index) in searchUser(user_search)">
                                                         <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
@@ -496,11 +496,11 @@
                                         </div>
                                     </div>
 
-                                    <!-- <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
+                                     <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
                                       <span v-for="assignee in task.assignees" :aria-label="assignee.user.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
                                           <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
                                       </span>
-                                    </div> -->
+                                    </div>
                                 </section>
                                 <section class="py-4">
                                     <h2 class="px-2 text-sm font-medium">

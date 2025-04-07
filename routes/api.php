@@ -6,6 +6,7 @@ use App\Http\Controllers\WorkSpacesController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ListsController;
 use App\Http\Controllers\TasksController;
+use App\Http\Controllers\LabelsController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,3 +27,5 @@ Route::get('workspaces/all', [WorkSpacesController::class, 'allWorkSpace']);
 Route::get('project/byworkspace/{id}', [ProjectsController::class, 'getProjectByWorkspace']);
 Route::get('list/byproject/{id}', [ListsController::class, 'getBoarListByProject']);
 Route::post('task/new', [TasksController::class, 'newTaskWithDetail']);
+Route::get('label/all', [LabelsController::class, 'listLabels']);
+Route::get('workspaces/getusers/{id}', [WorkSpacesController::class, 'getUserByWorkSpace']);

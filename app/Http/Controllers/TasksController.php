@@ -13,6 +13,7 @@ use App\Models\Task;
 use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\File;
 use Mavinoo\Batch\Batch;
 use App\Http\Controllers\GoogleController;
 use Carbon\Carbon;
+use App\Models\TaskNotification;
+use App\Helpers\MailerHelper;
 
 class TasksController extends Controller
 {
@@ -236,11 +239,15 @@ class TasksController extends Controller
             $checkList = $requestData['checkList'];
             unset($requestData['checkList']);
             unset($requestData['adjunto']);
+            unset($requestData['user']);
+            unset($requestData['label']);
+            unset($requestData['usercreation']);
             $task = Task::create($requestData);
 
             $slug = $this->clean($task->title);
             
             $task->slug = $slug;
+            $task->user_id = $request['usercreation'];
             $task->save();
             foreach ($checkList as $key => $value) {
                 $checkList = CheckList::create(['task_id' => $task->id, 'title' => $value]);
@@ -259,12 +266,58 @@ class TasksController extends Controller
                     }
                 }
             }
+
+            $findLabel = Label::where('name', $request["label"])->first();
+            if($findLabel != null){
+                $taskLabel = TaskLabel::create(['task_id' => $task->id, 'label_id' => $findLabel->id]);
+                $taskLabel->save();
+            }
+            
+            $teamMember = TeamMember::whereHas('user', function ($query) use ($request) {
+                $query->whereRaw("CONCAT(first_name, ' ', last_name) = ?", [$request["user"]]);
+            })->first();
+
+            if($teamMember != null){
+               
+                $usercreation = User::where('id', $request['usercreation'])
+                ->first();
+
+                $assignee = Assignee::create(['task_id' => $task->id, 'user_id' => $teamMember->user_id]);
+                $assignee->save();
+                $userasigned = $assignee->user;
+                $payload = [
+                    'fromUser' => $request['usercreation'],
+                    'task' =>  $task->id,
+                    'title' => "<p>{$usercreation->name}<strong> te asigno una nueva tarea</p></strong>",
+                    'toUser' =>$teamMember->user_id,
+                    'wasRead' => false,
+                    'notification_type'=>2
+                ];
+                $notification = TaskNotification::create($payload);
+                $notification->save();
+                $htmlTemplate = File::get(public_path('html/email_templates/assign_to_a_task.html'));
+                $variables = [
+                    '{title}' => "Nueva tarea asignada",
+                    '{workspacename}' => $task->project->workspace->name,
+                    '{proyect}' => $task->project->title,
+                    '{task}' => $task->title,
+                ];
+                
+                $html = str_replace(array_keys($variables), array_values($variables), $htmlTemplate);
+                $mailResponse =  MailerHelper::sendMail([$teamMember->user->email], "{$usercreation->name} te asigno una nueva tarea", $html);
+           
+            }
             $data = [
                 'task' => $task,
                 'checkList' => $checkList,
-                'attachment' => $files
+                'attachment' => $files,
+                'userasigned' => $teamMember->user,
             ];
-           return response()->json(['error' => false, 'message' => 'success', 'data' => $data]);
+
+            
+            
+
+           return response()->json(['error' => false, 'message' => "success", 'data' => $data]);
         } catch (\Exception $e) {
             return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
         }

@@ -236,4 +236,22 @@ class WorkSpacesController extends Controller
             return MethodHelper::errorResponse($e->getMessage());
         }
     }
+
+    public function getUserByWorkSpace($workspace_id)
+    {
+        try {
+            $workspaceUsers = TeamMember::where('workspace_id', $workspace_id)
+                ->with('user')
+                ->get();
+    
+            // Ordenar por nombre de usuario
+            $sortedUsers = $workspaceUsers->sortBy(function ($item) {
+                return $item->user->name; // Asumiendo que el nombre de usuario está en 'user->name'
+            });
+    
+            return MethodHelper::successResponse($sortedUsers->values()->all());
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }  
 }

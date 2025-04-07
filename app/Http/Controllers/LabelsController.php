@@ -9,11 +9,12 @@ use App\Models\TaskLabel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
 
 class LabelsController extends Controller
 {
     public function __construct(){
-        $this->middleware(RedirectIfNotAdmin::class);
+        #$this->middleware(RedirectIfNotAdmin::class);
     }
 
     public function all(){
@@ -127,5 +128,14 @@ class LabelsController extends Controller
             $label->delete();
         }
         return response()->json(['success' => true]);
+    }
+
+    public function listLabels(){
+        try {
+            $data = Label::all();
+            return MethodHelper::successResponse($data);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
     }
 }
