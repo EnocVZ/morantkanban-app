@@ -386,7 +386,7 @@
                                             <div v-for="(comment, comment_i) in task.comments" class="group relative flex py-1">
                                                 <div class="h-6 w-6">
                                                     <span class="block rounded-full h-6 w-6">
-                                                        <img v-if="comment.user.photo_path" class="h-full w-full rounded-full" :src="comment.user.photo_path" alt="">
+                                                        <img v-if="comment?.user?.photo_path" class="h-full w-full rounded-full" :src="comment?.user?.photo_path" alt="">
                                                         <img v-else class="h-full w-full rounded-full" src="/images/user.svg" alt="">
                                                     </span>
                                                 </div>
@@ -394,13 +394,13 @@
                                                 <div class="group flex-1 ltr:pl-4 rtl:pr-4">
                                                     <div class="flex">
                                                         <h2 v-if="comment.user" class="flex text-sm font-medium leading-none">
-                                                            {{ comment.user.first_name + ' ' + comment.user.last_name }}
+                                                            {{ comment.user?.first_name + ' ' + comment.user?.last_name }}
                                                         </h2>
                                                         <span class="text-xs font-normal text-gray-500 ltr:ml-3 rtl:mr-3">{{formatDate(comment.created_at)}}</span>
                                                         <icon v-show="comment.was_read == 1" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3" name="like_up"/>
                                                         <icon v-show="comment.was_read == 0" class="w-4 h-4 mr-3 ltr:ml-3 rtl:mr-3 cursor-pointer" name="like_upout" @click="saveReadComment(comment)"/>
                                                         <div class="ml-auto">
-                                                            <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="$page.props.auth.user.id === comment.user.id">
+                                                            <div class="absolute right-0 hidden pl-4 group-hover:flex" v-if="$page.props.auth.user.id === comment?.user?.id">
                                                                 <icon class="w-3 h-3 mr-3 cursor-pointer" name="edit" @click="onloadEditData(comment, comment_i)" />
                                                                 <icon class="w-3 h-3 cursor-pointer" name="trash" @click="deleteComment(comment.id, comment_i, task.comments)" />
                                                             </div>
@@ -422,7 +422,7 @@
                                                                 <li v-for="(userObject, user_index) in searchUser('')" @click="addMention(userObject)">
                                                                     <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
                                                                         <span data-a="" class="p-1" type="button" :tabindex="user_index">
-                                                                            {{ userObject.user.name }}
+                                                                            {{ userObject.user?.name }}
                                                                         </span>
                                                                     </label>
                                                                 </li>
@@ -484,7 +484,7 @@
                                                     <li v-for="(userObject, user_index) in searchUser(user_search)">
                                                         <label :for="'td_u_id_'+user_index" class="flex p-2 cursor-pointer hover:bg-gray-200 rounded">
                                                             <input :id="'td_u_id_'+user_index" class="w-5 ml-1 mr-2" type="checkbox" :checked="task_assignees().includes(userObject.user_id)" @change="assignUserToTask($event.target.checked, userObject.user_id)">
-                                                            <img v-if="userObject.user.photo_path" :aria-label="userObject.user.name" :alt="userObject.user.name" class="w-6 h-6 rounded-full" :src="userObject.user.photo_path" />
+                                                            <img v-if="userObject?.user?.photo_path" :aria-label="userObject.user.name" :alt="userObject.user.name" class="w-6 h-6 rounded-full" :src="userObject?.user?.photo_path" />
                                                             <img v-else :aria-label="userObject.user.name" :alt="userObject.user.name" class="w-6 h-6 rounded-full" src="/images/user.svg" />
                                                             <span data-a="" class="p-1" type="button" :tabindex="user_index">
                                                                 {{ userObject.user.name }}
