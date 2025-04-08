@@ -497,8 +497,8 @@
                                     </div>
 
                                      <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
-                                      <span v-for="assignee in task.assignees" :aria-label="assignee.user.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
-                                          <img class="h-full w-full rounded-full" :src="assignee.user.photo_path" :alt="assignee.user.name">
+                                      <span v-for="assignee in task.assignees" :aria-label="assignee?.user?.name" data-a="" class="block rounded-full h-8 w-8 border-2 border-white">
+                                          <img class="h-full w-full rounded-full" :src="assignee?.user?.photo_path" :alt="assignee?.user?.name">
                                       </span>
                                     </div>
                                 </section>

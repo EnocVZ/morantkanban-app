@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller{
     public function __construct(){
@@ -192,5 +195,18 @@ class UsersController extends Controller{
         Assignee::where('user_id', $userId)->delete();
         Comment::where('user_id', $userId)->delete();
         Attachment::where('user_id', $userId)->delete();
+    }
+
+    public function token($passwordIngresado){
+        
+        try {
+            $original = ['application' => 'opinometro', 'code' => 'APP-OP-KANBAN'];
+            $original = json_encode($original);
+            $encriptado = Crypt::encryptString($original);
+            return MethodHelper::successResponse($encriptado);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+      
     }
 }

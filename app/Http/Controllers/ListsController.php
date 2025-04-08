@@ -71,7 +71,8 @@ class ListsController extends Controller
 
     public function getBoarListByProject($project_id){
         try {
-            $lists = BoardList::where('project_id', $project_id)->get();
+            $lists = BoardList::where('project_id', $project_id)
+            ->where('is_archive', 0)->get();
             return MethodHelper::successResponse($lists);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
