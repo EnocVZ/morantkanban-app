@@ -11,22 +11,15 @@ class ValidateApiExternal
     public function handle(Request $request, Closure $next)
     {
         try {
-            $authHeader = $request->header('Authorization');
+            $origin = $_SERVER['HTTP_ORIGIN'] ?? 'No origin';
 
-            if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-                return response()->json(['error' => 'Acceso denegado'], 401);
-            }
+            $hostValidation = [
+                env('URLCONTROL'),
+                env('URLPR')
+            ];
 
-            $token = substr($authHeader, 7);
-            $desencriptado = Crypt::decryptString($token);
-            $token = json_decode($desencriptado, true);
-            if (is_null($token)) {
-                return response()->json(['error' => 'Acceso denegado'], 401);
-            }
-
-            if ($token['application'] == "opinometro" && $token['code'] == "APP-OP-KANBAN") {
+            if (in_array($origin, $hostValidation)) {
                 return $next($request);
-                
             }
             return response()->json(['error' => true,"message" => "Acceso denegado"], 401);
         } catch (\Throwable $th) {

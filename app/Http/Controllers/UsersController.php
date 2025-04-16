@@ -197,7 +197,7 @@ class UsersController extends Controller{
         Attachment::where('user_id', $userId)->delete();
     }
 
-    public function token($passwordIngresado){
+    public function token(){
         
         try {
             $original = ['application' => 'opinometro', 'code' => 'APP-OP-KANBAN'];

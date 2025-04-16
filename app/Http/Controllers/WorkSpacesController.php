@@ -240,13 +240,16 @@ class WorkSpacesController extends Controller
     public function getUserByWorkSpace($workspace_id)
     {
         try {
+            
             $workspaceUsers = TeamMember::where('workspace_id', $workspace_id)
-                ->with('user')
+                ->with('user', function ($query) {
+                    $query->select('id', 'first_name', 'last_name');
+                })
                 ->get();
     
-            // Ordenar por nombre de usuario
+           
             $sortedUsers = $workspaceUsers->sortBy(function ($item) {
-                return $item->user->name; // Asumiendo que el nombre de usuario está en 'user->name'
+                return $item->user->name;
             });
     
             return MethodHelper::successResponse($sortedUsers->values()->all());
