@@ -16,7 +16,7 @@
                         </div>
                     </div>
                     <div class="flex relative">
-                        <button v-if="workspace.member.role === 'admin'" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
+                        <button v-if="isAdmin" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
                             Agregar participantes
                         </button>
@@ -160,6 +160,9 @@ export default {
         }
     },
     computed: {
+        isAdmin() {
+            return this.auth?.user?.role?.slug === 'admin'
+        },
 
     },
     created() {
