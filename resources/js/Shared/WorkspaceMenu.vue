@@ -24,7 +24,7 @@
                   <span class="ml-3">{{ __('My Tasks') }}</span>
               </Link>
           </li>
-          <li class="relative" v-if="workspace.member.role === 'admin'">
+          <li class="relative" v-if="isAdmin">
               <Link class="flex items-center px-3 p-2 group workspace_members" :href="route('workspace.members', workspace.id)" :class="{'active' : checkActiveClass('component', 'Workspaces_Members')}">
                   <icon class="w-4 h-4" name="user" />
                   <span class="flex-1 ml-3 whitespace-nowrap">{{ __('Team Members') }}</span>
@@ -109,6 +109,11 @@ export default {
   },
     emits: {
         enableSidebar: null,
+    },
+    computed: {
+        isAdmin() {
+            return this.$page.props.auth?.user?.role?.slug === 'admin'
+        },
     },
     data(){
       return{

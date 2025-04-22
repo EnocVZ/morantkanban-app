@@ -126,9 +126,9 @@ class WorkSpacesController extends Controller
 
     public function workspaceMembers($uid, Request $request){
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
-        if($workspace->member->role != 'admin'){
+        /*if($workspace->member->role != 'admin'){
                 return Redirect::route('workspace.view', $workspace->id);
-        }
+        }*/
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/Members', [
             'title' => 'Participantes | '.$workspace->name,
