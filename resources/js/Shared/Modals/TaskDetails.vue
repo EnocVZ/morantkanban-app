@@ -461,7 +461,7 @@
                                                 <div class="group flex-1 ltr:pl-4 rtl:pr-4">
                                                     <div class="flex items-center gap-2 text-sm text-gray-700">
                                                         <span class="font-medium text-gray-900">{{ task?.user_durations[user].user_name }}</span>
-                                                        <span class="text-gray-500">Registro</span>
+                                                        <span class="text-gray-500">Registró</span>
                                                         <span class="ml-auto text-gray-400 text-xs font-semibold">{{ moment.duration(task?.user_durations[user].total_duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
                                                       </div>
                                                     
