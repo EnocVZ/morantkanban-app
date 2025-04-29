@@ -149,6 +149,7 @@ class TasksController extends Controller
         $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)
         ->with('project')
         ->with('timer')
+        ->with('timerList.user')
         ->with('cover')
         ->with('list')
         ->with('checklists')
@@ -159,6 +160,23 @@ class TasksController extends Controller
         ->with('userUpdateList')
         ->with('taskLabels.label')
         ->withCount('checklistDone')->first();
+
+        if ($task && $task->timerList) {
+            $userDurations = $task->timerList
+                ->whereNotNull('user_id')
+                ->groupBy('user_id')
+                ->map(function ($group) {
+                    $user = $group->first()->user;
+                    return [
+                        'user_name' => $user ? $user->name : null,
+                        'total_duration' => $group->sum(function($item) {
+                            return (int) $item->duration;
+                        }),
+                    ];
+                });
+    
+            $task->user_durations = $userDurations;
+        }
         return response()->json($task);
     }
 
