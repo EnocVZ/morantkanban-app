@@ -2748,10 +2748,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-scale-y: 1.25;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
-.hover\:border-blue-600:hover {
-  --tw-border-opacity: 1;
-  border-color: rgb(37 99 235 / var(--tw-border-opacity));
-}
 .hover\:border-gray-300:hover {
   --tw-border-opacity: 1;
   border-color: rgb(203 213 225 / var(--tw-border-opacity));
