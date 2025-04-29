@@ -65,6 +65,10 @@ class Task extends Model
         return $this->hasOne(Timer::class, 'task_id')->where('user_id', auth()->id())->whereNull('stopped_at');
     }
 
+    public function timerList() {
+        return $this->hasMany(Timer::class, 'task_id');
+    }
+
     public function assignees() {
         return $this->hasMany(Assignee::class)->with('user');
     }

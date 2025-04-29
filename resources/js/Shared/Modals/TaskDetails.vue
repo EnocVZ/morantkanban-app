@@ -253,17 +253,33 @@
                                         </button>
                                     </div>
                                 </section>
-
-                                <section class="mt-8">
-                                    <div>
-                                        <div class="flex">
-                                            <icon class="w-4 h-4 mr-3 mt-1" name="attachment" />
-                                            <div class="flex-1 border-b pb-2">
-                                                <span class="text-sm font-medium ">{{ __('Attachments') }}</span>
-                                                <span class="ml-2 text-sm font-light ">{{ task.attachments.length }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="flex space-x-2 border-b pb-1 py-8">
+                                    <button :class="[
+                                        'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                                        optionSection === 1
+                                          ? 'bg-blue-600 text-white'
+                                          : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                                      ]" @click="optionSection = 1">
+                                        Adjuntos({{  task.attachments.length }})
+                                      </button>
+                                    <button :class="[
+                                        'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                                        optionSection === 2
+                                          ? 'bg-blue-600 text-white'
+                                          : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                                      ]" @click="optionSection = 2">
+                                      Comentarios({{ task.comments.length }})
+                                    </button>
+                                    <button :class="[
+                                        'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                                        optionSection === 3
+                                          ? 'bg-blue-600 text-white'
+                                          : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                                      ]" @click="optionSection = 3">
+                                      Registro de tiempos
+                                    </button>
+                                  </div>
+                                <section v-show="optionSection == 1">
                                     <div class="pl-8 pt-4">
                                         <div class="bg-white p-8 rounded w-full max-w-md mx-auto" v-show="showAttachFile">
                                             <form >
@@ -313,18 +329,9 @@
                                         </div>
                                     </div>
                                 </section>
-
-                                <section class="mt-8">
-                                     <div>
-                                        <div class="flex">
-                                            <icon class="w-4 h-4 mr-3 mt-1" name="comments" />
-                                            <div class="flex-1 border-b pb-2">
-                                                <span class="text-sm font-medium">{{ __('Comments') }}</span>
-                                                <span class="ml-2 text-sm font-light ">{{ task.comments.length }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
+                                
+                                <section v-show="optionSection == 2">
+                                   
                                     <div class="pl-8 pt-4">
                                         <div>
                                             <div v-if="!showCommentBox" class="mt-1 mb-4 cursor-pointer rounded-md border border-gray-300 hover:shadow">
@@ -441,6 +448,23 @@
                                                         </div>
                                                     </div>
                                                     <div class="prose text-sm pt-1" v-if="!comment.modify" v-html="comment.details"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <section v-show="optionSection == 3">
+                                   
+                                    <div class="pl-8 pt-4">
+                                        <div class="space-y-4">
+                                            <div v-for="(user, i) in timeForUser" :key="i+user" class="group relative flex py-1">
+                                                <div class="group flex-1 ltr:pl-4 rtl:pr-4">
+                                                    <div class="flex items-center gap-2 text-sm text-gray-700">
+                                                        <span class="font-medium text-gray-900">{{ task?.user_durations[user].user_name }}</span>
+                                                        <span class="text-gray-500">Registro</span>
+                                                        <span class="ml-auto text-gray-400 text-xs font-semibold">{{ moment.duration(task?.user_durations[user].total_duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
+                                                      </div>
+                                                    
                                                 </div>
                                             </div>
                                         </div>
@@ -564,7 +588,7 @@
                                     </h2>
                                     <div class="relative" modal="true">
                                         <div class="px-2 py-1 text-sm">
-                                        {{task.createdby.name}}
+                                        {{task.createdby?.name}}
                                         </div>
                                     </div>
                                     <h2 class="px-2 text-sm font-medium">
@@ -704,6 +728,7 @@ export default {
                 link:""
             },
             exploreFolder: false,
+            optionSection: 1
         }
     },
     components: {
@@ -713,6 +738,10 @@ export default {
         sortedTasks:()=> {
             return this.task.checklists.sort((a, b) => a.order - b.order);
         },
+        timeForUser(){
+            const timer = this.task?.user_durations || {};
+            return Object.keys(timer);
+        }
 
     },
     methods: {
