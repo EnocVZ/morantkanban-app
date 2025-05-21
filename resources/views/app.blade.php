@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="light scroll-smooth " dir="ltr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -13,13 +14,13 @@
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
 
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=smoothscroll,NodeList.prototype.forEach,Promise,Object.values,Object.assign,String.prototype.startsWith" defer></script>
-
     <script src="{{ mix('/js/app.js') }}" defer></script>
     @routes
     @inertiaHead
 </head>
+
 <body class="font-inter leading-none antialiased bg-gray-50 dark:bg-gray-800">
     @inertia
 </body>
+
 </html>
