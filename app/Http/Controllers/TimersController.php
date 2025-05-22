@@ -6,6 +6,7 @@ use App\Models\Timer;
 use Carbon\Traits\Creator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+date_default_timezone_set('America/Mexico_City');
 
 class TimersController extends Controller
 {
@@ -15,7 +16,11 @@ class TimersController extends Controller
         $requests = $request->all();
         $timer = Timer::whereId($requests['id'])->first();
         if ($timer) {
-            $timer->duration = $requests['duration'];
+            $start = Carbon::parse($timer->started_at, 'America/Mexico_City');
+            $now = Carbon::now('America/Mexico_City');
+            $seconds = $now->diffInSeconds($start);
+
+            $timer->duration = $seconds;
             $timer->stopped_at = new Carbon();
             $timer->save();
         }
@@ -27,7 +32,7 @@ class TimersController extends Controller
         $requests = $request->all();
         $existingTimer = Timer::mine()->running()->first();
         if ($existingTimer) {
-            $start = Carbon::parse($existingTimer->started_at);
+            $start = Carbon::now('America/Mexico_City');
             $stopped = new Carbon();
             $existingTimer->duration = $stopped->diffInSeconds($start);
             $existingTimer->stopped_at = $stopped;
