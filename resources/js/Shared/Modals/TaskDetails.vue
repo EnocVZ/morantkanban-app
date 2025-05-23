@@ -910,7 +910,7 @@ export default {
         },
         goToLink(link){ window.location.href = link; },
         startTimer(start_now){
-            let started = this.counter.timer.started_at ? this.moment.utc(this.counter.timer.started_at) : this.moment();
+            let started = this.counter.timer.started_at ? this.moment(this.counter.timer.started_at) : this.moment();
             let seconds = parseInt(this.moment.duration(this.moment().diff(started)).asSeconds())
 
             seconds = this.counter.timer.duration + seconds;
@@ -1372,6 +1372,7 @@ export default {
       },
     created() {
         this.moment = moment
+       // this.moment.tz('America/Mexico_City');
         this.getTask(this.id)
     },
     mounted() {
