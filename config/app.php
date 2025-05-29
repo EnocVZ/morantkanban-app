@@ -75,7 +75,7 @@ return [
     |
     */
 
-    'timezone' => env('TIMEZONE', 'UTC'),
+    'timezone' => env('TIMEZONE', 'America/Mexico_City'),
 
     /**
      * Pate
@@ -94,7 +94,7 @@ return [
     |
     */
 
-    'locale' => env('LOCALE', 'en'),
+    'locale' => env('LOCALE', 'es'),
 
     /*
     |--------------------------------------------------------------------------
@@ -107,7 +107,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => '',
 
     /*
     |--------------------------------------------------------------------------

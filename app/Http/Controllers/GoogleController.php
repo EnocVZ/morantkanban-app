@@ -298,13 +298,13 @@ public function listFolders($parentFolderId)
     
             $driveService = new Google_Service_Drive($this->client);
     
-            if (!isset($request->adjunto) || !is_array($request->adjunto)) {
+            if (!isset($request->attachment) || !is_array($request->attachment)) {
                 return response()->json(["error" => true, "message" => "No se encontraron archivos en la solicitud."], 400);
             }
     
             $uploadedFiles = [];
     
-            foreach ($request->adjunto as $fileData) {
+            foreach ($request->attachment as $fileData) {
                 if (!isset($fileData['content']) || !isset($fileData['name']) || !isset($fileData['type'])) {
                     continue;
                 }

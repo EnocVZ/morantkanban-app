@@ -23,6 +23,7 @@ use App\Http\Controllers\GoogleController;
 use Carbon\Carbon;
 use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
+use App\Models\LogTask;
 
 class TasksController extends Controller
 {
@@ -48,8 +49,9 @@ class TasksController extends Controller
     public function updateTask($taskId, Request $request){
         $task = Task::whereId($taskId)->first();
         $requestData = $request->all();
+        $action = "full-update";
         foreach ($requestData as $itemKey => $itemValue){
-            $task->{$itemKey} = $itemValue;
+            
             if($itemKey == 'title'){
                 $slug = $this->clean($itemValue);
                 $existingItem = Task::where('slug', $slug)->first();
@@ -57,8 +59,19 @@ class TasksController extends Controller
                     $slug = $slug . '-' . $task->id;
                 }
                 $task->slug = $slug;
+               // $action = "update-title";
+
+            }else if($itemKey == 'list_id'){
+                $action = "update-list";
+                $this->LogTask($taskId, $action, $task->list_id, $itemValue);
+            }else if($itemKey == 'due_date'){
+               // $action = "update-duedate";
+            }else if($itemKey == 'description'){
+               // $action = "update-description";
             }
+            $task->{$itemKey} = $itemValue;
         }
+        //$this->LogTask($taskId, $action);
         $task->save();
         $task->load('list')->load('taskLabels.label')->load('assignees');
         return response()->json($task);
@@ -119,7 +132,8 @@ class TasksController extends Controller
         }
         $task->slug = $slug;
         $task->save();
-
+        $this->LogTask($task->id, "new-taskinlist", 0, $task->list_id);
+        
         $task->load('lastAssignee')->load('taskLabels.label')->loadCount('checklistDone')->loadCount('comments')->loadCount('checklists')->loadCount('attachments')->loadCount('assignees');
         return response()->json($task);
     }
@@ -256,7 +270,7 @@ class TasksController extends Controller
             $requestData = $request->all();
             $checkList = $requestData['checkList'];
             unset($requestData['checkList']);
-            unset($requestData['adjunto']);
+            unset($requestData['attachment']);
             unset($requestData['user']);
             unset($requestData['label']);
             unset($requestData['usercreation']);
@@ -272,7 +286,7 @@ class TasksController extends Controller
                 $checkList->save();
             }
             $files = [];
-            if($request["adjunto"] == true){
+            if($request["attachment"] == true){
                 $googleController = new GoogleController;
                 $project = Project::where('id', $requestData["project_id"])->first();
                 $filesUpload = $googleController->uploadMultipleFilesToGoogle($request, $project->folderKey);
@@ -332,12 +346,25 @@ class TasksController extends Controller
                 'userasigned' => $teamMember->user,
             ];
 
-            
-            
-
            return response()->json(['error' => false, 'message' => "success", 'data' => $data]);
         } catch (\Exception $e) {
             return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
         }
+    }
+
+    private function LogTask($task_id, $action, $prev_value, $new_value){
+       try {
+        $user_id = auth()->id();
+        $log = new LogTask();
+        $log->task_id = $task_id;
+        $log->action = $action;
+        $log->user_id = $user_id;
+        $log->prev_value = $prev_value;
+        $log->new_value = $new_value;
+        $log->created_at = now();
+        $log->save();
+       } catch (\Throwable $th) {
+        //throw $th;
+       }
     }
 }
