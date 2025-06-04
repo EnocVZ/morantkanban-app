@@ -191,7 +191,7 @@
                                               
                                                     <!-- Edit Mode -->
                                                     <div class="checklist-box2 w-full" v-if="element.modify">
-                                                      <input :id="'modify_'+element.id" 
+                                                      <textarea  :id="'modify_'+element.id" 
                                                              class="border rounded p-2 text-sm bg-white w-full" 
                                                              v-model="element.title" 
                                                              @keyup.enter="modifyCheckListSubmit(element, index, task.checklists)" />
@@ -236,7 +236,7 @@
                                             </div -->
                                             <div v-show="newCheckList" class="group relative flex">
                                                 <div class="checklist-box2 pl-6 w-full">
-                                                    <input class="border rounded p-2 text-sm bg-white w-full" ref="ncl" v-model="new_chek_list.title" @keyup="inputNewChecklistAction(new_chek_list, $event)" />
+                                                    <textarea  class="border rounded p-2 text-sm bg-white w-full" ref="ncl" v-model="new_chek_list.title" @keyup="inputNewChecklistAction(new_chek_list, $event)" />
                                                     <div class="flex">
                                                         <div class="flex items-center action__buttons mt-2">
                                                             <button type="button" class="small save" @click="inputNewChecklistAction(new_chek_list)">

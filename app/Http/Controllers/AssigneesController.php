@@ -42,8 +42,7 @@ class AssigneesController extends Controller
                     'wasRead' => false,
                     'notification_type'=>2
                 ];
-                $notification = TaskNotification::create($payload);
-                $notification->save();
+                
                 
                 $htmlTemplate = File::get(public_path('html/email_templates/assign_to_a_task.html'));
                 $variables = [
@@ -56,8 +55,12 @@ class AssigneesController extends Controller
                 
                 // Reemplazar las variables en el template
                 $html = str_replace(array_keys($variables), array_values($variables), $htmlTemplate);
-            
-               $mailResponse =  MailerHelper::sendMail([$user->email], "{$userName} te asigno una nueva tarea", $html);
+
+                if($user_id != $requestData['user_id']){
+                    $notification = TaskNotification::create($payload);
+                    $mailResponse =  MailerHelper::sendMail([$user->email], "{$userName} te asigno una nueva tarea", $html);
+                }
+               
                $assignee->load('user');
             }
             return response()->json($assignee);
