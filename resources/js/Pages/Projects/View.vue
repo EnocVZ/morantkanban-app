@@ -45,6 +45,10 @@
                                       <icon class="mr-2 h-4 w-4 " name="archive" />
                                       Archivar
                                   </button>
+                                  <button @click="changeWorkspace($event, element)" class="m__archive">
+                                      <icon class="mr-2 h-4 w-4 " name="archive" />
+                                      Cambiar de espacio de trabajo
+                                  </button>
                               </div>
                               <button @click="visibleShowMore($event, element)" class="hidden show__more group-hover:flex">
                                   <icon class="w-4 h-4" name="more" />
@@ -53,7 +57,7 @@
                               <div v-if="element.cover" class="t__cover" :style="{backgroundImage: 'url('+element.cover.path+')', height: element.cover.width?element.cover.height/(element.cover.width/246)+'px':'auto'}"></div>
                               <div class="t__details">
                                   <div class="task__labels" v-if="element.task_labels.length">
-                                      <button @click="visibleLabel($event)" class="color" v-for="(la, l_index) in element.task_labels" :style="{backgroundColor: la.label.color}" :aria-label="la.label.name">{{ la.label.name }}</button>
+                                      <button @click="visibleLabel($event)" class="color" v-for="(la, l_index) in element.task_labels"  :key="l_index" :style="{backgroundColor: la.label.color}" :aria-label="la.label.name">{{ la.label.name }}</button>
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
                                   <div class="card__footer">
@@ -133,6 +137,10 @@
       </div>
       <task-details v-if="taskDetailsOpen" :id="taskDetailsId" view="board" :isPopup="td_pop" @closeModal="closeDetails()"  />
       <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu" @openTask="(id)=>taskDetailsPopup(id)" />
+         <change-workspace v-if="visible.changeWorkspace" 
+         @onClose="onCloseChangeWorkSpace"
+         :taskId="taskId"/>
+         
   </div>
 </template>
 
@@ -150,11 +158,12 @@ import pickBy from "lodash/pickBy";
 import mapValues from "lodash/mapValues";
 import RightMenu from "../../Shared/RightMenu";
 import axios from 'axios'
+import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: {RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, BoardViewMenu },
+    components: {RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, BoardViewMenu, ChangeWorkspace },
   layout: Layout,
     props: {
         auth: Object,
@@ -197,6 +206,10 @@ export default {
                 label: this.filters.label,
                 task: this.filters.task ?? null,
             },
+            visible:{
+                changeWorkspace: false,
+            },
+            taskId: 0
         }
     },
     watch: {
@@ -421,6 +434,19 @@ export default {
         },
         log: function(evt) {
             window.console.log(evt);
+        },
+        changeWorkspace(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+            element.show_more = false
+            this.taskId = element.id;
+            this.visible.changeWorkspace = true;
+        },
+        onCloseChangeWorkSpace(success = false) {
+            this.visible.changeWorkspace = false;
+            if (success) {
+                  this.$inertia.reload({ preserveState: true });
+            }
         },
     },
 }
