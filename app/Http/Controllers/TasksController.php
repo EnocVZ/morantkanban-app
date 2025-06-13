@@ -367,4 +367,21 @@ class TasksController extends Controller
         //throw $th;
        }
     }
+
+       public function changeList($taskId, Request $request){
+        try {
+            $task = Task::whereId($taskId)->first();
+            $prev_value = $task->list_id;
+            $requestData = $request->all();
+            $task->list_id = $requestData['list_id'];
+            $task->project_id = $requestData['project_id'];
+            $task->userupdate_list = auth()->id();
+            $task->updatedlist_at = now();
+            $this->LogTask($taskId,"update-list", $prev_value, $task->list_id);
+            $task->save();
+            return response()->json(['error' => false, 'message' => "success", 'data' => $task]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
 }

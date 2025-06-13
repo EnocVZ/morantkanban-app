@@ -1293,6 +1293,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .left-0 {
   left: 0px;
 }
+.left-1\/2 {
+  left: 50%;
+}
 .left-3 {
   left: 0.75rem;
 }
@@ -1329,6 +1332,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .top-1 {
   top: 0.25rem;
 }
+.top-1\/2 {
+  top: 50%;
+}
 .top-2 {
   top: 0.5rem;
 }
@@ -1364,6 +1370,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .z-999 {
   z-index: 999;
+}
+.z-\[199\] {
+  z-index: 199;
 }
 .z-\[200\] {
   z-index: 200;
@@ -1779,6 +1788,14 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .border-collapse {
   border-collapse: collapse;
 }
+.-translate-x-1\/2 {
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.-translate-y-1\/2 {
+  --tw-translate-y: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
 .transform {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
@@ -2178,6 +2195,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
+}
+.bg-opacity-60 {
+  --tw-bg-opacity: 0.6;
 }
 .bg-opacity-80 {
   --tw-bg-opacity: 0.8;
@@ -2618,6 +2638,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity));
 }
+.text-green-700 {
+  --tw-text-opacity: 1;
+  color: rgb(21 128 61 / var(--tw-text-opacity));
+}
 .underline {
   text-decoration-line: underline;
 }
@@ -2953,6 +2977,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   opacity: 0.7;
 }
 @media (min-width: 640px) {
+  .sm\:inline {
+    display: inline;
+  }
   .sm\:flex-row {
     flex-direction: row;
   }

@@ -143,10 +143,11 @@ Route::post('task/attachment/add/{id}', [TasksController::class, 'addAttachment'
 Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttachment'])->name('task.attachment.delete')->middleware('auth');
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
-
+Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
+Route::get('board_list/byproject/{id}', [ListsController::class, 'getBoarListByProject'])->name('boardlist.all')->middleware('auth');
 
 Route::get('labels/all', [LabelsController::class, 'all'])->name('labels.all')->middleware('auth');
 Route::post('task/labels/add', [LabelsController::class, 'addLabelToTask'])->name('task.labels.add')->middleware('auth');
