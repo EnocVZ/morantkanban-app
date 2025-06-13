@@ -2196,9 +2196,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
 }
-.bg-opacity-60 {
-  --tw-bg-opacity: 0.6;
-}
 .bg-opacity-80 {
   --tw-bg-opacity: 0.8;
 }
@@ -2606,6 +2603,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-text-opacity: 1;
   color: rgb(15 23 42 / var(--tw-text-opacity));
 }
+.text-green-700 {
+  --tw-text-opacity: 1;
+  color: rgb(21 128 61 / var(--tw-text-opacity));
+}
 .text-indigo-500 {
   --tw-text-opacity: 1;
   color: rgb(101 116 205 / var(--tw-text-opacity));
@@ -2637,10 +2638,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .text-yellow-800 {
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity));
-}
-.text-green-700 {
-  --tw-text-opacity: 1;
-  color: rgb(21 128 61 / var(--tw-text-opacity));
 }
 .underline {
   text-decoration-line: underline;
