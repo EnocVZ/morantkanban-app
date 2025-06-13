@@ -1,5 +1,5 @@
 <template>
-    <div class="fixed inset-0 bg-black bg-opacity-60 z-[199] flex items-center justify-center">
+    <div class="fixed inset-0 bg-black bg-opacity-80 z-[199] flex items-center justify-center">
         <div
             class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] rounded-[8px] bg-white shadow overflow-hidden">
             <div class="flex gap-3 flex-col py-3 px-5" v-if="!loading">
