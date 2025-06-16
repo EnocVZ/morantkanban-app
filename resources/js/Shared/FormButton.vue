@@ -1,7 +1,7 @@
 <template>
     <button
     class="bg-indigo-600 w-full text-white p-[9px] rounded flex items-center justify-center gap-2 disabled:opacity-50"
-    :disabled="loading"
+    :disabled="loading || disabled"
     @click="$emit('click')"
   >
     <svg v-if="loading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -27,6 +27,10 @@ export default {
         loaderLabel: {
             type: String,
             default: 'Cargando'
+        },
+        disabled: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ['click'],

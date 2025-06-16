@@ -14,7 +14,10 @@
                     </div>
                 </div>
                 <div class="flex">
-                    <label class="flex flex-col w-full text-left">
+                    <div role="status" class="max-w-sm animate-pulse" v-if="loadWorkspaces">
+                        <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                    </div>
+                    <label class="flex flex-col w-full text-left" v-else>
                         <div>{{ __('Espacio de trabajo') }}</div>
                         <select-input v-model="idWorkspace" class=" mr-2 w-full">
                             <option v-for="(wkspace, ti) in workspaces" :key="ti" :value="wkspace.id">{{ wkspace.name }}</option>
@@ -22,7 +25,10 @@
                     </label>
                 </div>
                 <div class="flex">
-                    <label class="flex flex-col w-full text-left">
+                    <div role="status" class="max-w-sm animate-pulse" v-if="loadProjects">
+                        <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                    </div>
+                    <label class="flex flex-col w-full text-left" v-else>
                         <div>{{ __('Proyecto') }}</div>
                         <select-input v-model="idProject" class=" mr-2 w-full">
                             <option v-for="(project, ti) in projects" :key="ti" :value="project.id">{{ project.title }}</option>
@@ -30,7 +36,10 @@
                     </label>
                 </div>
                 <div class="flex">
-                    <label class="flex flex-col w-full text-left">
+                    <div role="status" class="max-w-sm animate-pulse" v-if="loadBoardList">
+                        <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                    </div>
+                    <label class="flex flex-col w-full text-left" v-else>
                         <div>{{ __('Lista') }}</div>
                         <select-input v-model="idBoard" class=" mr-2 w-full">
                             <option v-for="(board, ti) in boardList" :key="ti" :value="board.id">{{ board.title }}</option>
@@ -38,7 +47,8 @@
                     </label>
                 </div>
                 <div class="flex">
-                    <form-button @click="changeWorkSpace" label="Mover" :loading="loaderSave" loaderLabel="Moviendo" v-show="optionToSave != 1"/>
+                    <form-button @click="changeWorkSpace" label="Mover" :loading="loaderSave" loaderLabel="Moviendo" 
+                     :disabled="!validButtonSave" v-show="optionToSave != 1"/>
                     
                     <div class="px-4 py-2 text-green-700" role="alert" v-if="optionToSave == 1">
                     <span class="block sm:inline">Se movió correctamente.</span>
@@ -76,6 +86,11 @@ export default {
         }
     },
     components: { SelectInput, Icon, FormButton },
+    computed:{
+        validButtonSave() {
+            return this.idWorkspace > 0 && this.idProject > 0 && this.idBoard > 0;
+        }
+    },
     emits: {
         onClose: null
     },
@@ -84,6 +99,9 @@ export default {
             workspace: {},
             loading: false,
             loaderSave: false,
+            loadProjects: false,
+            loadBoardList: false,
+            loadWorkspaces: false,
             optionToSave: 0, // 0: no se ha guardado, 1: se guardó correctamente, 2: error al guardar
             workspaces: [],
             backgrounds: [],
@@ -111,13 +129,24 @@ export default {
             });
         },
         getProjectsByWorkspace(workspaceId) {
+            this.loadProjects = true;
+            this.loadBoardList = true;
+            this.idProject = 0;
+            this.idBoard = 0;
             axios.get(this.route('json.projects.all', workspaceId)).then((response) => {
                 this.projects = response.data;
+            }).finally(()=>{
+                this.loadProjects = false;
+                this.loadBoardList = false;
             });
         },
         getBoardListByProject(projectId) {
+            this.loadBoardList = true;
             axios.get(this.route('boardlist.all', projectId)).then((response) => {
                 this.boardList = response.data.data;
+            }).finally(() => {
+                this.idBoard = 0;
+                this.loadBoardList = false;
             });
         },
         changeWorkSpace() {
