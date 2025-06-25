@@ -15,7 +15,7 @@
 
         <!-- Grid de notas -->
         <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <div :class="[note.bg, 'text-black p-4 rounded relative shadow']" v-show="newNote">
+          <div :class="[note.color, 'text-black p-4 rounded relative shadow']" v-show="newNote">
             <div class="flex justify-end">
               <div class="relative inline-block text-left">
                 <!-- Botón que abre el menú -->
@@ -31,7 +31,7 @@
                     <ul>
                       <li v-for="color in colors" :key="color.name"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        @click="note.bg = color.bg">
+                        @click="note.color = color.bg">
                         <span class="w-3 h-3 rounded-full mr-2" :class="color.bg"></span> {{ color.name }}
                       </li>
                     </ul>
@@ -40,11 +40,13 @@
               </div>
             </div>
 
-            <textarea v-model="note.text"
+            <textarea v-model="note.details"
               class="w-full bg-transparent p-2 border-none overflow-hidden focus:outline-none h-48"
               placeholder="Escribe tu nota aquí..." rows="1"></textarea>
             <div class="flex justify-end gap-2 mt-2">
-              <button class="text-sm text-blue-600 hover:underline" @click="saveNote">Guardar</button>
+              <loading-button :loading="loadingSave" class="text-sm text-blue-600 " @click="saveNote">Guardar
+              </loading-button>
+
               <button class="text-sm text-red-600 hover:underline" @click="newNote = !newNote">Cancelar</button>
             </div>
           </div>
@@ -59,7 +61,7 @@
 
 
                 <!-- Menú principal -->
-                <div v-show="note.showMenu" class="absolute mt-2 w-56 bg-white border rounded shadow z-10">
+                <div v-show="note.showMenu" class="absolute right-0 mt-2 w-56 bg-white border rounded shadow z-10">
 
                   <!-- Opción con submenú -->
                   <div class="relative group">
@@ -72,7 +74,7 @@
 
                     <!-- Submenú -->
                     <div
-                      class="absolute left-full top-0 ml-1 w-40 bg-white border rounded shadow opacity-0 group-hover:opacity-100 group-hover:block hidden transition-opacity duration-150 z-20">
+                      class="absolute right-full top-0 mr-1 w-40 bg-white border rounded shadow opacity-0 group-hover:opacity-100 group-hover:block hidden transition-opacity duration-150 z-20">
                       <ul>
                         <li v-for="color in colors" :key="color.name"
                           class="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -102,7 +104,8 @@
               placeholder="Escribe tu nota aquí..." rows="1" v-else></textarea>
 
             <div class="flex justify-end gap-2 mt-2" v-if="note.editNote">
-              <button class="text-sm text-blue-600 " @click="updateNote(note)">Guardar</button>
+              <loading-button :loading="note.loading" class="text-sm text-blue-600 " @click="updateNote(note)">Guardar
+              </loading-button>
               <button class="text-sm text-red-600 " @click="note.editNote = false">Cancelar</button>
             </div>
           </div>
@@ -118,8 +121,8 @@
         <p class="text-sm text-gray-700 mb-6">Esta acción no se puede deshacer.</p>
 
         <div class="flex justify-end gap-2">
-          <button @click="confirmDelete" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sí,
-            eliminar</button>
+          <loading-button :loading="lodadingDelete" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            @click="confirmDelete">Sí, eliminar</loading-button>
           <button @click="openConfirmDialog = false"
             class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
         </div>
@@ -134,6 +137,7 @@ import { Head, Link } from '@inertiajs/vue3'
 import '@vuepic/vue-datepicker/dist/main.css'
 
 import BoardViewMenu from '@/Shared/BoardViewMenu'
+import LoadingButton from '@/Shared/LoadingButton'
 import axios from 'axios'
 
 export default {
@@ -142,6 +146,7 @@ export default {
     Link,
     Head,
     BoardViewMenu,
+    LoadingButton
   },
   layout: Layout,
   props: {
@@ -168,6 +173,8 @@ export default {
       open_filter: false,
       newNote: false,
       openConfirmDialog: false,
+      loadingSave: false,
+      lodadingDelete: false,
       calendarEvents: [],
       listNote: [],
       colors: [
@@ -188,8 +195,8 @@ export default {
       event_dates: {},
       rangeDate: null,
       note: {
-        text: '',
-        bg: 'bg-yellow-100',
+        details: '',
+        color: 'bg-yellow-100',
       },
       noteToDelete: {},
     }
@@ -219,30 +226,42 @@ export default {
 
     saveNote() {
       const REQUEST = {
-        details: this.note.text,
-        color: this.note.bg,
+        details: this.note.details,
+        color: this.note.color,
         project_id: this.project.id,
       };
-      axios.post(this.route('notes.new'), REQUEST);
-      const newId = this.listNote.length + 1;
-      this.listNote.push({ ...this.note, id: newId, showMenu: false });
-      this.note.text = '';
-      this.newNote = false;
+      this.loadingSave = true;
+      axios.post(this.route('notes.new'), REQUEST).then((response) => {
+        if (!response.data.error) {
+          const newId = response.data.data.id;
+          this.listNote.unshift({ ...this.note, id: newId, showMenu: false });
+          this.note.details = '';
+          this.newNote = false;
+        }
+      }).finally(() => {
+        this.loadingSave = false;
+      });
+
     },
     updateNote(note) {
       const REQUEST = {
         details: note.details,
         color: note.color
       };
+      note.loading = true;
       axios.post(this.route('notes.update', note.id), REQUEST).finally(() => {
         note.editNote = false;
+        note.loading = false;
       });
     },
 
     confirmDelete() {
+      this.lodadingDelete = true
       axios.delete(this.route('notes.delete', this.noteToDelete.id)).then(() => {
         this.listNote = this.listNote.filter(note => note.id !== this.noteToDelete.id);
         this.openConfirmDialog = false;
+      }).finally(() => {
+        this.lodadingDelete = false
       });
     },
     openQuestionConfirmDialog(note) {

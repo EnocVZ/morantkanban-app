@@ -17,7 +17,8 @@ class MethodHelper
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
+            'error' => false
         ], $code);
     }
 
@@ -34,7 +35,8 @@ class MethodHelper
         return response()->json([
             'status' => 'error',
             'message' => $message,
-            'errors' => $errors
+            'errors' => $errors,
+            'error' => true
         ], $code);
     }
 }
