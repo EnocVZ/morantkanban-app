@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
 
+use App\Models\Note;
+
 class ProjectsController extends Controller {
     public function index(){
         return Inertia::render('Projects/Index', [
@@ -458,5 +460,28 @@ class ProjectsController extends Controller {
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
+    }
+
+    public function viewNotes($uid, Request $request){
+
+        $requests = $request->all();
+        $auth_id = auth()->id();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
+        $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        $list_index = [];
+        $notes = Note::where('project_id', $project->id)
+         ->orderBy('id', 'desc')
+        ->get()
+        ->toArray();
+        
+       
+        return Inertia::render('Notes/Index', [
+            'title' => 'Notes | '.$project->title,
+            'list_index' => $list_index,
+            'project' => $project,
+            'filters' => $requests,
+            'notes' => $notes,
+        ]);
+
     }
 }

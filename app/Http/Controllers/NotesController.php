@@ -7,6 +7,7 @@ use App\Models\Note;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
+use App\Helpers\MethodHelper;
 
 class NotesController extends Controller {
 
@@ -32,25 +33,41 @@ class NotesController extends Controller {
         ]);
     }
 
-    public function saveNote($id = null){
-        $noteFields = Request::validate([
-            'name' => ['required', 'max:100'],
+    public function saveNote(){
+        try {
+            $noteFields = Request::validate([
+                'project_id' => ['required'],
+                'details' => ['required'],
+                'color' => ['nullable']
+            ]);
+            $noteFields['user_id'] = Auth()->id();
+            $note = Note::create($noteFields);
+            return MethodHelper::successResponse($note);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function updateNote($id){
+       try {
+         $noteFields = Request::validate([
             'details' => ['required'],
             'color' => ['nullable']
         ]);
-        $noteFields['user_id'] = Auth()->id();
-        if(!empty($id)){
-            Note::where('id', $id)->update($noteFields);
-            $message = 'Note updated!';
-        }else{
-            Note::create($noteFields);
-            $message = 'Note created!';
+           $note = Note::where('id', $id)->update($noteFields);
+            return MethodHelper::successResponse($note);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
         }
-        return Redirect::route('notes')->with('success', $message);
     }
 
-    public function delete(Note $note){
-        $note->delete();
-        return Redirect::back()->with('success', 'Note deleted!');
-    }
+    public function deleteNote($id){
+        try {
+            $note = Note::where('id', $id)->delete();
+             return MethodHelper::successResponse();
+         } catch (\Exception $e) {
+             return MethodHelper::errorResponse($e->getMessage());
+         }
+     }
+
 }

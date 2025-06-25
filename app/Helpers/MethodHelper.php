@@ -12,7 +12,7 @@ class MethodHelper
      * @param int $code
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function successResponse($data, $message = 'Success', $code = 200)
+    public static function successResponse($data=[], $message = 'Success', $code = 200)
     {
         return response()->json([
             'status' => 'success',

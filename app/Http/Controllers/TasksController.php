@@ -138,7 +138,7 @@ class TasksController extends Controller
         return response()->json($task);
     }
 
-    public function deleteDask($id){
+    public function deleteTask($id){
         $result = null;
         $task = Task::where('id', $id)->first();
         if(!empty($task)){

@@ -49,6 +49,7 @@ export default {
                 // {name: 'Report', slug: 'dashboard'},
                 {name: 'Calendar', slug: 'calendar'},
                 //{name: 'Time Logs', slug: 'time_logs'}
+                {name: 'Notas', slug: 'notes'},
             ],
             position: {top: 0, left: 0, right: 'inherit'},
         }

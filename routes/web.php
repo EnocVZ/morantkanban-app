@@ -36,6 +36,7 @@ use App\Http\Controllers\WorkSpacesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\TaskNotificationController;
+use App\Http\Controllers\NotesController;
 
 
 /*
@@ -131,9 +132,11 @@ Route::get('project/all', [ProjectsController::class, 'all'])->name('project.all
 Route::get('project/other/data/{project_id}', [ProjectsController::class, 'projectOtherData'])->name('project.other.data')->middleware('auth');
 Route::get('workspace/other/data/{workspace_id}', [ProjectsController::class, 'workspaceOtherData'])->name('workspace.other.data')->middleware('auth');
 
+
+
 Route::post('task/update/order', [TasksController::class, 'updateTaskOrder'])->name('task.update.order')->middleware('auth');
 Route::post('task/new', [TasksController::class, 'newTask'])->name('task.new')->middleware('auth');
-Route::post('task/delete/{id}', [TasksController::class, 'deleteDask'])->name('task.delete')->middleware('auth');
+Route::post('task/delete/{id}', [TasksController::class, 'deleteTask'])->name('task.delete')->middleware('auth');
 Route::get('json/task/get/{taskUid}', [TasksController::class, 'getJsonTask'])->name('json.task.get')->middleware('auth');
 Route::post('task/update/{taskUid}', [TasksController::class, 'updateTask'])->name('task.update')->middleware('auth');
 Route::post('task/update/list/{project_id}', [TasksController::class, 'updateTaskListByProjectId'])->name('task.update.list')->middleware('auth');
@@ -381,3 +384,9 @@ Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNot
 Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
 Route::put('notification/read/{id}', [TaskNotificationController::class, 'wasReadNotification'])->name('notification.wasread')->middleware('auth');
 Route::delete('notification/remove/{id}', [TaskNotificationController::class, 'deleteNotification'])->name('notification.delete')->middleware('auth');
+
+// Notes
+Route::get('p/note/{uid}', [ProjectsController::class, 'viewNotes'])->name('projects.view.notes')->middleware('auth');
+Route::post('notes/new', [NotesController::class, 'saveNote'])->name('notes.new')->middleware('auth');
+Route::post('notes/update/{id}', [NotesController::class, 'updateNote'])->name('notes.update')->middleware('auth');
+Route::delete('notes/delete/{id}', [NotesController::class, 'deleteNote'])->name('notes.delete')->middleware('auth');
