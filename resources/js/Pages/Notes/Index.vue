@@ -24,7 +24,7 @@
 
 
                 <!-- Menú principal -->
-                <div v-show="note.showMenu" class="absolute mt-2 w-56 bg-white border rounded shadow z-10">
+                <div v-show="note.showMenu" class="absolute w-56 bg-white border rounded shadow z-10">
 
                   <!-- Opción con submenú -->
                   <div class="relative group">
@@ -55,26 +55,30 @@
           <div v-for="note in listNote" :key="note.id" :class="[note.color, 'text-black p-4 rounded relative shadow']">
             <div class="flex justify-end">
               <div class="relative inline-block text-left">
+
                 <!-- Botón que abre el menú -->
                 <button class="p-2 rounded hover:bg-gray-200 focus:outline-none" @click="toggleMenu(note)">⋮</button>
                 <!-- Menú de opciones -->
 
 
                 <!-- Menú principal -->
-                <div v-show="note.showMenu" class="absolute right-0 mt-2 w-56 bg-white border rounded shadow z-10">
+                <div v-show="note.showMenu" :class="[
+                  'absolute mt-2 w-56 bg-white border rounded shadow z-10 right-0',
+
+                ]" :id="`menu-${note.id}`">
 
                   <!-- Opción con submenú -->
                   <div class="relative group">
-                    <button class="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100">
+                    <button class="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100"
+                      @click="note.showColors = !note.showColors">
                       <span>Cambiar color</span>
                       <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
 
-                    <!-- Submenú -->
-                    <div
-                      class="absolute right-full top-0 mr-1 w-40 bg-white border rounded shadow opacity-0 group-hover:opacity-100 group-hover:block hidden transition-opacity duration-150 z-20">
+                    <!-- Contenido -->
+                    <div v-show="note.showColors" class="px-4 py-3 text-gray-700 bg-white transition-all duration-300">
                       <ul>
                         <li v-for="color in colors" :key="color.name"
                           class="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -205,11 +209,16 @@ export default {
     togleMenuNewNote() {
       this.note.showMenu = !this.note.showMenu;
     },
+
+
+
     toggleMenu(note) {
       this.listNote.forEach((n) => {
         if (n.id !== note.id) n.showMenu = false;
       });
+      note.showColors = false;
       note.showMenu = !note.showMenu;
+
     },
 
     enableEditNote(note) {

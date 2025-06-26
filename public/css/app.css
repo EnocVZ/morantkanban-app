@@ -1302,9 +1302,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .left-\[30\%\] {
   left: 30%;
 }
-.left-full {
-  left: 100%;
-}
 .right-0 {
   right: 0px;
 }
@@ -1328,6 +1325,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .right-9 {
   right: 2.25rem;
+}
+.right-full {
+  right: 100%;
 }
 .top-0 {
   top: 0px;
@@ -1355,9 +1355,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .top-\[52px\] {
   top: 52px;
-}
-.right-full {
-  right: 100%;
 }
 .-z-10 {
   z-index: -10;
@@ -2758,8 +2755,16 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
 .duration-150 {
   transition-duration: 150ms;
+}
+.duration-300 {
+  transition-duration: 300ms;
 }
 .ease-in-out {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
