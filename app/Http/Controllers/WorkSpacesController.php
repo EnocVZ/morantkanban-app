@@ -256,5 +256,54 @@ class WorkSpacesController extends Controller
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
-    }  
+    }
+    
+    public function viewBacklog($uid, Request $request){
+
+         $user = auth()->user()->load('role');
+        $requests = $request->all();
+        if(!empty($user->role)){
+            if($user->role->slug != 'admin' && empty($requests['user'])){
+                return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
+            }
+        }else{
+            return abort(404);
+        }
+
+        $list_index = [];
+        $board_lists = BoardList::orderByOrder()->get();
+        $workspace = Workspace::where('id', $uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
+        $loopIndex = 0;
+        foreach ($board_lists as &$listItem){
+            $list_index[$listItem->id] = $loopIndex;
+            $listItem['tasks'] = [];
+            $loopIndex+= 1;
+        }
+
+         $taksList = Task::where('project_id', 0)
+                ->filter($request->only('search'))
+                ->orderBy('created_at', 'DESC')
+                ->paginate(20)
+                ->withQueryString();
+
+        return Inertia::render('Workspaces/Backlog', [
+            'title' => 'Backlog | '.$workspace->name,
+            'board_lists' => $board_lists,
+            'filters' => $requests,
+            'list_index' => $list_index,
+            'workspace' => $workspace,
+            'tasks' => $taksList
+        ]);
+
+    }
+
+    public function viewFormLink(Request $request){
+
+    
+        return Inertia::render('Link/Index', [
+            'title' => 'Solicitud',
+          
+        ]);
+
+    }
 }

@@ -33,6 +33,12 @@
                   </button-->
               </Link>
           </li>
+          <li v-if="isAdmin">
+              <Link :href="route('workspace.backlog', {'uid': workspace.slug || workspace.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('component', 'Workspaces_Backlog')}">
+                  <icon class="w-4 h-4" name="list" />
+                  <span class="ml-3">{{ __('Backlog') }}</span>
+              </Link>
+          </li>
       </ul>
       <div class="flex cursor-pointer select-none text-[13px] text items-center justify-start gap-3 mt-4 font-bold px-2 pt-2 border-t border-[#ffffff29]" @click="hide_starred=!hide_starred">
           <icon v-if="!hide_starred" name="arrow-down" class="w-4 h-4" />

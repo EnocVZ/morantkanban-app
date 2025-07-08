@@ -115,6 +115,8 @@ Route::get('w/{uid}', [WorkSpacesController::class, 'workspaceView'])->name('wor
 Route::get('w/{uid}/members', [WorkSpacesController::class, 'workspaceMembers'])->name('workspace.members')->middleware('auth');
 Route::get('w/{uid}/tables', [WorkSpacesController::class, 'workspaceTables'])->name('workspace.tables')->middleware('auth');
 Route::delete('workspace/destroy/{id}', [WorkSpacesController::class, 'destroy'])->name('workspace.destroy')->middleware('auth');
+Route::get('w/{uid}/backlog', [WorkSpacesController::class, 'viewBacklog'])->name('workspace.backlog')->middleware('auth');
+Route::get('w/request/link', [WorkSpacesController::class, 'viewFormLink'])->name('workspace.link')->middleware('auth');
 
 Route::delete('project/destroy/{id}', [ProjectsController::class, 'destroy'])->name('project.destroy')->middleware('auth');
 Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index')->middleware('auth');
