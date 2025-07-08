@@ -54,7 +54,7 @@ export default {
         return {
             icons: ['board', 'calendar'],//,'table', 'dashboard',  'time'
             options: [
-                { name: 'Backlog', slug: 'backlog' },
+              //  { name: 'Backlog', slug: 'backlog' },
                 { name: 'Board', slug: 'board' },
                 { name: 'List', slug: 'table' },
                 // {name: 'Report', slug: 'dashboard'},

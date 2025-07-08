@@ -39,7 +39,7 @@
             class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option>Ayuda</option>
             <option>Bug</option>
-            <option>Solicitud cambio</option>
+            <option>Nueva tarea</option>
           </select>
         </div>
         <div

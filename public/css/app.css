@@ -1522,6 +1522,12 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .mt-8 {
   margin-top: 2rem;
 }
+.-mb-px {
+  margin-bottom: -1px;
+}
+.me-2 {
+  margin-inline-end: 0.5rem;
+}
 .block {
   display: block;
 }
@@ -1841,6 +1847,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .cursor-pointer {
   cursor: pointer;
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
 }
 .select-none {
   -webkit-user-select: none;
@@ -2837,6 +2846,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-scale-y: 1.25;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
+.hover\:border-blue-500:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity));
+}
 .hover\:border-gray-300:hover {
   --tw-border-opacity: 1;
   border-color: rgb(203 213 225 / var(--tw-border-opacity));
@@ -2851,10 +2864,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .hover\:border-transparent:hover {
   border-color: transparent;
-}
-.hover\:border-blue-500:hover {
-  --tw-border-opacity: 1;
-  border-color: rgb(59 130 246 / var(--tw-border-opacity));
 }
 .hover\:bg-\[\#091e4224\]:hover {
   background-color: #091e4224;
@@ -3256,6 +3265,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-border-opacity: 1;
   border-color: rgb(51 65 85 / var(--tw-border-opacity));
 }
+:is(:where([data-mode="dark"]) .dark\:border-blue-500) {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity));
+}
 :is(:where([data-mode="dark"]) .dark\:bg-gray-700) {
   --tw-bg-opacity: 1;
   background-color: rgb(51 65 85 / var(--tw-bg-opacity));
@@ -3280,6 +3293,18 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
+:is(:where([data-mode="dark"]) .dark\:text-blue-500) {
+  --tw-text-opacity: 1;
+  color: rgb(59 130 246 / var(--tw-text-opacity));
+}
+:is(:where([data-mode="dark"]) .dark\:text-gray-400) {
+  --tw-text-opacity: 1;
+  color: rgb(148 163 184 / var(--tw-text-opacity));
+}
+:is(:where([data-mode="dark"]) .dark\:text-gray-500) {
+  --tw-text-opacity: 1;
+  color: rgb(100 116 139 / var(--tw-text-opacity));
+}
 :is(:where([data-mode="dark"]) .dark\:hover\:bg-gray-600:hover) {
   --tw-bg-opacity: 1;
   background-color: rgb(71 85 105 / var(--tw-bg-opacity));
@@ -3295,6 +3320,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 :is(:where([data-mode="dark"]) .dark\:hover\:text-white:hover) {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+:is(:where([data-mode="dark"]) .dark\:hover\:text-gray-300:hover) {
+  --tw-text-opacity: 1;
+  color: rgb(203 213 225 / var(--tw-text-opacity));
 }
 :is(:where([data-mode="dark"]) .dark\:focus\:ring-gray-600:focus) {
   --tw-ring-opacity: 1;

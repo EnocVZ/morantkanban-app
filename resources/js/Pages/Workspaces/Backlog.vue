@@ -7,10 +7,11 @@
                 
                 <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
                 @click="showModal = true">
-                Configurar formulario 
+                Agregar tarea
                 </button>
-                <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
-                Agregar Tarea
+                <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                @click="copyLink">
+                Obtener link para formulario
                 </button>
             </div>
             <h2 class="text mb-1 px-2 text-[20px] font-medium">Backlog </h2>
@@ -57,7 +58,7 @@
                                       </td>
                                       <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                                           <label v-if="listItem.task_category_id == 1">Ayuda</label>
-                                          <label v-if="listItem.task_category_id == 2">Solicitud de cambio</label>
+                                          <label v-if="listItem.task_category_id == 2">Nueva tarea</label>
                                       </td>
 
                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
@@ -137,7 +138,7 @@
             >
               <option>Ayuda</option>
               <option>Bug</option>
-              <option>Solicitud cambio</option>
+              <option>Nueva tarea</option>
             </select>
           </div>
           <div
@@ -173,7 +174,7 @@
               type="submit"
               class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
             >
-              Enviar
+              Crear
             </button>
             <button
               type="button"
@@ -281,6 +282,16 @@ export default {
        reset() {
             this.form = mapValues(this.form, () => null)
         },
+        copyLink() {
+        const link = window.location.origin; // obtiene la URL actual
+        navigator.clipboard.writeText(link+ '/w/request/link')
+            .then(() => {
+            alert('✅ Link copiado al portapapeles');
+            })
+            .catch(err => {
+            console.error('❌ Error al copiar: ', err);
+            });
+        }
     },
 }
 </script>

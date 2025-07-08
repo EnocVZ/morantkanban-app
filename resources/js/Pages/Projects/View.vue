@@ -36,7 +36,21 @@
                               Archivar
                           </button>
                       </div>
+                      
                   </div>
+                  <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+                        <ul class="flex flex-wrap -mb-px">
+                            <li class="me-2">
+                                <a href="#" class="inline-block text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500" aria-current="page">Nueva solicitud</a>
+                            </li>
+                            <li class="me-2">
+                                <a href="#" class="inline-block border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Bug</a>
+                            </li>
+                            <li class="me-2">
+                                <a href="#" class="inline-block border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Mejora</a>
+                            </li>
+                        </ul>
+                    </div>
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
                       <template #item="{ element, index }">
                           <div @click="taskDetailsPopup(element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
