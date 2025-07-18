@@ -29,14 +29,14 @@
                       <table>
                           <thead>
                           <tr>
-                            <th  scope="col">ID</th>
-                              <th scope="col" class="">
+                            <th  scope="col" class="w-[20px]">ID</th>
+                              <th scope="col" class="w-[17%]">
                                   <button class="flex items-center gap-x-3 focus:outline-none">
                                       <span>{{ __('Tareas') }}</span>
                                   </button>
                               </th>
 
-                              <th scope="col" class=" w-[17%]">
+                              <th scope="col">
                                   {{ __('Descripción') }}
                               </th>
 
@@ -46,25 +46,51 @@
 
                           </tr>
                           </thead>
-                          <tr   v-for="(listItem, listIndex) in lists" :key="listItem.id" class="list-group-item group">
+                          <tr   v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
                                     <td>{{ listItem?.id }}</td>
                                       <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                          <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
                                       </td>
-                                      <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                                      <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] cursor-pointer hover:bg-gray-100">
                                           <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
                                               {{ listItem?.description }}
                                           </div>
                                       </td>
                                       <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                                          <label v-if="listItem.task_category_id == 1">Ayuda</label>
-                                          <label v-if="listItem.task_category_id == 2">Nueva tarea</label>
+                                          <span>{{ findCategory(listItem.task_category_id)?.title  || ""}}</span>
                                       </td>
 
-                                      <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Asignar" data-a=""  class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
-                                              Asignar
-                                          </button>
+                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
+                                        <div class="inline-block text-left">
+                                          <div>
+                                            <button
+                                              @click="toggleDropdown(listItem.id)"
+                                              type="button"
+                                              class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200 "
+                                            >
+                                              ⋮
+                                            </button>
+                                          </div>
+                                          <div
+                                            v-if="openDropdownId === listItem.id"
+                                            class="absolute right-0 z-10 mt-2 w-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+                                          >
+                                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                              <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                               @click="openMoveTask(listItem.id)">
+                                                <icon name="clipboard" class="fill-gray-400 h-4 mr-2"/>Asignar
+                                              </a>
+                                              <a class=" flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                               @click="openEditTask(listItem)">
+                                                <icon name="edit" class="fill-gray-400 h-4 mr-2"/>Editar
+                                              </a>
+                                              <a class=" flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                              @click="openDelete(listItem.id)">
+                                                <icon name="trash" class="fill-gray-400 h-4 mr-2"/>Eliminar
+                                              </a>
+                                            </div>
+                                          </div>
+                                        </div>
                                       </td>
                                   </tr>
                           
@@ -109,7 +135,7 @@
         </div>
 
         <!-- Tu formulario -->
-        <form class="space-y-6">
+        <div class="space-y-6">
           <!-- Campo resumen -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
@@ -117,6 +143,7 @@
               type="text"
               placeholder="Titulo de la solicitud"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.title"
             />
           </div>
 
@@ -127,7 +154,8 @@
               rows="5"
               placeholder="Describa su solicitud"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            ></textarea>
+              v-model="formNewTask.description"
+              ></textarea>
           </div>
 
           <!-- Environment -->
@@ -135,10 +163,9 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
             <select
               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option>Ayuda</option>
-              <option>Bug</option>
-              <option>Nueva tarea</option>
+              v-model="formNewTask.task_category_id"
+              >
+              <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
             </select>
           </div>
           <div
@@ -171,8 +198,8 @@
           <!-- Botones -->
           <div class="flex items-center gap-4">
             <button
-              type="submit"
               class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+              @click="saveNewTask($event)"
             >
               Crear
             </button>
@@ -184,9 +211,28 @@
               Cancelar
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
+    <move-task v-if="moveToList" 
+         @onClose="onFinish"
+         :taskId="taskId"
+         :workspaceId="workspace.id"/>
+          <!-- Modal confirm-->
+    <div v-if="openConfirmDialog" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+        <h2 class="text-lg font-semibold mb-4">Confirma que desea realizar la acción</h2>
+        <p class="text-sm text-gray-700 mb-6">Esta acción no se puede deshacer.</p>
+
+        <div class="flex justify-end gap-2">
+          <loading-button :loading="lodadingDelete" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            @click="confirmDelete">Sí, eliminar</loading-button>
+          <button @click="openConfirmDialog = false"
+            class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
+        </div>
+      </div>
+    </div>
+        
 </template>
 
 <script>
@@ -204,12 +250,12 @@ import axios from 'axios'
 import SearchInput from '@/Shared/SearchInput'
 import Pagination from '@/Shared/Pagination'
 import mapValues from "lodash/mapValues";
-import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
+import MoveTask from '@/Pages/Workspaces/MoveTask';
 
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput, Pagination, ChangeWorkspace },
+    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput, Pagination, MoveTask },
   layout: Layout,
     props: {
         auth: Object,
@@ -225,34 +271,24 @@ export default {
         return {
             errors: [],
             loading: false,
-            showLabelBox: false,
-            label_search: '',
-            user_search: '',
-            list_search: '',
-            selected: {task_id: null, task_index: null, list_index: null, top: 0, left: 0},
-            showAssigneeBox: false,
-            firstResponse: [],
-            lastResponse: [],
-            new_task: {},
             taskDetailsOpen: false,
-            activeTimerString: '',
-            months: [],
-            counter: { seconds: 0, timer: this.timer },
-            drag: false,
-            new_task_open: false,
-            taskDetailsId: '',
-            labels: null,
-            team_members: null,
+            taskId: '',
             form: {
                 search: '',
-                user: this.filters.user,
-                due: this.filters.due,
-                label: this.filters.label,
-                task: this.filters.task ?? null,
             },
             search: '',
             filteredTasks: [],
-            showModal: false
+            showModal: false,
+            moveToList: false,
+            formNewTask: {
+                title: '',
+                description: '',
+                task_category_id: 2, // Default to 'Ayuda'
+            },
+            categories: [],
+            openDropdownId: 0,
+            openConfirmDialog: false,
+            lodadingDelete: false,
         }
     },
     watch: {
@@ -268,17 +304,29 @@ export default {
             return this.taskDetailsOpen;
         },
         lists(){
-            const items = this.board_lists;
-            
             //return items;
             return this.tasks.data
         }
     },
     created() {
         this.moment = moment
+        this.getCategory();
+        this.filteredTasks = this.tasks.data
        
     },
     methods: {
+      saveNewTask(e){
+       // e.preventDefault();
+            //const tasks = this.lists[listIndex].tasks;
+            axios.post(this.route('tasklink.new'), this.formNewTask).then((response) => {
+                if(response && response.data){
+                   // tasks.push(response.data)
+
+                }
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
        reset() {
             this.form = mapValues(this.form, () => null)
         },
@@ -291,6 +339,55 @@ export default {
             .catch(err => {
             console.error('❌ Error al copiar: ', err);
             });
+        },
+        openMoveTask(taskId) {
+            this.taskId = taskId;
+            this.moveToList = true;
+            //this.openDropdownId = 0;
+        },
+        onFinish(success = false) {
+            this.moveToList = false;
+            if (success) {
+                  this.$inertia.reload({ preserveState: true });
+            }
+        },
+        getCategory() {
+            axios.get(this.route('category.list', this.workspace.id)).then((response) => {
+              if(response?.data?.error == false){
+                this.categories = response.data.data;
+              }
+              console.log(response.data);
+              //  this.workspaces = response.data;
+            });
+        },
+
+        findCategory(id) {
+            return this.categories.find(category => category.id === id);
+        },
+        toggleDropdown(id) {
+          this.openDropdownId = this.openDropdownId === id ? null : id;
+        },
+        confirmDelete() {
+          this.lodadingDelete = true
+          axios.post(this.route('task.delete', this.taskId)).then(() => {
+            this.filteredTasks = this.filteredTasks.filter(task => task.id !== this.taskId);
+            this.openConfirmDialog = false;
+          }).finally(() => {
+            this.lodadingDelete = false
+          });
+        },
+        openDelete(taskId) {
+            this.taskId = taskId;
+            this.openConfirmDialog = true;
+        },
+        openEditTask(task){
+          console.log(task)
+          this.formNewTask = {
+            title: task.title,
+            description: task.description,
+            task_category_id: task.task_category_id || 2, // Default to 'Ayuda'
+          };
+          this.showModal = true;
         }
     },
 }

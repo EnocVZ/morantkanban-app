@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
+use App\Helpers\MethodHelper;
 
 class TasksController extends Controller
 {
@@ -369,19 +370,40 @@ class TasksController extends Controller
     }
 
        public function changeList($taskId, Request $request){
-        try {
-            $task = Task::whereId($taskId)->first();
-            $prev_value = $task->list_id;
-            $requestData = $request->all();
-            $task->list_id = $requestData['list_id'];
-            $task->project_id = $requestData['project_id'];
-            $task->userupdate_list = auth()->id();
-            $task->updatedlist_at = now();
-            $this->LogTask($taskId,"update-list", $prev_value, $task->list_id);
-            $task->save();
-            return response()->json(['error' => false, 'message' => "success", 'data' => $task]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+            try {
+                $task = Task::whereId($taskId)->first();
+                $prev_value = $task->list_id;
+                $requestData = $request->all();
+                $task->list_id = $requestData['list_id'];
+                $task->project_id = $requestData['project_id'];
+                $task->userupdate_list = auth()->id();
+                $task->updatedlist_at = now();
+                $this->LogTask($taskId,"update-list", $prev_value, $task->list_id);
+                $task->save();
+                return response()->json(['error' => false, 'message' => "success", 'data' => $task]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => true, 'message' => 'Error: ' . $e->getMessage()]);
+            }
         }
-    }
+
+        public function taskFromLink(Request $request){
+            try {
+                $requestData = $request->all();
+                $formData = $requestData;
+                unset($formData['email']);
+                $task = Task::create($formData);
+
+                $slug = $this->clean($task->title);
+                $existingItem = Task::where('slug', $slug)->first();
+                if(!empty($existingItem)){
+                    $slug = $slug . '-' . $task->id;
+                }
+                $task->slug = $slug;
+                $task->save();
+                
+                return MethodHelper::successResponse($task);
+            } catch (\Exception $e) {
+                return MethodHelper::errorResponse($e->getMessage());
+            }
+        }
 }

@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\TaskNotificationController;
 use App\Http\Controllers\NotesController;
-
+use App\Http\Controllers\TaskCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,6 +149,7 @@ Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttac
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
 Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
+Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
@@ -392,3 +393,4 @@ Route::get('p/note/{uid}', [ProjectsController::class, 'viewNotes'])->name('proj
 Route::post('notes/new', [NotesController::class, 'saveNote'])->name('notes.new')->middleware('auth');
 Route::post('notes/update/{id}', [NotesController::class, 'updateNote'])->name('notes.update')->middleware('auth');
 Route::delete('notes/delete/{id}', [NotesController::class, 'deleteNote'])->name('notes.delete')->middleware('auth');
+Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');

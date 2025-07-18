@@ -70,7 +70,7 @@ import FormButton from '@/Shared/FormButton'
 import Icon from '@/Shared/Icon'
 import axios from 'axios'
 export default {
-    name: "create-workspace",
+    name: "change-workspace",
     props: {
         top: {
             required: false,
