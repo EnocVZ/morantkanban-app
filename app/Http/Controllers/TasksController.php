@@ -406,4 +406,29 @@ class TasksController extends Controller
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
+
+        public function updateTaskBacklog($taskId, Request $request){
+            try {
+                $requestData = $request->all();
+                
+                $task = Task::whereId($taskId)->first();
+                foreach ($requestData as $itemKey => $itemValue){
+                    if($itemKey == 'title'){
+                        $slug = $this->clean($itemValue);
+                        $existingItem = Task::where('slug', $slug)->first();
+                        if(!empty($existingItem)){
+                            $slug = $slug . '-' . $task->id;
+                        }
+                        $task->slug = $slug;
+                    }
+                    $task->{$itemKey} = $itemValue;
+                }
+
+                $task->save();
+                
+                return MethodHelper::successResponse($task);
+            } catch (\Exception $e) {
+                return MethodHelper::errorResponse($e->getMessage());
+            }
+        }
 }

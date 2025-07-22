@@ -60,38 +60,19 @@
                                           <span>{{ findCategory(listItem.task_category_id)?.title  || ""}}</span>
                                       </td>
 
-                                       <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                        <div class="inline-block text-left">
-                                          <div>
-                                            <button
-                                              @click="toggleDropdown(listItem.id)"
-                                              type="button"
-                                              class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200 "
-                                            >
-                                              ⋮
-                                            </button>
-                                          </div>
-                                          <div
-                                            v-if="openDropdownId === listItem.id"
-                                            class="absolute right-0 z-10 mt-2 w-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                                          >
-                                            <div class="py-1" role="menu" aria-orientation="vertical">
-                                              <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                               @click="openMoveTask(listItem.id)">
-                                                <icon name="clipboard" class="fill-gray-400 h-4 mr-2"/>Asignar
-                                              </a>
-                                              <a class=" flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                               @click="openEditTask(listItem)">
-                                                <icon name="edit" class="fill-gray-400 h-4 mr-2"/>Editar
-                                              </a>
-                                              <a class=" flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                              @click="openDelete(listItem.id)">
-                                                <icon name="trash" class="fill-gray-400 h-4 mr-2"/>Eliminar
-                                              </a>
+                                         <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
+                                          <div class="inline-block text-left">
+                                            <div>
+                                              <button
+                                                @click.stop="toggleDropdown(listItem.id, $event)"
+                                                type="button"
+                                                class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200"
+                                              >
+                                                ⋮
+                                              </button>
                                             </div>
                                           </div>
-                                        </div>
-                                      </td>
+                                        </td>
                                   </tr>
                           
                           <tbody v-if="!lists.length">
@@ -129,8 +110,11 @@
 
         <!-- Título -->
         <div class="mb-6">
-          <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2">
-            <span class="text-black text-3xl"></span> Agregar nueva tarea al backlog
+          <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-if="formNewTask.id > 0">
+           Editar tarea
+          </h1>
+          <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-else>
+            Agregar nueva tarea al backlog
           </h1>
         </div>
 
@@ -170,6 +154,7 @@
           </div>
           <div
             class="flex justify-center items-center w-full"
+            v-if="!formNewTask.id"
             >
             <label
                 for="file-upload"
@@ -197,15 +182,12 @@
 
           <!-- Botones -->
           <div class="flex items-center gap-4">
-            <button
-              class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-              @click="saveNewTask($event)"
-            >
-              Crear
-            </button>
+            <loading-button :loading="loadingSaveTask" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+            @click="validateSaveOrEdit">Guardar</loading-button>
+            
             <button
               type="button"
-              @click="showModal = false"
+              @click="cancelNewTask"
               class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
             >
               Cancelar
@@ -232,6 +214,33 @@
         </div>
       </div>
     </div>
+    <!-- Dropdown fuera de la tabla con Teleport -->
+  <teleport to="body">
+    <div
+      v-if="openDropdownId !== null"
+      :style="{
+        position: 'fixed',
+        top: dropdownPosition.top + 'px',
+        left: dropdownPosition.left + 'px'
+      }"
+      class="z-50 w-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
+    >
+      <div class="py-1" role="menu" aria-orientation="vertical">
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          @click="openMoveTask(openDropdownId)">
+          <icon name="clipboard" class="fill-gray-400 h-4 mr-2" /> Asignar
+        </a>
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          @click="openEditTask()">
+          <icon name="edit" class="fill-gray-400 h-4 mr-2" /> Editar
+        </a>
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          @click="openDelete(openDropdownId)">
+          <icon name="trash" class="fill-gray-400 h-4 mr-2" /> Eliminar
+        </a>
+      </div>
+    </div>
+  </teleport>
         
 </template>
 
@@ -251,11 +260,11 @@ import SearchInput from '@/Shared/SearchInput'
 import Pagination from '@/Shared/Pagination'
 import mapValues from "lodash/mapValues";
 import MoveTask from '@/Pages/Workspaces/MoveTask';
-
+import LoadingButton from '@/Shared/LoadingButton'
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput, Pagination, MoveTask },
+    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput, Pagination, MoveTask, LoadingButton },
   layout: Layout,
     props: {
         auth: Object,
@@ -280,15 +289,13 @@ export default {
             filteredTasks: [],
             showModal: false,
             moveToList: false,
-            formNewTask: {
-                title: '',
-                description: '',
-                task_category_id: 2, // Default to 'Ayuda'
-            },
+            formNewTask:this.defaultForm(),
             categories: [],
-            openDropdownId: 0,
+            openDropdownId: null,
             openConfirmDialog: false,
             lodadingDelete: false,
+            dropdownPosition: { top: 0, left: 0 },
+            loadingSaveTask: false,
         }
     },
     watch: {
@@ -306,7 +313,8 @@ export default {
         lists(){
             //return items;
             return this.tasks.data
-        }
+        },
+        
     },
     created() {
         this.moment = moment
@@ -315,18 +323,49 @@ export default {
        
     },
     methods: {
-      saveNewTask(e){
-       // e.preventDefault();
-            //const tasks = this.lists[listIndex].tasks;
-            axios.post(this.route('tasklink.new'), this.formNewTask).then((response) => {
-                if(response && response.data){
-                   // tasks.push(response.data)
+      validateSaveOrEdit(){
+        if(this.formNewTask.id > 0){
+          this.updateTask();
+        }else {
+          this.saveNewTask();
+        }
+      },
+      saveNewTask(){
+        this.loadingSaveTask = true;
+        const requestData = {...this.formNewTask, workspace_id: this.workspace.id};
+          axios.post(this.route('tasklink.new'), requestData)
+          .then((response) => {
+              if(response?.data?.error == false){
+                this.formNewTask = this.defaultForm();
+                this.showModal = false;
+                  this.filteredTasks.unshift(response.data.data)
+              }
+          }).catch((error) => {
+              console.log(error)
+          }).finally(()=>{
+            this.loadingSaveTask = false;
+          })
+        },
+      updateTask(){
+        this.loadingSaveTask = true;
+            axios.put(this.route('taskbacklog.update', this.formNewTask.id), this.formNewTask)
+            .then((response) => {
+                if(response?.data?.error == false){
+                    const index = this.filteredTasks.findIndex(task => task.id === this.formNewTask.id);
+                    if (index !== -1) {
+                        this.filteredTasks.splice(index, 1, response.data.data);
+                    }
+                    // Reset the form
+                   this.formNewTask = this.defaultForm();
 
+                    this.showModal = false;
                 }
             }).catch((error) => {
                 console.log(error)
+            }).finally(()=>{
+                this.loadingSaveTask = false;
             })
-        },
+      },
        reset() {
             this.form = mapValues(this.form, () => null)
         },
@@ -343,20 +382,17 @@ export default {
         openMoveTask(taskId) {
             this.taskId = taskId;
             this.moveToList = true;
-            //this.openDropdownId = 0;
+            this.openDropdownId = null;
         },
         onFinish(success = false) {
+            this.filteredTasks = this.filteredTasks.filter(task => task.id !== this.taskId);
             this.moveToList = false;
-            if (success) {
-                  this.$inertia.reload({ preserveState: true });
-            }
         },
         getCategory() {
             axios.get(this.route('category.list', this.workspace.id)).then((response) => {
               if(response?.data?.error == false){
                 this.categories = response.data.data;
               }
-              console.log(response.data);
               //  this.workspaces = response.data;
             });
         },
@@ -364,8 +400,17 @@ export default {
         findCategory(id) {
             return this.categories.find(category => category.id === id);
         },
-        toggleDropdown(id) {
-          this.openDropdownId = this.openDropdownId === id ? null : id;
+         toggleDropdown(id, event) {
+          if (this.openDropdownId === id) {
+            this.openDropdownId = null
+          } else {
+            const rect = event.currentTarget.getBoundingClientRect()
+            this.dropdownPosition = {
+              top: rect.bottom + 4, // ajusta según necesidad
+              left: rect.left - 100
+            }
+            this.openDropdownId = id
+          }
         },
         confirmDelete() {
           this.lodadingDelete = true
@@ -374,21 +419,37 @@ export default {
             this.openConfirmDialog = false;
           }).finally(() => {
             this.lodadingDelete = false
+            this.notify()
           });
         },
         openDelete(taskId) {
             this.taskId = taskId;
+            this.openDropdownId = null;
             this.openConfirmDialog = true;
         },
-        openEditTask(task){
-          console.log(task)
+        openEditTask(){
+          const task = this.filteredTasks.find(task => task.id == this.openDropdownId);
           this.formNewTask = {
+            id: task.id,
             title: task.title,
             description: task.description,
             task_category_id: task.task_category_id || 2, // Default to 'Ayuda'
           };
+          this.openDropdownId = null;
           this.showModal = true;
-        }
+        },
+        defaultForm(){
+          return {
+              id: 0,
+              title: '',
+              description: '',
+              task_category_id: 2, // Default to 'Ayuda'
+          }
+        },
+        cancelNewTask() {
+            this.formNewTask = this.defaultForm();
+            this.showModal = false;
+        },
     },
 }
 </script>

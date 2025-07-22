@@ -150,6 +150,7 @@ Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachment
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
 Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
 Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new')->middleware('auth');
+Route::put('taskbacklog/update/{taskid}', [TasksController::class, 'updateTaskBacklog'])->name('taskbacklog.update')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
