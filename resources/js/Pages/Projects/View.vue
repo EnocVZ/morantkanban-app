@@ -44,20 +44,20 @@
                           <button
                               v-for="(tab, index) in tabs"
                               :key="index"
-                              @click="activeTab = index"
+                              @click="onSelectTab(index  , listItem.id)"
                               :class="[
                               'flex-shrink-0  whitespace-nowrap text-sm font-medium',
-                              activeTab === index
+                               tabOptions[listItem.id] === index 
                                   ? 'border-b-2 border-blue-500 text-blue-600'
                                   : 'text-gray-500 hover:text-gray-700'
                               ]"
-                          >
+                            >
                               {{ tab }}
                           </button>
                       </div>
                   </div>
                      <!-- Tabs -->
-                  <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
+                  <draggable :data-id="listItem.id" class="dragArea" :list="filteredTasks[listItem.id]" group="task" item-key="id" @end="afterDrop($event)">
                         
                       <template #item="{ element, index }">
                           <div @click="taskDetailsPopup(element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
@@ -245,15 +245,34 @@ export default {
             },
             taskId: 0,
             tabs: [
-                "Resumen",
+                "Todas",
                 "Tareas",
                 "Calendario",
-                "Archivos",
                 "Miembros",
                 "Ajustes",
                 "Otro Tab",
-                "Y Otro Más",
-                ]
+                ],
+            tabOptions:{
+                1: 0,
+                2: 0,
+                3: 0
+            },
+        }
+    },
+    computed:{
+         filteredTasks() {
+            console.log('Recomputing filteredTasks', this.tabOptions)
+            return this.lists.reduce((acc, listItem) => {
+            const tab = this.tabOptions[listItem.id] || 0
+
+            acc[listItem.id] = listItem.tasks.filter(task => {
+                // Filtro por sublista/tab
+                if (tab === 0) return true
+                return task.sublist_id === tab
+            })
+
+            return acc
+            }, {})
         }
     },
     watch: {
@@ -439,7 +458,12 @@ export default {
         },
         submitNewTask( listItem, listIndex ){
             if(this.new_task.title){
-                let task = { title: this.new_task.title, project_id: this.project.id, list_id: listItem.id, order: listItem.tasks.length+1 };
+                let task = { title: this.new_task.title,
+                    project_id: this.project.id, 
+                    list_id: listItem.id,
+                    order: listItem.tasks.length+1,
+                    sublist_id: this.tabOptions[listItem.id] || 0,
+                 };
                 this.saveNewTask(task, listIndex);
                 this.openNewTask(listItem)
             }else{
@@ -492,6 +516,17 @@ export default {
                   this.$inertia.reload({ preserveState: true });
             }
         },
+
+        getFilteredTasks(tasks, selectedTab) {
+            return tasks.filter(task => {
+                if (selectedTab === 0 || selectedTab === undefined) return true
+                return task.sublist_id === selectedTab
+            })
+        },
+        onSelectTab(key, value){
+            this.tabOptions[value] = key
+            console.log('onSelectTab', key, value, this.tabOptions);
+        }
     },
 }
 </script>
