@@ -371,7 +371,7 @@ export default {
         },
         copyLink() {
         const link = window.location.origin; // obtiene la URL actual
-        navigator.clipboard.writeText(link+ '/w/request/link')
+        navigator.clipboard.writeText(link+ '/w/request/link/' + this.workspace.id)
             .then(() => {
             alert('✅ Link copiado al portapapeles');
             })

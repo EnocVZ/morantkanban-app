@@ -38,20 +38,27 @@
                       </div>
                       
                   </div>
-                  <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
-                        <ul class="flex flex-wrap -mb-px">
-                            <li class="me-2">
-                                <a href="#" class="inline-block text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500" aria-current="page">Nueva solicitud</a>
-                            </li>
-                            <li class="me-2">
-                                <a href="#" class="inline-block border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Bug</a>
-                            </li>
-                            <li class="me-2">
-                                <a href="#" class="inline-block border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Mejora</a>
-                            </li>
-                        </ul>
-                    </div>
+                  <div class="b__list">
+
+                      <div class="flex overflow-x-auto no-scrollbar border-b noScroll board_width">
+                          <button
+                              v-for="(tab, index) in tabs"
+                              :key="index"
+                              @click="activeTab = index"
+                              :class="[
+                              'flex-shrink-0  whitespace-nowrap text-sm font-medium',
+                              activeTab === index
+                                  ? 'border-b-2 border-blue-500 text-blue-600'
+                                  : 'text-gray-500 hover:text-gray-700'
+                              ]"
+                          >
+                              {{ tab }}
+                          </button>
+                      </div>
+                  </div>
+                     <!-- Tabs -->
                   <draggable :data-id="listItem.id" class="dragArea" :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
+                        
                       <template #item="{ element, index }">
                           <div @click="taskDetailsPopup(element.id)" :data-id="element.id" class="t__box group hover:bg-opacity-100" draggable="true">
                               <div v-if="element.show_more" class="absolute right-7 top-1 w-30 z-999 bg-gray-100">
@@ -64,9 +71,21 @@
                                       Cambiar de espacio de trabajo
                                   </button>
                               </div>
-                              <button @click="visibleShowMore($event, element)" class="hidden show__more group-hover:flex">
-                                  <icon class="w-4 h-4" name="more" />
-                              </button>
+                              <div class="option__task flex hidden group-hover:flex ">
+                                  <button @click="visibleShowMore($event, element)">
+                                      <icon class="w-4 h-4" name="more" />
+                                  </button>
+                                  <div class="ml-2">
+                                        <label class="flex items-center cursor-pointer relative ">
+                                            <input type="checkbox" checked class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-slate-800 checked:border-slate-800" id="check" />
+                                            <span class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" stroke-width="1">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            </span>
+                                        </label>
+                                    </div> 
+                              </div>
                               <icon v-if="element.timer" name="blink" class="w-2 h-2 absolute top-2 right-2 z-20" />
                               <div v-if="element.cover" class="t__cover" :style="{backgroundImage: 'url('+element.cover.path+')', height: element.cover.width?element.cover.height/(element.cover.width/246)+'px':'auto'}"></div>
                               <div class="t__details">
@@ -74,6 +93,7 @@
                                       <button @click="visibleLabel($event)" class="color" v-for="(la, l_index) in element.task_labels"  :key="l_index" :style="{backgroundColor: la.label.color}" :aria-label="la.label.name">{{ la.label.name }}</button>
                                   </div>
                                   <h4 class="t__title">{{ element.title }}</h4>
+                                  
                                   <div class="card__footer">
                                       <div v-if="element.due_date" aria-label="Fecha entrega" class="__item due" :class="getDue(element)">
                                           <icon class="w-4 h-4" name="time" />
@@ -223,7 +243,17 @@ export default {
             visible:{
                 changeWorkspace: false,
             },
-            taskId: 0
+            taskId: 0,
+            tabs: [
+                "Resumen",
+                "Tareas",
+                "Calendario",
+                "Archivos",
+                "Miembros",
+                "Ajustes",
+                "Otro Tab",
+                "Y Otro Más",
+                ]
         }
     },
     watch: {
@@ -465,3 +495,27 @@ export default {
     },
 }
 </script>
+<style scoped>
+.noScroll{
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+
+.option__task{
+    top: 0px;
+    right: 0px;
+    z-index: 10;
+    margin-top: 0.25rem;
+    margin-right: 0.25rem;
+    /* height: 1.25rem; */
+    /* width: 1.25rem; */
+    /* align-items: center; */
+    justify-content: center;
+    border-radius: 0.25rem;
+    --tw-bg-opacity: 1;
+    background-color: rgb(226 232 240 / var(--tw-bg-opacity));
+    --tw-text-opacity: 1;
+    color: rgb(51 65 85 / var(--tw-text-opacity));
+    position: absolute;
+}
+</style>

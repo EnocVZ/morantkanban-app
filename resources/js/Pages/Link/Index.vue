@@ -37,15 +37,14 @@
 
         <!-- Environment -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
-          <select
-          v-model="formNewTask.task_category_id"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>Ayuda</option>
-            <option>Bug</option>
-            <option>Nueva tarea</option>
-          </select>
-        </div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.task_category_id"
+              >
+              <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
+            </select>
+          </div>
         <div
             class="flex justify-center items-center w-full"
             >
@@ -75,9 +74,9 @@
        
         <!-- Botones -->
         <div class="flex items-center gap-4">
-          <button
-            @click="saveNewTask"
-            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Enviar</button>
+          <loading-button :loading="loadingSave" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+            @click="saveNewTask">Enviar</loading-button>
+          
         </div>
       </div>
     </div>
@@ -87,9 +86,24 @@
 </template>
 <script>
 import axios from 'axios'
+import LoadingButton from '@/Shared/LoadingButton'
 export default {
+  components:{
+    LoadingButton
+  },
+  props: {
+    categories: {
+      type: Array,
+      default: () => []
+    },
+    workspace_id: {
+      type: Number,
+      required: true
+    }
+  },
   data(){
     return {
+      loadingSave: false,
       formNewTask:{
          title: '',
          description: '',
@@ -99,17 +113,35 @@ export default {
     }
   },
   methods:{
-  saveNewTask(e){
-       // e.preventDefault();
-            //const tasks = this.lists[listIndex].tasks;
-            axios.post(this.route('tasklink.new'), this.formNewTask).then((response) => {
-                if(response && response.data){
-                   // tasks.push(response.data)
-                }
-            }).catch((error) => {
-                console.log(error)
-            })
-        },
+    getParam(name){
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    },
+    saveNewTask(e){
+      this.loadingSave = true;
+      const requestData = {
+        ...this.formNewTask,
+        workspace_id: this.workspace_id
+      };
+      axios.post(this.route('tasklink.new'), requestData).then((response) => {
+          if(!response?.data?.error){
+              this.formNewTask = {
+                  title: '',
+                  description: '',
+                  task_category_id: 1,
+                  email: ''
+              }
+          }
+      }).catch((error) => {
+          console.log(error)
+      }).finally(()=>{
+        this.loadingSave = false;
+      })
+    },
+  },
+  created(){
+    console.log(this.getParam("id"));
+    
   }
 }
 </script>
