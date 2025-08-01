@@ -37,6 +37,10 @@ class BoardList extends Model
         return $this->hasMany(Task::class, 'list_id');
     }
 
+    public function sublist(){
+        return $this->hasMany(BoardSublist::class, 'list_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

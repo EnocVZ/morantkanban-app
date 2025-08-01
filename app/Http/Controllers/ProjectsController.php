@@ -17,6 +17,8 @@ use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
+use App\Models\BoardSublist;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -147,7 +149,27 @@ class ProjectsController extends Controller {
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
-        $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
+        $board_lists = BoardList::where('project_id', $project->id)
+        ->with([
+            'sublist.tasklist' => function ($query) use ($project) {
+                $query->isOpen()
+                    ->byProject($project->id)
+                    ->with([
+                        'taskLabels.label',
+                        'timer',
+                        'cover',
+                        'assignees',
+                    ])
+                    ->withCount([
+                        'checklistDone',
+                        'comments',
+                        'checklists',
+                        'attachments',
+                ])
+                ->orderByOrder();
+            }
+        ])
+        ->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
         foreach ($board_lists as &$listItem){
