@@ -1830,8 +1830,14 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+.cursor-default {
+  cursor: default;
+}
 .cursor-grab {
   cursor: grab;
+}
+.cursor-move {
+  cursor: move;
 }
 .cursor-pointer {
   cursor: pointer;
@@ -2243,6 +2249,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .bg-yellow-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(234 179 8 / var(--tw-bg-opacity));
+}
+.bg-opacity-30 {
+  --tw-bg-opacity: 0.3;
 }
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
@@ -2944,6 +2953,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .hover\:bg-white:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+}
+.hover\:bg-red-50:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 242 242 / var(--tw-bg-opacity));
 }
 .hover\:bg-opacity-100:hover {
   --tw-bg-opacity: 1;

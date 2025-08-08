@@ -36,7 +36,7 @@
           <li v-if="isAdmin">
               <Link :href="route('workspace.backlog', {'uid': workspace.slug || workspace.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('component', 'Workspaces_Backlog')}">
                   <icon class="w-4 h-4" name="list" />
-                  <span class="ml-3">{{ __('Backlog') }}</span>
+                  <span class="ml-3">{{ __('Solicitudes') }}</span>
               </Link>
           </li>
       </ul>

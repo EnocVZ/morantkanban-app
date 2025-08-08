@@ -399,3 +399,4 @@ Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categ
 
 //sublist
 Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.new')->middleware('auth');
+Route::post('sublist/update/{id}', [SublistController::class, 'update'])->name('sublist.update')->middleware('auth');

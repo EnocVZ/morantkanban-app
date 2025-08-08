@@ -16,9 +16,20 @@ class SublistController extends Controller
     public function create(Request $request){
         try {
             $requestData = $request->all();
-            $task = BoardSublist::create($requestData);
+            $sublist = BoardSublist::create($requestData);
             
-            return MethodHelper::successResponse($task);
+            return MethodHelper::successResponse($sublist);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function update($id, Request $request){
+        try {
+            $requestData = $request->all();
+            $sublist = BoardSublist::where('id',$id)->first();
+            $sublist->update($requestData);
+            return MethodHelper::successResponse($sublist);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }

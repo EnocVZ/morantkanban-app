@@ -53,4 +53,10 @@ class BoardList extends Model
             });
         });
     }
+
+    public function tasksWithoutSubcategory()
+{
+    return $this->hasMany(Task::class, 'list_id')
+                ->whereNull('sublist_id'); // Solo tareas sin subcategoría
+}
 }

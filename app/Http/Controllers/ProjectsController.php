@@ -150,53 +150,60 @@ class ProjectsController extends Controller {
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)
-        ->with([
-            'sublist.tasklist' => function ($query) use ($project) {
-                $query->isOpen()
-                    ->byProject($project->id)
                     ->with([
-                        'taskLabels.label',
-                        'timer',
-                        'cover',
-                        'assignees',
+                        'sublist.tasklist' => function ($query) use ($project) {
+                            $query->isOpen()
+                                ->byProject($project->id)
+                                ->with([
+                                    'taskLabels.label',
+                                    'timer',
+                                    'cover',
+                                    'assignees',
+                                ])
+                                ->withCount([
+                                    'checklistDone',
+                                    'comments',
+                                    'checklists',
+                                    'attachments',
+                                ])
+                                ->orderByOrder();
+                        },
+                        'tasksWithoutSubcategory' => function ($query) use ($project) {
+                            $query->isOpen()
+                                ->byProject($project->id)
+                                ->with([
+                                    'taskLabels.label',
+                                    'timer',
+                                    'cover',
+                                    'assignees',
+                                ])
+                                ->withCount([
+                                    'checklistDone',
+                                    'comments',
+                                    'checklists',
+                                    'attachments',
+                                ])
+                                ->orderByOrder();
+                        }
                     ])
-                    ->withCount([
-                        'checklistDone',
-                        'comments',
-                        'checklists',
-                        'attachments',
-                ])
-                ->orderByOrder();
-            }
-        ])
-        ->isOpen()->orderByOrder()->get()->toArray();
+                    ->isOpen()
+                    ->orderByOrder()
+                    ->get()
+                    ->map(function ($boardList) {
+                        $tasksInSublist = $boardList->sublist->sum(fn($sub) => $sub->tasklist->count());
+                        $tasksWithoutSub = $boardList->tasksWithoutSubcategory->count();
+                        $boardList->total_tasks = $tasksInSublist + $tasksWithoutSub;
+                        return $boardList;
+                    })
+                    ->toArray();
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
-        foreach ($board_lists as &$listItem){
-            $list_index[$listItem['id']] = $loopIndex;
-            $listItem['tasks'] = [];
-            $loopIndex+= 1;
-        }
+       
         if($project->is_private && (auth()->user()['role_id'] != 1)){
             $requests['private_task'] = $auth_id;
         }
-        $tasks = Task::filter($requests)
-            ->isOpen()
-            ->byProject($project->id)
-            ->with('taskLabels.label')
-            ->with('timer')
-            ->whereHas('list')
-            ->with('cover')
-            ->withCount('checklistDone')
-            ->withCount('comments')
-            ->withCount('checklists')
-            ->withCount('attachments')->with('assignees')
-            ->orderByOrder()->get()->toArray();
-        foreach ($tasks as $task){
-            if(isset($list_index[$task['list_id']])){
-                $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
-            }
-        }
+        
+      
 //        dd($board_lists);
         return Inertia::render('Projects/View', [
             'title' => 'Proyecto | '.$project->title,
@@ -205,7 +212,6 @@ class ProjectsController extends Controller {
             'list_index' => $list_index,
             'filters' => $requests,
             'project' => $project,
-            'tasks' => $tasks,
             'notification'=>$notification,
         ]);
     }

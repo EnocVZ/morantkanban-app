@@ -15,12 +15,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex relative">
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <div class="flex relative">
+                            <button v-if="isAdmin" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
+                                <icon name="user_plus" class="w-4 h-4 fill-white" />
+                                Agregar participantes
+                            </button>
+                            <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
+                        </div>
                         <button v-if="isAdmin" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
-                            Agregar participantes
+                            Configurar columnas kanban
                         </button>
-                        <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
                     </div>
                     <button v-if="workspace.member.role === 'admin'" @click="show_more = !show_more" class="top-[50%] right-3 absolute show__more flex" v-click-outside="()=>{show_more = false}">
                         <icon class="w-4 w-4" name="more" />
@@ -56,7 +63,7 @@
                         </div>
                         <div class="flex gap-3 justify-between">
                             <button class="bg-indigo-600 w-full text-white p-[9px] rounded disabled:opacity-50" :disabled="!workspace.name" @click="updateWorkspace()">
-                                {{ __('Update') }} {{ __('Workspace') }}</button>
+                                {{ __('Update') }}</button>
                             <button class="bg-indigo-600 w-full text-white p-[9px] rounded disabled:opacity-50" @click="edit_workspace_option = false">
                                 {{ __('Cancel') }}</button>
                         </div>

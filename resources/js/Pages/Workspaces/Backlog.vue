@@ -14,7 +14,7 @@
                 Obtener link para formulario
                 </button>
             </div>
-            <h2 class="text mb-1 px-2 text-[20px] font-medium">Backlog </h2>
+            <h2 class="text mb-1 px-2 text-[20px] font-medium">Solicitudes </h2>
             <div class="tiny__time__log__bar">
                 <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
             </div>
