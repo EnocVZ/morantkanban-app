@@ -24,7 +24,7 @@
                             </button>
                             <invite-workspace-member :workspace="workspace" v-if="invite_workspace" @invite-member="closeInviteMember()" top="40px" left="-10px" />
                         </div>
-                        <button v-if="isAdmin" @click="invite_workspace = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
+                        <button v-if="isAdmin" @click="showoptio = true" class="flex gap-[5px] bg-indigo-600 h-9 items-center text-white rounded px-3">
                             <icon name="user_plus" class="w-4 h-4 fill-white" />
                             Configurar columnas kanban
                         </button>
@@ -114,6 +114,48 @@
             v-if="delete_workspace_popup" @popup="delete_workspace_popup = false" @confirm="deleteWorkspace()"
             details="Al eliminar el espacio de trabajo, se eliminarán todos los proyectos, incluida la lista de tableros. ¿Está seguro de que desea eliminar este espacio de trabajo?"
         />
+
+         <!-- Overlay -->
+        <div v-if="showoptio" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <!-- Modal -->
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h2 class="text-lg font-semibold mb-2">¿Cómo se supervisan las actividades?</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Te ayudan a ver dónde están las tareas en el flujo de trabajo.
+                Puedes cambiarlo en cualquier momento.
+            </p>
+
+            <!-- Lista de estados -->
+            <div v-for="(estado, index) in estados" :key="index" class="flex items-center gap-2 mb-2">
+                <input
+                type="text"
+                v-model="estados[index]"
+                class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button @click="removeEstado(index)" class="text-gray-500 hover:text-red-500">
+                ✕
+                </button>
+            </div>
+
+            <!-- Botón agregar -->
+            <button
+                @click="addEstado"
+                class="text-indigo-600 text-sm font-medium hover:underline mt-2"
+            >
+                + Agregar estado
+            </button>
+
+            <!-- Footer -->
+            <div class="flex justify-end gap-2 mt-6">
+                <button @click="showoptio = false" class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">
+                Cancelar
+                </button>
+                <button @click="showoptio = false" class="px-4 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                Guardar
+                </button>
+            </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -163,7 +205,9 @@ export default {
             },
             editProject:false,
             projectSelected:{},
-            project_index:-1
+            project_index:-1,
+            showoptio: false,
+            estados: ['Backlog','Por hacer', 'En progreso', 'Hecho', 'Archivado'], // Estados predetermin
         }
     },
     computed: {
@@ -216,7 +260,13 @@ export default {
         closeOption(){
             this.create_project = false
             this.editProject = false
-        }
+        },
+         addEstado() {
+            this.estados.push('')
+        },
+         removeEstado(index) {
+            this.estados.splice(index, 1)
+    }
     },
 }
 </script>

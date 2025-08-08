@@ -54,6 +54,16 @@ class ProjectsController extends Controller {
         }
         $project->slug = $slug;
         $project->save();
+        $taskstatus = ['Backlog','Por hacer', 'En progreso', 'Hecho', 'Archivado'];
+
+        foreach ($taskstatus as $index => $status) {
+            BoardList::create([
+                'title' => $status,
+                'project_id' => $project->id,
+                'user_id' => auth()->id(), // si necesitas asignar el usuario
+                'order' => $index
+            ]);
+        }
 
         return response()->json($project);
     }

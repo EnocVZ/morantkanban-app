@@ -2143,6 +2143,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-bg-opacity: 1;
   background-color: rgb(22 28 45 / var(--tw-bg-opacity));
 }
+.bg-black\/40 {
+  background-color: rgb(22 28 45 / 0.4);
+}
 .bg-blue-300 {
   --tw-bg-opacity: 1;
   background-color: rgb(147 197 253 / var(--tw-bg-opacity));
@@ -2954,10 +2957,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
-.hover\:bg-red-50:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(254 242 242 / var(--tw-bg-opacity));
-}
 .hover\:bg-opacity-100:hover {
   --tw-bg-opacity: 1;
 }
@@ -2994,6 +2993,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .hover\:text-indigo-600:hover {
   --tw-text-opacity: 1;
   color: rgb(115 102 255 / var(--tw-text-opacity));
+}
+.hover\:text-red-500:hover {
+  --tw-text-opacity: 1;
+  color: rgb(239 68 68 / var(--tw-text-opacity));
 }
 .hover\:text-red-700:hover {
   --tw-text-opacity: 1;
