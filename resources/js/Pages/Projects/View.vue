@@ -411,6 +411,7 @@ import axios from 'axios'
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 import LoadingButton from '@/Shared/LoadingButton'
 import Dropdown from '@/Shared/Dropdown'
+import { list } from 'postcss'
 
 export default {
     metaInfo: { title: 'Dashboard' },
@@ -423,7 +424,7 @@ export default {
         project: Object,
         list_index: Object,
         filters: Object,
-        lists: {
+        proyectLists: {
             required: false
         },
         task: {
@@ -472,6 +473,7 @@ export default {
             },
             draggingChild: false,
             loaderBasicStatus: false,
+            lists:[]
 
         }
     },
@@ -509,6 +511,7 @@ export default {
         if (!!this.filters.task) {
             this.taskDetailsPopup(this.filters.task)
         }
+        this.lists = this.proyectLists || [];
     },
     methods: {
         getDoneCount(list) {
@@ -597,7 +600,7 @@ export default {
         },
         afterDropSublist(e, column) {
             
-            // const new_list = this.newSortedItems(e, 'to');
+             const new_list = this.newSortedItems(e, 'to', 'li_sublist');
             let previous_list = [];
             const resquest = {
                 list_id: e.to.dataset.id,
@@ -605,12 +608,12 @@ export default {
             };
 
             if (!!e.pullMode) {
-                resquest.list_id = e.to.dataset.id;
-                //previous_list = this.newSortedItems(e, 'from');
+                //resquest.list_id = e.to.dataset.id;
+                previous_list = this.newSortedItems(e, 'from', 'li_sublist');
                 this.saveNewSublist(e.item.dataset.id, resquest)
                 
             }
-            //const list_items = new_list.concat(previous_list);
+            const list_items = new_list.concat(previous_list);
             if (e.to.dataset.id !== 'null') {
                // this.saveOrder(list_items)
             }
@@ -638,8 +641,8 @@ export default {
             }
             this.draggingChild = false;
         },
-        newSortedItems(e, selector) {
-            const lists = e[selector].getElementsByClassName("li_box");
+        newSortedItems(e, selector, classItem = 'li_box') {
+            const lists = e[selector].getElementsByClassName(classItem);
             const newOrder = [];
             for (let i = 0; i < lists.length; i++) {
                 newOrder.push({ id: lists[i].dataset.id, order: i + 1 })
@@ -786,8 +789,9 @@ export default {
         },
         saveNewSublist(sublistId, request) {
             axios.post(this.route('sublist.update', sublistId), request).then((response) => {
-                if (response && response.data) {
-                    
+                console.log(response?.data)
+                if (!response?.data?.error) {
+                   // this.$inertia.reload({ preserveState: false });
                 }
             }).catch((error) => {
                 console.log(error)

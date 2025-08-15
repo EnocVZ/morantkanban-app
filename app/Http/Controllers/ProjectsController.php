@@ -231,7 +231,7 @@ class ProjectsController extends Controller {
         return Inertia::render('Projects/View', [
             'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
-            'lists' => $board_lists,
+            'proyectLists' => $board_lists,
             'list_index' => $list_index,
             'filters' => $requests,
             'project' => $project,
