@@ -1122,7 +1122,7 @@ export default {
                         })
                     }
                     
-                    this.sendNotification('send.mail.task_update', response.data.id)
+                   // this.sendNotification('send.mail.task_update', response.data.id)
                 }
             })
         },

@@ -56,7 +56,7 @@ class ListsController extends Controller
 
     public function makeArchive($list_id){
         $list = BoardList::where('id', $list_id)->first();
-        Task::where('list_id', $list->id)->update(['is_archive' => 1]);
+        #Task::where('list_id', $list->id)->update(['is_archive' => 1]);
         $list->is_archive = 1;
         $list->save();
         return response()->json($list);

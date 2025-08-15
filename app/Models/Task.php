@@ -89,6 +89,11 @@ class Task extends Model
         return $this->hasMany(CheckList::class)->where('check_lists.is_done', '=', 1);
     }
 
+    public function sublist()
+    {
+        return $this->belongsTo(BoardSublist::class, 'sublist_id');
+    }
+
     public function scopeFilter($query, array $filters){
         $query->when($filters['search'] ?? null, function ($query, $search) {
             $query->where('title', 'like', '%'.$search.'%')

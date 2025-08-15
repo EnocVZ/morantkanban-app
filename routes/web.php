@@ -36,7 +36,9 @@ use App\Http\Controllers\WorkSpacesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\TaskNotificationController;
-
+use App\Http\Controllers\NotesController;
+use App\Http\Controllers\TaskCategoryController;
+use App\Http\Controllers\SublistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,6 +116,8 @@ Route::get('w/{uid}', [WorkSpacesController::class, 'workspaceView'])->name('wor
 Route::get('w/{uid}/members', [WorkSpacesController::class, 'workspaceMembers'])->name('workspace.members')->middleware('auth');
 Route::get('w/{uid}/tables', [WorkSpacesController::class, 'workspaceTables'])->name('workspace.tables')->middleware('auth');
 Route::delete('workspace/destroy/{id}', [WorkSpacesController::class, 'destroy'])->name('workspace.destroy')->middleware('auth');
+Route::get('w/{uid}/backlog', [WorkSpacesController::class, 'viewBacklog'])->name('workspace.backlog')->middleware('auth');
+Route::get('w/request/link/{idWorkspace}', [WorkSpacesController::class, 'viewFormLink'])->name('workspace.link')->middleware('auth');
 
 Route::delete('project/destroy/{id}', [ProjectsController::class, 'destroy'])->name('project.destroy')->middleware('auth');
 Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index')->middleware('auth');
@@ -131,9 +135,11 @@ Route::get('project/all', [ProjectsController::class, 'all'])->name('project.all
 Route::get('project/other/data/{project_id}', [ProjectsController::class, 'projectOtherData'])->name('project.other.data')->middleware('auth');
 Route::get('workspace/other/data/{workspace_id}', [ProjectsController::class, 'workspaceOtherData'])->name('workspace.other.data')->middleware('auth');
 
+
+
 Route::post('task/update/order', [TasksController::class, 'updateTaskOrder'])->name('task.update.order')->middleware('auth');
 Route::post('task/new', [TasksController::class, 'newTask'])->name('task.new')->middleware('auth');
-Route::post('task/delete/{id}', [TasksController::class, 'deleteDask'])->name('task.delete')->middleware('auth');
+Route::post('task/delete/{id}', [TasksController::class, 'deleteTask'])->name('task.delete')->middleware('auth');
 Route::get('json/task/get/{taskUid}', [TasksController::class, 'getJsonTask'])->name('json.task.get')->middleware('auth');
 Route::post('task/update/{taskUid}', [TasksController::class, 'updateTask'])->name('task.update')->middleware('auth');
 Route::post('task/update/list/{project_id}', [TasksController::class, 'updateTaskListByProjectId'])->name('task.update.list')->middleware('auth');
@@ -144,6 +150,8 @@ Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttac
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
 Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
+Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new')->middleware('auth');
+Route::put('taskbacklog/update/{taskid}', [TasksController::class, 'updateTaskBacklog'])->name('taskbacklog.update')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
@@ -381,3 +389,17 @@ Route::get('notification/{user_id}', [TaskNotificationController::class, 'getNot
 Route::post('notification/new', [TaskNotificationController::class, 'saveNew'])->name('notification.new')->middleware('auth');
 Route::put('notification/read/{id}', [TaskNotificationController::class, 'wasReadNotification'])->name('notification.wasread')->middleware('auth');
 Route::delete('notification/remove/{id}', [TaskNotificationController::class, 'deleteNotification'])->name('notification.delete')->middleware('auth');
+
+// Notes
+Route::get('p/note/{uid}', [ProjectsController::class, 'viewNotes'])->name('projects.view.notes')->middleware('auth');
+Route::post('notes/new', [NotesController::class, 'saveNote'])->name('notes.new')->middleware('auth');
+Route::post('notes/update/{id}', [NotesController::class, 'updateNote'])->name('notes.update')->middleware('auth');
+Route::delete('notes/delete/{id}', [NotesController::class, 'deleteNote'])->name('notes.delete')->middleware('auth');
+Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');
+
+//sublist
+Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.new')->middleware('auth');
+Route::post('sublist/update/{id}', [SublistController::class, 'update'])->name('sublist.update')->middleware('auth');
+Route::get('sublist/list/{listid}', [SublistController::class, 'itemListByListId'])->name('sublist.getbylistid')->middleware('auth');
+
+Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');

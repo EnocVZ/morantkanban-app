@@ -37,6 +37,10 @@ class BoardList extends Model
         return $this->hasMany(Task::class, 'list_id');
     }
 
+    public function sublist(){
+        return $this->hasMany(BoardSublist::class, 'list_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -49,4 +53,10 @@ class BoardList extends Model
             });
         });
     }
+
+    public function tasksWithoutSubcategory()
+{
+    return $this->hasMany(Task::class, 'list_id')
+                ->whereNull('sublist_id'); // Solo tareas sin subcategoría
+}
 }

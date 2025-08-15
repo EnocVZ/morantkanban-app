@@ -17,6 +17,9 @@ use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
+use App\Models\BoardSublist;
+use App\Models\BasicStatus;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +28,10 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
 
+use App\Models\Note;
+
 class ProjectsController extends Controller {
+    public $taskstatus = ['Backlog','Por hacer', 'En progreso', 'Hecho', 'Archivado'];
     public function index(){
         return Inertia::render('Projects/Index', [
             'title' => 'Proyectos',
@@ -50,6 +56,16 @@ class ProjectsController extends Controller {
         }
         $project->slug = $slug;
         $project->save();
+
+        foreach ($this->taskstatus as $index => $status) {
+            BoardList::create([
+                'title' => $status,
+                'project_id' => $project->id,
+                'user_id' => auth()->id(), // si necesitas asignar el usuario
+                'order' => $index,
+                'is_basic' => 1
+            ]);
+        }
 
         return response()->json($project);
     }
@@ -140,40 +156,78 @@ class ProjectsController extends Controller {
 
     public function view($uid, Request $request){
         $auth_id = auth()->id();
-        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $requests = $request->all();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        $basicStatus = BasicStatus::where('workspace_id', $project->workspace_id)->get()->toArray();
+        $existingBasicStatus = false;
+
+        if(empty($basicStatus)){
+            $existingTitles = BoardList::whereIn('title', $this->taskstatus)
+            ->where('is_basic', 1)
+            ->where('project_id', $project->id)
+            ->pluck('title')
+            ->toArray();
+            if(!empty($existingTitles)){
+              $existingBasicStatus = true;  
+            }
+        }
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
-        $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
+        $board_lists = BoardList::where('project_id', $project->id)
+                    ->with([
+                        'sublist.tasklist' => function ($query) use ($project) {
+                            $query->isOpen()
+                                ->byProject($project->id)
+                                ->with([
+                                    'taskLabels.label',
+                                    'timer',
+                                    'cover',
+                                    'assignees',
+                                ])
+                                ->withCount([
+                                    'checklistDone',
+                                    'comments',
+                                    'checklists',
+                                    'attachments',
+                                ])
+                                ->orderByOrder();
+                        },
+                        'tasksWithoutSubcategory' => function ($query) use ($project) {
+                            $query->isOpen()
+                                ->byProject($project->id)
+                                ->with([
+                                    'taskLabels.label',
+                                    'timer',
+                                    'cover',
+                                    'assignees',
+                                ])
+                                ->withCount([
+                                    'checklistDone',
+                                    'comments',
+                                    'checklists',
+                                    'attachments',
+                                ])
+                                ->orderByOrder();
+                        }
+                    ])
+                    ->isOpen()
+                    ->orderByOrder()
+                    ->get()
+                    ->map(function ($boardList) {
+                        $tasksInSublist = $boardList->sublist->sum(fn($sub) => $sub->tasklist->count());
+                        $tasksWithoutSub = $boardList->tasksWithoutSubcategory->count();
+                        $boardList->total_tasks = $tasksInSublist + $tasksWithoutSub;
+                        return $boardList;
+                    })
+                    ->toArray();
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
-        foreach ($board_lists as &$listItem){
-            $list_index[$listItem['id']] = $loopIndex;
-            $listItem['tasks'] = [];
-            $loopIndex+= 1;
-        }
+       
         if($project->is_private && (auth()->user()['role_id'] != 1)){
             $requests['private_task'] = $auth_id;
         }
-        $tasks = Task::filter($requests)
-            ->isOpen()
-            ->byProject($project->id)
-            ->with('taskLabels.label')
-            ->with('timer')
-            ->whereHas('list')
-            ->with('cover')
-            ->withCount('checklistDone')
-            ->withCount('comments')
-            ->withCount('checklists')
-            ->withCount('attachments')->with('assignees')
-            ->orderByOrder()->get()->toArray();
-        foreach ($tasks as $task){
-            if(isset($list_index[$task['list_id']])){
-                $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
-            }
-        }
-//        dd($board_lists);
+        
         return Inertia::render('Projects/View', [
             'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
@@ -181,8 +235,8 @@ class ProjectsController extends Controller {
             'list_index' => $list_index,
             'filters' => $requests,
             'project' => $project,
-            'tasks' => $tasks,
             'notification'=>$notification,
+            'existingBasicStatus' => $existingBasicStatus,
         ]);
     }
 
@@ -283,6 +337,7 @@ class ProjectsController extends Controller {
             ->whereHas('list')
             ->with('assignees')
             ->with('list')
+            ->with('sublist')
             ->orderByOrder()
             ->get()->toArray();
         foreach ($tasks as $task){
@@ -455,6 +510,73 @@ class ProjectsController extends Controller {
         try {
             $project = Project::where('workspace_id', $id)->get()->toArray();
             return MethodHelper::successResponse($project);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function viewNotes($uid, Request $request){
+
+        $requests = $request->all();
+        $auth_id = auth()->id();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
+        $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        $list_index = [];
+        $notes = Note::where('project_id', $project->id)
+         ->orderBy('id', 'desc')
+        ->get()
+        ->toArray();
+        
+       
+        return Inertia::render('Notes/Index', [
+            'title' => 'Notes | '.$project->title,
+            'list_index' => $list_index,
+            'project' => $project,
+            'filters' => $requests,
+            'notes' => $notes,
+        ]);
+
+    }
+
+    public function viewBacklog($uid, Request $request){
+
+        $requests = $request->all();
+        $auth_id = auth()->id();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
+        $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        $list_index = [];
+        $notes = Note::where('project_id', $project->id)
+         ->orderBy('id', 'desc')
+        ->get()
+        ->toArray();
+        
+       
+        return Inertia::render('Projects/Backlog', [
+            'title' => 'Backlog | '.$project->title,
+            'list_index' => $list_index,
+            'project' => $project,
+            'filters' => $requests,
+            'notes' => $notes,
+        ]);
+
+    }
+
+    public function generateBasicStatus($project_id){
+        try {
+            foreach ($this->taskstatus as $index => $status) {
+                BoardList::create([
+                    'title' => $status,
+                    'project_id' => $project_id,
+                    'user_id' => auth()->id(),
+                    'order' => $index,
+                    'is_basic' => 1
+                ]);
+            }
+            $board_lists = BoardList::where('project_id', $project_id)
+                ->where('is_basic', 1)
+                ->get()
+                ->toArray();
+        return MethodHelper::successResponse($board_lists);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
