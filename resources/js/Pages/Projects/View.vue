@@ -610,7 +610,7 @@ export default {
                 this.saveNewSublist(e.item.dataset.id, resquest)
                 
             }
-            const list_items = new_list.concat(previous_list);
+            //const list_items = new_list.concat(previous_list);
             if (e.to.dataset.id !== 'null') {
                // this.saveOrder(list_items)
             }

@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use App\Models\User;
 use App\Models\BoardSublist;
 
+
 use App\Helpers\MethodHelper;
 
 class SublistController extends Controller
@@ -28,6 +29,9 @@ class SublistController extends Controller
         try {
             $requestData = $request->all();
             $sublist = BoardSublist::where('id',$id)->first();
+            $task = Task::where('sublist_id', $id)->update([
+                'list_id' => $requestData['list_id'],
+            ]);
             $sublist->update($requestData);
             return MethodHelper::successResponse($sublist);
         } catch (\Exception $e) {
