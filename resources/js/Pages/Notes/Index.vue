@@ -41,7 +41,7 @@
             </div>
 
             <textarea v-model="note.details"
-              class="w-full bg-transparent p-2 border-none overflow-hidden focus:outline-none h-48"
+              class="w-full bg-transparent p-2 border-none overflow-hidden focus:outline-none min-h-48  h-48"
               placeholder="Escribe tu nota aquí..." rows="1"></textarea>
             <div class="flex justify-end gap-2 mt-2">
               <loading-button :loading="loadingSave" class="text-sm text-blue-600 " @click="saveNote">Guardar
@@ -51,7 +51,7 @@
             </div>
           </div>
 
-          <!-- Nota 1 -->
+          <!-- Nota  -->
           <div v-for="note in listNote" :key="note.id" :class="[note.color, 'text-black p-4 rounded relative shadow']">
             <div class="flex justify-end">
               <div class="relative inline-block text-left">
@@ -100,7 +100,7 @@
             </div>
 
 
-            <div class="whitespace-pre-wrap h-48" v-if="!note.editNote">
+            <div class="whitespace-pre-wrap" v-if="!note.editNote">
               {{ note.details }}
             </div>
             <textarea v-model="note.details"

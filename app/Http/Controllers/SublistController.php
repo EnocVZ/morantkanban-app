@@ -34,4 +34,13 @@ class SublistController extends Controller
             return MethodHelper::errorResponse($e->getMessage());
         }
     }
+
+    public function itemListByListId($id){
+        try {
+            $sublist = BoardSublist::where('list_id',$id)->get();
+            return MethodHelper::successResponse($sublist);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
 }

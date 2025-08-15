@@ -18,6 +18,7 @@ use App\Models\Timer;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
 use App\Models\BoardSublist;
+use App\Models\BasicStatus;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ use App\Helpers\MethodHelper;
 use App\Models\Note;
 
 class ProjectsController extends Controller {
+    public $taskstatus = ['Backlog','Por hacer', 'En progreso', 'Hecho', 'Archivado'];
     public function index(){
         return Inertia::render('Projects/Index', [
             'title' => 'Proyectos',
@@ -54,14 +56,14 @@ class ProjectsController extends Controller {
         }
         $project->slug = $slug;
         $project->save();
-        $taskstatus = ['Backlog','Por hacer', 'En progreso', 'Hecho', 'Archivado'];
 
-        foreach ($taskstatus as $index => $status) {
+        foreach ($this->taskstatus as $index => $status) {
             BoardList::create([
                 'title' => $status,
                 'project_id' => $project->id,
                 'user_id' => auth()->id(), // si necesitas asignar el usuario
-                'order' => $index
+                'order' => $index,
+                'is_basic' => 1
             ]);
         }
 
@@ -154,9 +156,22 @@ class ProjectsController extends Controller {
 
     public function view($uid, Request $request){
         $auth_id = auth()->id();
-        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $requests = $request->all();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        $basicStatus = BasicStatus::where('workspace_id', $project->workspace_id)->get()->toArray();
+        $existingBasicStatus = false;
+
+        if(empty($basicStatus)){
+            $existingTitles = BoardList::whereIn('title', $this->taskstatus)
+            ->where('is_basic', 1)
+            ->where('project_id', $project->id)
+            ->pluck('title')
+            ->toArray();
+            if(!empty($existingTitles)){
+              $existingBasicStatus = true;  
+            }
+        }
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)
@@ -213,8 +228,6 @@ class ProjectsController extends Controller {
             $requests['private_task'] = $auth_id;
         }
         
-      
-//        dd($board_lists);
         return Inertia::render('Projects/View', [
             'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
@@ -223,6 +236,7 @@ class ProjectsController extends Controller {
             'filters' => $requests,
             'project' => $project,
             'notification'=>$notification,
+            'existingBasicStatus' => $existingBasicStatus,
         ]);
     }
 
@@ -323,6 +337,7 @@ class ProjectsController extends Controller {
             ->whereHas('list')
             ->with('assignees')
             ->with('list')
+            ->with('sublist')
             ->orderByOrder()
             ->get()->toArray();
         foreach ($tasks as $task){
@@ -544,5 +559,26 @@ class ProjectsController extends Controller {
             'notes' => $notes,
         ]);
 
+    }
+
+    public function generateBasicStatus($project_id){
+        try {
+            foreach ($this->taskstatus as $index => $status) {
+                BoardList::create([
+                    'title' => $status,
+                    'project_id' => $project_id,
+                    'user_id' => auth()->id(),
+                    'order' => $index,
+                    'is_basic' => 1
+                ]);
+            }
+            $board_lists = BoardList::where('project_id', $project_id)
+                ->where('is_basic', 1)
+                ->get()
+                ->toArray();
+        return MethodHelper::successResponse($board_lists);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
     }
 }

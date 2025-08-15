@@ -400,3 +400,6 @@ Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categ
 //sublist
 Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.new')->middleware('auth');
 Route::post('sublist/update/{id}', [SublistController::class, 'update'])->name('sublist.update')->middleware('auth');
+Route::get('sublist/list/{listid}', [SublistController::class, 'itemListByListId'])->name('sublist.getbylistid')->middleware('auth');
+
+Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');

@@ -47,6 +47,17 @@
                     </label>
                 </div>
                 <div class="flex">
+                    <div role="status" class="max-w-sm animate-pulse" v-if="loadSublist">
+                        <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                    </div>
+                    <label class="flex flex-col w-full text-left" v-else>
+                        <div>{{ __('Sub lista') }}</div>
+                        <select-input v-model="idSubList" class=" mr-2 w-full">
+                            <option v-for="(sublist, ti) in boardSublist" :key="ti" :value="sublist.id">{{ sublist.title }}</option>
+                        </select-input>
+                    </label>
+                </div>
+                <div class="flex">
                     <form-button @click="changeWorkSpace" label="Mover" :loading="loaderSave" loaderLabel="Moviendo" 
                      :disabled="!validButtonSave" v-show="optionToSave != 1"/>
                     
@@ -102,14 +113,17 @@ export default {
             loadProjects: false,
             loadBoardList: false,
             loadWorkspaces: false,
+            loadSublist: false,
             optionToSave: 0, // 0: no se ha guardado, 1: se guardó correctamente, 2: error al guardar
             workspaces: [],
             backgrounds: [],
             projects: [],
             boardList: [],
+            boardSublist:[],
             idWorkspace: 0,
             idProject: 0,
             idBoard: 0,
+            idSubList: 0,
             types: ['Desarrollo ', 'Ciencia de datos', 'IA', ' Encuestas', 'Ventas', 'Otros'],
         }
     },
@@ -119,6 +133,9 @@ export default {
         },
         idProject(newValue) {
             this.getBoardListByProject(newValue);
+        },
+        idBoard(newValue){
+            this.getBoardSubListByBoardID(newValue);
         }
         },
        
@@ -131,6 +148,7 @@ export default {
         getProjectsByWorkspace(workspaceId) {
             this.loadProjects = true;
             this.loadBoardList = true;
+            this.loadSublist = true;
             this.idProject = 0;
             this.idBoard = 0;
             axios.get(this.route('json.projects.all', workspaceId)).then((response) => {
@@ -138,21 +156,37 @@ export default {
             }).finally(()=>{
                 this.loadProjects = false;
                 this.loadBoardList = false;
+                this.loadSublist = false;
             });
         },
         getBoardListByProject(projectId) {
             this.loadBoardList = true;
+            this.loadSublist = true;
             axios.get(this.route('boardlist.all', projectId)).then((response) => {
                 this.boardList = response.data.data;
             }).finally(() => {
                 this.idBoard = 0;
                 this.loadBoardList = false;
+                this.loadSublist = false;
+            });
+        },
+        getBoardSubListByBoardID(idBoard) {
+            this.loadSublist = true;
+            axios.get(this.route('sublist.getbylistid', idBoard)).then((resp) => {
+                const response = resp.data;
+                if (!response.error) {
+                    this.boardSublist = response.data;
+                }
+               // this.boardList = response.data.data;
+            }).finally(() => {
+                this.loadSublist = false;
             });
         },
         changeWorkSpace() {
             const REQUEST = {
                list_id: this.idBoard,
                project_id: this.idProject,
+               sublist_id: this.idSubList
             };
             this.loaderSave = true;
             axios.post(this.route('task.list.change', this.taskId), REQUEST).then((response) => {

@@ -246,6 +246,8 @@ export default {
         onClickEdit(e,project, project_index){
             this.project_index = project_index
             this.editProject = true
+            console.log('project', project);
+            
             this.projectSelected = project
             e.preventDefault();
         },

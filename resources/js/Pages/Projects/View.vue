@@ -75,13 +75,30 @@
                     </div><span class="sr-only">Loading...</span>
                 </div>
             </div>
-            <div v-else class="board_width" :class="{ 'v_label': showLabelName }">
+            <div v-else :class="{ 'v_label': showLabelName }">
+                <div class="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg" v-show="!existingBasicStatus">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+
+                    <div class="flex text-gray-700 font-medium">
+                        No cuentas con las columnas básicas. 
+                        <loading-button :loading="loaderBasicStatus"
+                            class="bg-indigo-600 hover:bg-indigo-700 inline-flex items-center ml-2 px-3 py-0.5 rounded-md text-white text-xs"
+                            @click="generateBasicStatus">
+                            Generar
+                        </loading-button>
+                    </div>
+                </div>
+
                 <!-- Componente Kanban con subcolumnas -->
                 <div class="flex space-x-4 overflow-x-auto p-4  min-h-screen">
                     <div v-for="(column, index) in lists" :key="index"
                         class="bg-white rounded-xl shadow-md w-96 flex flex-col">
                         <div class="flex justify-between p-4 border-b">
                             <h2 class="text-lg font-semibold">{{ column.title }}</h2>
+                            <button @click="makeListArchive(column.id)" class="text-red-700" v-show="column.is_basic == 0">Eliminar</button>
                             <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
                             aria-label="Total de tareas">{{ column?.total_tasks || 0 }}</span>
                         </div>
@@ -93,7 +110,7 @@
 
                                     <!-- Título con botón de colapsar -->
                                     <div class="flex justify-between items-center handle cursor-move">
-                                        <div class="flex w-full text-sm font-semibold"><span class="px-2 py-1 w-full" contenteditable="true">{{ sub.title }}</span></div>
+                                        <div class="flex w-full text-sm font-semibold"><span class="px-2 py-1 w-full">{{ sub.title }}</span></div>
                                         <div class="flex items-center gap-2">
                                             <span
                                                 class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
@@ -112,11 +129,10 @@
                                             @end="afterDrop($event)">
                                             <template #item="{ element, indexTsk }">
                                                 <li :key="indexTsk" :id="element.id" :data-id="element.id"
-                                                    @click="taskDetailsPopup(element.id)"
-                                                    class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
+                                                class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
                                                     <!-- Etiquetas -->
                                                     <div v-if="element.task_labels.length"
-                                                        class="mb-2 flex flex-wrap gap-1">
+                                                        class="mb-2 flex flex-wrap gap-1"  @click="taskDetailsPopup(element.id)">
                                                         <button v-for="(la, l_index) in element.task_labels"
                                                             :key="l_index"
                                                             class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
@@ -127,9 +143,26 @@
                                                     </div>
 
                                                     <!-- Título -->
-                                                    <div class="font-medium text-sm text-gray-800 mb-2">{{ element.title
-                                                        }}</div>
+                                                        <div class="flex justify-between items-center handle cursor-move">
+                                                            <span class="flex font-medium text-sm text-gray-800 mb-2">{{ element.title }}</span>
+                                                            <div class="flex items-center gap-2">
+                                                                
+                                                                <dropdown className="rounded" placement="bottom-end">
+                                                                    <template #default>
+                                                                        <div class="flex items-center cursor-pointer group">
+                                                                            <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400" name="more" />
+                                                                        </div>
+                                                                    </template>
+                                                                    <template #dropdown>
+                                                                        <div class="shadow-xl bg-white rounded text-sm ">
+                                                                            <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white" @click="changeWorkspace(element)"><icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Cambiar de espacio de trabajo') }}</a>
+                                                                        </div>
+                                                                    </template>
+                                                                </dropdown>
+                                                            </div>
 
+                                                        </div>
+                                                    
                                                     <!-- Footer -->
                                                     <div
                                                         class="flex flex-wrap items-center text-gray-500 text-xs gap-3">
@@ -266,7 +299,7 @@
 
                                                     <!-- Título -->
                                                     <div class="font-medium text-sm text-gray-800 mb-2">{{ element.title
-                                                        }}</div>
+                                                        }} </div>
 
                                                     <!-- Footer -->
                                                     <div
@@ -356,7 +389,7 @@
         <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
             @openTask="(id) => taskDetailsPopup(id)" />
         <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
-
+<
     </div>
 </template>
 
@@ -376,10 +409,11 @@ import RightMenu from "../../Shared/RightMenu";
 import axios from 'axios'
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 import LoadingButton from '@/Shared/LoadingButton'
+import Dropdown from '@/Shared/Dropdown'
 
 export default {
     metaInfo: { title: 'Dashboard' },
-    components: { RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, BoardViewMenu, ChangeWorkspace, LoadingButton },
+    components: { RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, BoardViewMenu, ChangeWorkspace, LoadingButton,Dropdown },
     layout: Layout,
     props: {
         auth: Object,
@@ -393,6 +427,10 @@ export default {
         },
         task: {
             required: false
+        },
+        existingBasicStatus: {
+            type: Boolean,
+            default: false
         },
     },
     remember: 'form',
@@ -426,24 +464,13 @@ export default {
                 changeWorkspace: false,
             },
             taskId: 0,
-            tabs: [
-                "Todas",
-                "Tareas",
-                "Calendario",
-                "Miembros",
-                "Ajustes",
-                "Otro Tab",
-            ],
-            tabOptions: {
-                1: 0,
-                2: 0,
-                3: 0
-            },
+            
             formSublist: {
                 title: '',
                 list_id: 0,
             },
             draggingChild: false,
+            loaderBasicStatus: false,
 
         }
     },
@@ -457,6 +484,8 @@ export default {
                 this.$inertia.get(this.route('projects.view.board', this.project.slug || this.project.id), pickBy(this.form), { preserveState: true })
             }, 150),
         },
+    },
+    mounted(){
     },
     created() {
         this.moment = moment
@@ -535,11 +564,10 @@ export default {
             }
         },
 
-        makeListArchive(e, id, index) {
-            e.preventDefault();
+        makeListArchive(id) {
             axios.post(this.route('json.list.archive', id)).then((response) => {
                 if (response.data) {
-                    this.lists.splice(index, 1)
+                    this.$inertia.reload({ preserveState: false });
                 }
             })
         },
@@ -676,17 +704,14 @@ export default {
         log: function (evt) {
             window.console.log(evt);
         },
-        changeWorkspace(event, element) {
-            event.preventDefault();
-            event.stopPropagation();
-            element.show_more = false
+        changeWorkspace( element) {
             this.taskId = element.id;
             this.visible.changeWorkspace = true;
         },
         onCloseChangeWorkSpace(success = false) {
             this.visible.changeWorkspace = false;
             if (success) {
-                this.$inertia.reload({ preserveState: true });
+                this.$inertia.reload({ preserveState: false });
             }
         },
 
@@ -765,6 +790,19 @@ export default {
                 }
             }).catch((error) => {
                 console.log(error)
+            })
+        },
+        generateBasicStatus(){
+            this.loaderBasicStatus = true;
+            axios.post(this.route('project.generate.basicstatus', this.project.id), {}).then((response) => {
+                if (response && response.data) {
+                    
+                }
+            }).catch((error) => {
+                console.log(error)
+            }).finally(() => {
+                this.loaderBasicStatus = false;
+                this.$inertia.reload({ preserveState: false });
             })
         }
     },
