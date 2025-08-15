@@ -129,10 +129,11 @@
                                             @end="afterDrop($event)">
                                             <template #item="{ element, indexTsk }">
                                                 <li :key="indexTsk" :id="element.id" :data-id="element.id"
+                                                :data-column="column.id"
                                                 class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
                                                     <!-- Etiquetas -->
                                                     <div v-if="element.task_labels.length"
-                                                        class="mb-2 flex flex-wrap gap-1"  @click="taskDetailsPopup(element.id)">
+                                                        class="mb-2 flex flex-wrap gap-1">
                                                         <button v-for="(la, l_index) in element.task_labels"
                                                             :key="l_index"
                                                             class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
@@ -144,7 +145,7 @@
 
                                                     <!-- Título -->
                                                         <div class="flex justify-between items-center handle cursor-move">
-                                                            <span class="flex font-medium text-sm text-gray-800 mb-2">{{ element.title }}</span>
+                                                            <span class="flex font-medium text-sm text-gray-800 mb-2 cursor-pointer" @click="taskDetailsPopup(element.id)">{{ element.title }}</span>
                                                             <div class="flex items-center gap-2">
                                                                 
                                                                 <dropdown className="rounded" placement="bottom-end">
@@ -621,11 +622,11 @@ export default {
             const resquest = {
                 updatedlist_at: new Date(),
                 sublist_id: e.to.dataset.id,
-                userupdate_list: this.auth.user.id
+                userupdate_list: this.auth.user.id,
+                list_id:e.item.dataset.column
             };
 
             if (!!e.pullMode) {
-                resquest.list_id = e.to.dataset.id;
                 previous_list = this.newSortedItems(e, 'from');
                 if (e.to.dataset.id !== 'null') {
                     this.saveTask(e.item.dataset.id, resquest)

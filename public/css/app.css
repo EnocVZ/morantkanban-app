@@ -1540,9 +1540,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .grid {
   display: grid;
 }
-.contents {
-  display: contents;
-}
 .hidden {
   display: none;
 }
@@ -1637,14 +1634,14 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .max-h-full {
   max-height: 100%;
 }
+.min-h-48 {
+  min-height: 12rem;
+}
 .min-h-\[30vh\] {
   min-height: 30vh;
 }
 .min-h-screen {
   min-height: 100vh;
-}
-.min-h-48 {
-  min-height: 12rem;
 }
 .w-1\/2 {
   width: 50%;
@@ -2979,10 +2976,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .hover\:text-blue-600:hover {
   --tw-text-opacity: 1;
   color: rgb(37 99 235 / var(--tw-text-opacity));
-}
-.hover\:text-blue-800:hover {
-  --tw-text-opacity: 1;
-  color: rgb(30 64 175 / var(--tw-text-opacity));
 }
 .hover\:text-dark:hover {
   --tw-text-opacity: 1;
