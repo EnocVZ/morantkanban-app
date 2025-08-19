@@ -159,68 +159,11 @@ class ProjectsController extends Controller {
         $requests = $request->all();
         $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
-        $basicStatus = BasicStatus::where('workspace_id', $project->workspace_id)->get()->toArray();
-        $existingBasicStatus = false;
+        
 
-        if(empty($basicStatus)){
-            $existingTitles = BoardList::whereIn('title', $this->taskstatus)
-            ->where('is_basic', 1)
-            ->where('project_id', $project->id)
-            ->pluck('title')
-            ->toArray();
-            if(!empty($existingTitles)){
-              $existingBasicStatus = true;  
-            }
-        }
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
-        $board_lists = BoardList::where('project_id', $project->id)
-                    ->with([
-                        'sublist.tasklist' => function ($query) use ($project) {
-                            $query->isOpen()
-                                ->byProject($project->id)
-                                ->with([
-                                    'taskLabels.label',
-                                    'timer',
-                                    'cover',
-                                    'assignees',
-                                ])
-                                ->withCount([
-                                    'checklistDone',
-                                    'comments',
-                                    'checklists',
-                                    'attachments',
-                                ])
-                                ->orderByOrder();
-                        },
-                        'tasksWithoutSubcategory' => function ($query) use ($project) {
-                            $query->isOpen()
-                                ->byProject($project->id)
-                                ->with([
-                                    'taskLabels.label',
-                                    'timer',
-                                    'cover',
-                                    'assignees',
-                                ])
-                                ->withCount([
-                                    'checklistDone',
-                                    'comments',
-                                    'checklists',
-                                    'attachments',
-                                ])
-                                ->orderByOrder();
-                        }
-                    ])
-                    ->isOpen()
-                    ->orderByOrder()
-                    ->get()
-                    ->map(function ($boardList) {
-                        $tasksInSublist = $boardList->sublist->sum(fn($sub) => $sub->tasklist->count());
-                        $tasksWithoutSub = $boardList->tasksWithoutSubcategory->count();
-                        $boardList->total_tasks = $tasksInSublist + $tasksWithoutSub;
-                        return $boardList;
-                    })
-                    ->toArray();
+        $board_lists = $this->boardListWithDetails($project);
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
        
@@ -236,8 +179,88 @@ class ProjectsController extends Controller {
             'filters' => $requests,
             'project' => $project,
             'notification'=>$notification,
-            'existingBasicStatus' => $existingBasicStatus,
+            'existBasicList' => $this->validateIfExistList($project),
         ]);
+    }
+
+    private function validateIfExistList($project){
+        $existingBasicStatus = false;
+        $basicStatus = BasicStatus::where('workspace_id', $project->workspace_id)
+        ->pluck('title')
+        ->toArray();
+
+
+        $createdBasicList = BoardList::whereIn('title', $this->taskstatus)
+        ->where('is_basic', 1)
+        ->where('project_id', $project->id)
+        ->pluck('title')
+        ->toArray();
+
+        if(!empty($createdBasicList)){
+            $existingBasicStatus = true;  
+        }else{
+             $createdBasicListFromTable = BoardList::whereIn('title', $this->basicStatus)
+            ->where('is_basic', 1)
+            ->where('project_id', $project->id)
+            ->pluck('title')
+            ->toArray();
+            if(!empty($createdBasicListFromTable)){
+                $existingBasicStatus = true;  
+            }
+        }
+        return $existingBasicStatus;
+    }
+
+    private function boardListWithDetails($project){
+        $projectId = $project->id;
+        $board_lists = BoardList::where('project_id', $projectId)
+                        ->with([
+                            'sublist.tasklist' => function ($query) use ($projectId) {
+                                $query->isOpen()
+                                    ->byProject($projectId)
+                                    ->with([
+                                        'taskLabels.label',
+                                        'timer',
+                                        'cover',
+                                        'assignees',
+                                    ])
+                                    ->withCount([
+                                        'checklistDone',
+                                        'comments',
+                                        'checklists',
+                                        'attachments',
+                                    ])
+                                    ->orderByOrder();
+                            },
+                            'tasksWithoutSubcategory' => function ($query) use ($projectId) {
+                                $query->isOpen()
+                                    ->byProject($projectId)
+                                    ->with([
+                                        'taskLabels.label',
+                                        'timer',
+                                        'cover',
+                                        'assignees',
+                                    ])
+                                    ->withCount([
+                                        'checklistDone',
+                                        'comments',
+                                        'checklists',
+                                        'attachments',
+                                    ])
+                                    ->orderByOrder();
+                            }
+                        ])
+                        ->isOpen()
+                        ->orderByOrder()
+                        ->get()
+                        ->map(function ($boardList) {
+                            $tasksInSublist = $boardList->sublist->sum(fn($sub) => $sub->tasklist->count());
+                            $tasksWithoutSub = $boardList->tasksWithoutSubcategory->count();
+                            $boardList->total_tasks = $tasksInSublist + $tasksWithoutSub;
+                            return $boardList;
+                        })
+                        ->toArray();
+        return $board_lists;
     }
 
     public function viewWithTask($projectUid, $taskUid, Request $request){
@@ -563,6 +586,12 @@ class ProjectsController extends Controller {
 
     public function generateBasicStatus($project_id){
         try {
+            $project = Project::where('id', $project_id)->first();
+            $existingBasicStatus = $this->validateIfExistList($project);
+
+            if($existingBasicStatus){
+                return MethodHelper::successResponse([], 'Ya existen los estados básicos en este proyecto.');  
+            }
             foreach ($this->taskstatus as $index => $status) {
                 BoardList::create([
                     'title' => $status,
@@ -576,7 +605,21 @@ class ProjectsController extends Controller {
                 ->where('is_basic', 1)
                 ->get()
                 ->toArray();
-        return MethodHelper::successResponse($board_lists);
+            return MethodHelper::successResponse($board_lists);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function getBoarListData($projectId){
+        try {
+            $project = Project::where('id', $projectId)->first();
+            $board_lists = $this->boardListWithDetails($project);
+            $existingBasicStatus = $this->validateIfExistList($project);
+            return MethodHelper::successResponse([
+                'items' => $board_lists,
+                'existingBasicStatus' => $existingBasicStatus
+            ]);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }

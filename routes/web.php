@@ -403,3 +403,4 @@ Route::post('sublist/update/{id}', [SublistController::class, 'update'])->name('
 Route::get('sublist/list/{listid}', [SublistController::class, 'itemListByListId'])->name('sublist.getbylistid')->middleware('auth');
 
 Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');
+Route::get('project/boardlists/{project_id}', [ProjectsController::class, 'getBoarListData'])->name('project.boardlists.data')->middleware('auth');
