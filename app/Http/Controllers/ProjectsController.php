@@ -199,7 +199,7 @@ class ProjectsController extends Controller {
         if(!empty($createdBasicList)){
             $existingBasicStatus = true;  
         }else{
-             $createdBasicListFromTable = BoardList::whereIn('title', $this->basicStatus)
+             $createdBasicListFromTable = BoardList::whereIn('title', $basicStatus)
             ->where('is_basic', 1)
             ->where('project_id', $project->id)
             ->pluck('title')
