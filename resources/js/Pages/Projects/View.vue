@@ -98,11 +98,15 @@
                         class="bg-white rounded-xl shadow-md w-96 flex flex-col">
                         <div class="flex justify-between p-4 border-b">
                             <h2 class="text-lg font-semibold">{{ column.title }}</h2>
-                            <button @click="makeListArchive(column.id)" class="text-red-700" v-show="column.is_basic == 0">Eliminar</button>
+                            <loading-button :loading="column.loaderDelete"
+                                class="bg-red-500 hover:bg-red-600 inline-flex items-center ml-2 px-3 py-0.5 rounded-md text-white text-xs"
+                                @click="makeListArchive(column.id, index)" v-show="column.is_basic == 0">
+                                Eliminar
+                            </loading-button>
                             <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
                             aria-label="Total de tareas">{{ column?.total_tasks || 0 }}</span>
                         </div>
-                        <draggable :data-id="column.id" v-model="column.sublist" :group="{ name: 'sublist', pull: true, put: true }"
+                        <draggable :data-id="column.id" :list="column.sublist" group="sublistgroup"
                             item-key="id" handle=".handle" class="flex flex-col gap-4 p-4 overflow-y-auto"
                             :disabled="draggingChild" @end="afterDropSublist($event,column)">
                             <template #item="{ element: sub, index:subcolumnIndex }">
@@ -130,7 +134,7 @@
                                             <template #item="{ element, indexTsk }">
                                                 <li :key="indexTsk" :id="element.id" :data-id="element.id"
                                                 :data-column="column.id"
-                                                class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
+                                                class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50  cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
                                                     <!-- Etiquetas -->
                                                     <div v-if="element.task_labels.length"
                                                         class="mb-2 flex flex-wrap gap-1">
@@ -411,7 +415,6 @@ import axios from 'axios'
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 import LoadingButton from '@/Shared/LoadingButton'
 import Dropdown from '@/Shared/Dropdown'
-import { list } from 'postcss'
 
 export default {
     metaInfo: { title: 'Dashboard' },
@@ -430,7 +433,7 @@ export default {
         task: {
             required: false
         },
-        existingBasicStatus: {
+        existBasicList: {
             type: Boolean,
             default: false
         },
@@ -478,6 +481,7 @@ export default {
         }
     },
     computed: {
+        
 
     },
     watch: {
@@ -512,6 +516,7 @@ export default {
             this.taskDetailsPopup(this.filters.task)
         }
         this.lists = this.proyectLists || [];
+        this.existingBasicStatus = this.existBasicList;
     },
     methods: {
         getDoneCount(list) {
@@ -568,11 +573,14 @@ export default {
             }
         },
 
-        makeListArchive(id) {
-            axios.post(this.route('json.list.archive', id)).then((response) => {
-                if (response.data) {
-                    this.$inertia.reload({ preserveState: false });
+        makeListArchive(id, listIndex) {
+            this.lists[listIndex].loaderDelete = true;
+            axios.post(this.route('json.list.archive', id)).then(async(response) => {
+                if (!response?.data?.error) {
+                    await this.getBoardLists();
                 }
+            }).finally(() => {
+                this.lists[listIndex].loaderDelete = false;
             })
         },
         makeArchive(e, id, tasks, index) {
@@ -593,7 +601,6 @@ export default {
         },
         changeBoardTitle(id, title) {
             axios.post(this.route('board.update', id), { title }).then((response) => {
-                console.log(response)
             }).catch((error) => {
                 console.log(error)
             })
@@ -725,15 +732,7 @@ export default {
                 return task.sublist_id === selectedTab
             })
         },
-        onSelectTab(key, value) {
-            this.tabOptions[value] = key
-            console.log('onSelectTab', key, value, this.tabOptions);
-        },
         //new functions
-        toggleSubcolumn(columnIndex, subIndex) {
-            const sub = this.lists[columnIndex].sublist[subIndex];
-            sub.isOpen = !sub.isOpen;
-        },
         addSubcolumn(columnIndex) {
             const column = this.lists[columnIndex]
             column.newsubcolumn = !column.newsubcolumn;
@@ -788,52 +787,39 @@ export default {
             })
         },
         saveNewSublist(sublistId, request) {
-            axios.post(this.route('sublist.update', sublistId), request).then((response) => {
-                console.log(response?.data)
+            axios.post(this.route('sublist.update', sublistId), request).then(async(response) => {
                 if (!response?.data?.error) {
-                   // this.$inertia.reload({ preserveState: false });
+                    //await this.getBoardLists();
+                   //this.goToLink(this.route('projects.view.board', this.project.id));
                 }
             }).catch((error) => {
                 console.log(error)
             })
         },
-        generateBasicStatus(){
+        async generateBasicStatus(){
             this.loaderBasicStatus = true;
-            axios.post(this.route('project.generate.basicstatus', this.project.id), {}).then((response) => {
-                if (response && response.data) {
-                    
+            axios.post(this.route('project.generate.basicstatus', this.project.id), {}).then(async (response) => {
+                if (!response?.data?.error) {
+                    await this.getBoardLists();
                 }
             }).catch((error) => {
                 console.log(error)
             }).finally(() => {
+                //this.$inertia.reload({ preserveState: false });
                 this.loaderBasicStatus = false;
-                this.$inertia.reload({ preserveState: false });
+            })
+        },
+
+        async getBoardLists(){
+            await axios.get(this.route('project.boardlists.data', this.project.id)).then((response) => {
+                if (!response?.data?.error) {
+                    this.lists = response.data.data.items;
+                    this.existingBasicStatus = response.data.data.existingBasicStatus;
+                }
+            }).catch((error) => {
+                console.log(error)
             })
         }
     },
 }
 </script>
-<style scoped>
-.noScroll {
-    overflow-y: hidden;
-    overflow-x: auto;
-}
-
-.option__task {
-    top: 0px;
-    right: 0px;
-    z-index: 10;
-    margin-top: 0.25rem;
-    margin-right: 0.25rem;
-    /* height: 1.25rem; */
-    /* width: 1.25rem; */
-    /* align-items: center; */
-    justify-content: center;
-    border-radius: 0.25rem;
-    --tw-bg-opacity: 1;
-    background-color: rgb(226 232 240 / var(--tw-bg-opacity));
-    --tw-text-opacity: 1;
-    color: rgb(51 65 85 / var(--tw-text-opacity));
-    position: absolute;
-}
-</style>
