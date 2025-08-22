@@ -113,8 +113,13 @@
                                 <div class="li_sublist bg-gray-100 p-3 rounded-md shadow-inner " :id="sub.id" :data-id="sub.id">
 
                                     <!-- Título con botón de colapsar -->
-                                    <div class="flex justify-between items-center handle cursor-move">
-                                        <div class="flex w-full text-sm font-semibold"><span class="px-2 py-1 w-full">{{ sub.title }}</span></div>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <icon class="w-4 h-4 handle cursor-move" name="move" />
+                                        </div>
+                                        <div class="flex w-full text-sm font-semibold">
+                                            <span class="px-2 py-1 w-full" contenteditable="true"  @keypress="saveSublistTitle($event,sub.id)" @blur="saveSublistTitle($event,sub.id )">{{ sub.title }}</span>
+                                        </div>
                                         <div class="flex items-center gap-2">
                                             <span
                                                 class="inline-flex items-center justify-center px-2 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
@@ -123,6 +128,20 @@
                                                 class="text-xs text-indigo-600 hover:underline">
                                                 {{ sub.isOpen ? 'Ocultar' : 'Mostrar' }}
                                             </button>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <dropdown className="rounded" placement="bottom-end">
+                                                <template #default>
+                                                    <div class="flex items-center cursor-pointer group">
+                                                        <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400" name="more" />
+                                                    </div>
+                                                </template>
+                                                <template #dropdown>
+                                                    <div class="shadow-xl bg-white rounded text-sm ">
+                                                        <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white" @click="onSelectSublistOption(sub, 1)"><icon class="w-4 h-4 mr-2" name="trash" /> {{ __('Eliminar') }}</a>
+                                                    </div>
+                                                </template>
+                                            </dropdown>
                                         </div>
 
                                     </div>
@@ -589,18 +608,24 @@ export default {
             this.saveTask(id, { is_archive: 1 });
             tasks.splice(index, 1)
         },
-        saveListTitle(e, board_id) {
+        saveSublistTitle(e, board_id) {
             if (e.keyCode === 13 || e.type === 'blur') {
                 e.preventDefault();
                 e.target.blur();
                 if (e.target.innerText) {
                     const title = e.target.innerText.replace(/[^a-zA-Z0-9 _-]/g, "");
-                    this.changeBoardTitle(board_id, title);
+                    if (title.length > 0) {
+                        this.updateSublistInfo(board_id, {title:title}, false);
+                    } 
                 }
             }
         },
-        changeBoardTitle(id, title) {
-            axios.post(this.route('board.update', id), { title }).then((response) => {
+        updateSublistInfo(id, request, reloadSublist = true) {
+            axios.put(this.route('sublist.update.row', id), request).then((response) => {
+                if (!response?.data?.error && reloadSublist) {
+                    this.getBoardLists();
+                }
+
             }).catch((error) => {
                 console.log(error)
             })
@@ -789,8 +814,6 @@ export default {
         saveNewSublist(sublistId, request) {
             axios.post(this.route('sublist.update', sublistId), request).then(async(response) => {
                 if (!response?.data?.error) {
-                    //await this.getBoardLists();
-                   //this.goToLink(this.route('projects.view.board', this.project.id));
                 }
             }).catch((error) => {
                 console.log(error)
@@ -805,7 +828,6 @@ export default {
             }).catch((error) => {
                 console.log(error)
             }).finally(() => {
-                //this.$inertia.reload({ preserveState: false });
                 this.loaderBasicStatus = false;
             })
         },
@@ -819,6 +841,12 @@ export default {
             }).catch((error) => {
                 console.log(error)
             })
+        },
+        
+        onSelectSublistOption(sublist, option){
+            if(option === 1){
+                this.updateSublistInfo(sublist.id, {archived: 1});
+            }
         }
     },
 }

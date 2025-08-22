@@ -18,133 +18,180 @@
                 
                   <div class="table__view">
                       <table>
-                          <thead>
-                          <tr>
-                              <th scope="col" class="w-[20px]">
-                              </th>
-                              <th scope="col" class=" w-[17%]">
+                        <thead class="bg-gray-50">
+                        <tr>
+                                <th scope="col" class="w-[20px]">
+                                </th>
+                                <th scope="col" class=" w-[17%]">
                                 {{ __('Project') }}
                             </th>
-                              <th scope="col" class="">
-                                  <button class="flex items-center gap-x-3 focus:outline-none">
-                                      <span>{{ __('Tareas') }}</span>
-                                  </button>
-                              </th>
+                                <th scope="col" class="w-[17%]">
+                                    <button class="flex items-center gap-x-3 focus:outline-none">
+                                        <span>{{ __('Tareas') }}</span>
+                                    </button>
+                                </th>
 
-                              <th scope="col" class=" w-[17%]">
-                                  {{ __('List') }}
-                              </th>
+                                <th scope="col" class=" w-[17%]">
+                                    {{ __('List') }}
+                                </th>
 
-                              <th scope="col" class=" w-[17%]">
-                                  {{ __('Labels') }}
-                              </th>
+                                <th scope="col" class=" w-[17%]">
+                                    {{ __('Labels') }}
+                                </th>
 
-                              <th scope="col" class=" w-[17%]">
+                                <th scope="col" class=" w-[17%]">
                                 {{ __('Assignees') }}
-                              </th>
+                                </th>
 
-                              <th scope="col" class="w-[17%]">
-                                  {{ __('Due Date') }}
-                              </th>
+                                <th scope="col" class="w-[17%]">
+                                    {{ __('Due Date') }}
+                                </th>
 
-                              <th scope="col" class="relative w-[50px]">
-                                  <span class="sr-only">--</span>
-                              </th>
-                          </tr>
-                          </thead>
-                          <draggable v-for="(listItem, listIndex) in lists" :key="listItem.id" :data-index="listIndex" :data-id="listItem.id" tag="tbody" handle=".handle" class="t__drag" :list="listItem.tasks" group="task" item-key="id">
-                              <template #item="{ element, index }">
-                                  <tr class="list-group-item group" :data-id="element.id">
-                                      <td class="pl-2 pr-1 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
-                                          <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project?.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
-                                      </td>
-                                      <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
+                                <th scope="col" class="relative w-[50px]">
+                                    <span class="sr-only">--</span>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-200">
+                        <template v-for="(element, i) in tasks" :key="element.id">
+                            <!-- Fila principal -->
+                            <tr class="list-group-item group" :data-id="element.id"  @click="toggle(i)">
+                                    <td class="pl-2 pr-1 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
+                                        <div class="project__color w-5 h-5 rounded-full" :aria-label="element.project?.title" :style="{background: 'url('+element.project.background.image+')'}"></div>
+                                    </td>
+                                    <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                                         <h2 class="font-medium t__title text-pretty">{{ element.project?.title }}</h2>
                                     </td>
-                                      <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
-                                          <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: element.project.slug || element.project.id, task: element.slug || element.id})" :data-id="element.id">
-                                              <!-- <icon v-if="element.timer" name="blink" class="w-2 h-2" /> -->
-                                              <h2 class="font-medium t__title text-pretty">{{ element?.title }}</h2>
-                                          </Link>
-                                      </td>
-                                      <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                                          <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
-                                              {{ element.list?.title }}
-                                          </div>
-                                      </td>
-                                      <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
-                                          <div class="task__labels overflow-hidden" v-if="element.task_labels.length">
-                                              <button class="color" v-for="(la, l_index) in element.task_labels" :style="{backgroundColor: la.label.color}">{{ la.label.name }}</button>
-                                              <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="arrow-down" />
-                                              </div>
-                                          </div>
-                                          <div v-else>
-                                              <div class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="plus" />
-                                              </div>
-                                          </div>
-                                      </td>
-                                      <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
-                                          <div class="flex items-center" v-if="element.assignees.length">
-                                              <div v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                                <!--div class="logo flex justify-center items-center w-9 h-9 rounded-full bg-indigo-600 text-lg">
-                                                    {{ assignee.user.name.charAt(0) }}
-                                                </div-->
-                                                <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
-                                                <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
-                                                
-                                              </div>
-                                              <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="arrow-down" />
-                                              </div>
-                                          </div>
-                                          <div v-else>
-                                              <div class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="plus" />
-                                              </div>
-                                          </div>
-                                      </td>
+                                    <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[25%] hover:bg-gray-100">
+                                        <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: element.project.slug || element.project.id, task: element.slug || element.id})" :data-id="element.id">
+                                            <!-- <icon v-if="element.timer" name="blink" class="w-2 h-2" /> -->
+                                            <h2 class="font-medium t__title text-pretty">{{ element?.title }}</h2>
+                                        </Link>
+                                    </td>
+                                    <td class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                                        <div class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
+                                            {{ element.list?.title }}
+                                        </div>
+                                    </td>
+                                    <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
+                                        <div class="task__labels overflow-hidden" v-if="element.task_labels.length">
+                                            <button class="color" v-for="(la, l_index) in element.task_labels" :style="{backgroundColor: la.label.color}">{{ la.label.name }}</button>
+                                            <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
+                                                <icon class="w-4 h-4" name="arrow-down" />
+                                            </div>
+                                        </div>
+                                        <div v-else>
+                                            <div class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
+                                                <icon class="w-4 h-4" name="plus" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100" @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
+                                        <div class="flex items-center" v-if="element.assignees.length">
+                                            <div v-for="assignee in element.assignees" :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
+                                            <!--div class="logo flex justify-center items-center w-9 h-9 rounded-full bg-indigo-600 text-lg">
+                                                {{ assignee.user.name.charAt(0) }}
+                                            </div-->
+                                            <img v-if="assignee.user.photo_path" class="h-full w-full rounded-full" :alt="assignee.user.name" :src="assignee.user.photo_path" />
+                                            <img v-else src="/images/svg/profile.svg" class="h-full w-full rounded-full" :alt="assignee.user.name" />
+                                            
+                                            </div>
+                                            <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
+                                                <icon class="w-4 h-4" name="arrow-down" />
+                                            </div>
+                                        </div>
+                                        <div v-else>
+                                            <div class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
+                                                <icon class="w-4 h-4" name="plus" />
+                                            </div>
+                                        </div>
+                                    </td>
 
-                                      <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                                          <div class="t__title" v-if="element.due_date">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
-                                                  <template #trigger>
-                                                      <div class="flex t__title items-center">
-                                                          <icon class="w-4 w-4" name="time" />
-                                                          <span class="ml-1 font-light leading-none" aria-label="Due date"> {{ moment(element.due_date).format('MMM D') }} </span>
-                                                      </div>
-                                                  </template>
-                                              </Datepicker>
-                                              <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="arrow-down" />
-                                              </div>
-                                          </div>
-                                          <div v-else class="w-full h-full">
-                                              <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
-                                                  <template #trigger>
-                                                      <div class="show_arrow_hover top-0 left-0 w-full h-full flex justify-start items-center">
-                                                          <icon class="w-4 h-4" name="plus" />
-                                                      </div>
-                                                  </template>
-                                              </Datepicker>
-                                          </div>
-                                      </td>
+                                    <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                                        <div class="t__title" v-if="element.due_date">
+                                            <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                                <template #trigger>
+                                                    <div class="flex t__title items-center">
+                                                        <icon class="w-4 w-4" name="time" />
+                                                        <span class="ml-1 font-light leading-none" aria-label="Due date"> {{ moment(element.due_date).format('MMM D') }} </span>
+                                                    </div>
+                                                </template>
+                                            </Datepicker>
+                                            <div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
+                                                <icon class="w-4 h-4" name="arrow-down" />
+                                            </div>
+                                        </div>
+                                        <div v-else class="w-full h-full">
+                                            <Datepicker v-model="element.due_date" @update:modelValue="saveTask(element.id, {due_date: element.due_date}, listIndex)">
+                                                <template #trigger>
+                                                    <div class="show_arrow_hover top-0 left-0 w-full h-full flex justify-start items-center">
+                                                        <icon class="w-4 h-4" name="plus" />
+                                                    </div>
+                                                </template>
+                                            </Datepicker>
+                                        </div>
+                                    </td>
 
-                                      <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                          <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
-                                              <icon class="mr-2 h-4 w-4 " name="archive" />
-                                          </button>
-                                      </td>
-                                  </tr>
-                              </template>
-                          </draggable>
-                          <tbody v-if="!tasks.length">
-                          <tr>
-                              <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!</td>
-                          </tr>
-                          </tbody>
-                      </table>
+                                    <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
+                                        <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
+                                            <icon class="mr-2 h-4 w-4 " name="archive" />
+                                        </button>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                    <button
+                                    class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
+                                    @click.stop="toggle(i)"
+                                    :aria-expanded="isOpen(i)"
+                                    :aria-controls="`row-details-${element.id}`"
+                                    >
+                                    <span>{{ isOpen(i) ? 'Ocultar' : 'Mostrar' }}</span>
+                                    <svg class="w-4 h-4 transition-transform"
+                                        :class="isOpen(i) ? 'rotate-180' : ''"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                                            clip-rule="evenodd"/>
+                                    </svg>
+                                    </button>
+                                </td>
+                                </tr>
+                            
+
+                            <!-- Detalle colapsable -->
+                            <tr v-show="isOpen(i)" :id="`row-details-${element.id}`" class="bg-white">
+                            <td colspan="4" class="px-4 py-0">
+                                <transition name="collapse">
+                                <div v-show="isOpen(i)" class="px-4 py-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="p-3 rounded-lg bg-gray-50">
+                                        <p class="text-xs text-gray-500">Teléfono</p>
+                                        <p class="text-sm font-medium text-gray-800">{{ element.phone || '—' }}</p>
+                                    </div>
+                                    <div class="p-3 rounded-lg bg-gray-50">
+                                        <p class="text-xs text-gray-500">Dirección</p>
+                                        <p class="text-sm font-medium text-gray-800">{{ element.address || '—' }}</p>
+                                    </div>
+                                    <div class="p-3 rounded-lg bg-gray-50">
+                                        <p class="text-xs text-gray-500">Estado</p>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                                            :class="element.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                                        {{ element.active ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </div>
+                                    </div>
+
+                                    <div class="mt-4 flex gap-2">
+                                    <button class="px-3 py-1.5 text-sm rounded-lg border hover:bg-gray-50">Editar</button>
+                                    <button class="px-3 py-1.5 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Ver perfil</button>
+                                    </div>
+                                </div>
+                                </transition>
+                            </td>
+                            </tr>
+                        </template>
+                        </tbody>
+                    </table>
                       <!-- List Popup Board -->
                       <!-- List Popup Assignee -->
 
@@ -263,7 +310,14 @@ export default {
                 task: this.filters.task ?? null,
             },
             search: '',
-            filteredTasks: []
+            filteredTasks: [],
+            rows: [
+        { id: 1, name: 'María Pérez', email: 'maria@example.com', role: 'Admin', phone: '555-0101', address: 'Lima', active: true },
+        { id: 2, name: 'Juan Gómez', email: 'juan@example.com', role: 'User',  phone: '555-0123', address: 'Bogotá', active: false },
+        { id: 3, name: 'Ana Ruiz',   email: 'ana@example.com',  role: 'User',  phone: '555-0456', address: 'CDMX',  active: true },
+      ],
+      openIndexes: new Set(),
+      singleOpen: false
         }
     },
     watch: {
@@ -307,6 +361,21 @@ export default {
         this.getOtherData();
     },
     methods: {
+        isOpen(index) {
+      return this.openIndexes.has(index)
+    },
+    toggle(index) {
+      if (this.singleOpen) {
+        this.openIndexes = this.isOpen(index) ? new Set() : new Set([index])
+      } else {
+        if (this.isOpen(index)) {
+          this.openIndexes.delete(index)
+        } else {
+          this.openIndexes.add(index)
+        }
+        this.openIndexes = new Set(this.openIndexes) // Forzar reactividad
+      }
+    },
         addLabelToTask(checked, id){
             axios.post(this.route('task.labels.add'), {task_id: this.selected.task_id, label_id: id}).then((response) => {
                 if(response.data){
