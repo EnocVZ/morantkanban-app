@@ -215,6 +215,9 @@ class ProjectsController extends Controller {
         $projectId = $project->id;
         $board_lists = BoardList::where('project_id', $projectId)
                         ->with([
+                            'sublist' => function ($query) {
+                                $query->where('archived', 0);
+                            },
                             'sublist.tasklist' => function ($query) use ($projectId) {
                                 $query->isOpen()
                                     ->byProject($projectId)

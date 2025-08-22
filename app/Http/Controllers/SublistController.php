@@ -48,4 +48,18 @@ class SublistController extends Controller
             return MethodHelper::errorResponse($e->getMessage());
         }
     }
+
+    public function updateRow($id, Request $request){
+        try {
+            $requestData = $request->all();
+            $sublist = BoardSublist::where('id', $id)->first();
+            foreach ($requestData as $itemKey => $itemValue){
+                $sublist->{$itemKey} = $itemValue;
+            }
+            $sublist->save();
+            return MethodHelper::successResponse($sublist);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
 }
