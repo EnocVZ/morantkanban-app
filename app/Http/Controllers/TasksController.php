@@ -178,7 +178,7 @@ class TasksController extends Controller
             'taskLabels.label',
             'sublist',
             'subtaskList.task' => function ($q) {
-                $q->with(['list', 'sublist']); // ejemplo
+                $q->with(['list', 'sublist']);
             }
         ])
         ->withCount('checklistDone')

@@ -136,7 +136,7 @@
                                     <td class="px-4 py-3 text-right">
                                     <button
                                     class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
-                                    @click.stop="toggle(i)"
+                                    @click.stop="toggle(i,element)"
                                     :aria-expanded="isOpen(i)"
                                     :aria-controls="`row-details-${element.id}`"
                                     >
@@ -174,17 +174,16 @@
 
                                             <!-- Cuerpo -->
                                             <tbody class="divide-y divide-gray-200">
+                                               
                                             <tr
-                                                v-for="(item, index) in rows"
+                                                v-for="(item, index) in element.subtask_list"
                                                 :key="index"
                                                 class="hover:bg-gray-50 transition"
                                             >
-                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.name }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.email }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.phone }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-700">
-                                                {{ item.status }}
-                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.title }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.description }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.list?.title }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.sublist?.title }}</td>
                                                 <td class="px-6 py-4 text-right">
                                                 </td>
                                             </tr>
@@ -385,7 +384,9 @@ export default {
         isOpen(index) {
       return this.openIndexes.has(index)
     },
-    toggle(index) {
+    toggle(index, item) {
+        console.log(item);
+        
       if (this.singleOpen) {
         this.openIndexes = this.isOpen(index) ? new Set() : new Set([index])
       } else {

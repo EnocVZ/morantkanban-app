@@ -2220,6 +2220,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   --tw-bg-opacity: 1;
   background-color: rgb(22 163 74 / var(--tw-bg-opacity));
 }
+.bg-indigo-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(101 116 205 / var(--tw-bg-opacity));
+}
 .bg-indigo-600 {
   --tw-bg-opacity: 1;
   background-color: rgb(115 102 255 / var(--tw-bg-opacity));
@@ -2266,10 +2270,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .bg-yellow-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(234 179 8 / var(--tw-bg-opacity));
-}
-.bg-indigo-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(101 116 205 / var(--tw-bg-opacity));
 }
 .bg-opacity-30 {
   --tw-bg-opacity: 0.3;
@@ -2486,9 +2486,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .pl-2 {
   padding-left: 0.5rem;
 }
-.pl-3 {
-  padding-left: 0.75rem;
-}
 .pl-4 {
   padding-left: 1rem;
 }
@@ -2509,9 +2506,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .pr-1 {
   padding-right: 0.25rem;
-}
-.pr-10 {
-  padding-right: 2.5rem;
 }
 .pr-2 {
   padding-right: 0.5rem;
@@ -5620,7 +5614,7 @@ body .dark.layout_landing .action__buttons .small.cancel {
   margin-right: auto;
   max-height: 100%;
   width: 100%;
-  max-width: 53rem;
+  max-width: 48rem;
   position: relative;
 }
 .chat__box nav.task__details .wrapper .container {

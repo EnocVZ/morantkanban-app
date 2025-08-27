@@ -176,15 +176,21 @@ class WorkSpacesController extends Controller
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
+        $taksList = Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
+                $q->where('workspace_id', $workspace->id);
+            })->with(['list','taskLabels.label', 'project.background', 'assignees','timer',
+            'subtaskList.task' => function ($q) {
+                $q->with(['list', 'sublist']);
+            }
+             ])
+            ->isOpen()->orderByOrder()->get();
         return Inertia::render('Workspaces/Table', [
             'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,
             'workspace' => $workspace,
-            'tasks' => Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
-                $q->where('workspace_id', $workspace->id);
-            })->with('list')->with('taskLabels.label')->with('project.background')->with('assignees')->with('timer')->isOpen()->orderByOrder()->get()
+            'tasks' => $taksList
         ]);
     }
 
