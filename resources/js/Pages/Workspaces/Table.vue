@@ -39,7 +39,7 @@
                                     {{ __('Labels') }}
                                 </th>
 
-                                <th scope="col" class=" w-[17%]">
+                                <th scope="col" class="w-[17%]">
                                 {{ __('Assignees') }}
                                 </th>
 
@@ -133,11 +133,6 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                        <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
-                                            <icon class="mr-2 h-4 w-4 " name="archive" />
-                                        </button>
-                                    </td>
                                     <td class="px-4 py-3 text-right">
                                     <button
                                     class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
@@ -160,42 +155,42 @@
 
                             <!-- Detalle colapsable -->
                             <tr v-show="isOpen(i)" :id="`row-details-${element.id}`" class="bg-white">
-                            <td colspan="4" class="px-4 py-0">
+                            <td colspan="12" class="px-4 py-0">
                                 <transition name="collapse">
-                                <div v-show="isOpen(i)" class="px-4 py-4">
-                                     <table class="min-w-full border border-gray-200 divide-y divide-gray-200 rounded-lg">
-                                        <!-- Encabezado -->
-                                        <thead class="bg-gray-50">
-                                        <tr>
-                                            <th
-                                            v-for="header in headers"
-                                            :key="header"
-                                            class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                                            >
-                                            {{ header }}
-                                            </th>
-                                        </tr>
-                                        </thead>
+                                    <div v-show="isOpen(i)" class="px-4 py-4">
+                                        <table class="min-w-full border border-gray-200 divide-y divide-gray-200 rounded-lg">
+                                            <!-- Encabezado -->
+                                            <thead class="bg-gray-50">
+                                            <tr>
+                                                <th
+                                                v-for="header in headers"
+                                                :key="header"
+                                                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                                                >
+                                                {{ header }}
+                                                </th>
+                                            </tr>
+                                            </thead>
 
-                                        <!-- Cuerpo -->
-                                        <tbody class="divide-y divide-gray-200">
-                                        <tr
-                                            v-for="(item, index) in rows"
-                                            :key="index"
-                                            class="hover:bg-gray-50 transition"
-                                        >
-                                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.name }}</td>
-                                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.email }}</td>
-                                            <td class="px-6 py-4 text-sm text-gray-700">{{ item.phone }}</td>
-                                            <td class="px-6 py-4 text-sm text-gray-700">
-                                            {{ item.status }}
-                                            </td>
-                                            <td class="px-6 py-4 text-right">
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            <!-- Cuerpo -->
+                                            <tbody class="divide-y divide-gray-200">
+                                            <tr
+                                                v-for="(item, index) in rows"
+                                                :key="index"
+                                                class="hover:bg-gray-50 transition"
+                                            >
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.name }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.email }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.phone }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">
+                                                {{ item.status }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </transition>
                             </td>
                             </tr>

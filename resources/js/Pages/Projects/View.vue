@@ -569,6 +569,7 @@ export default {
         closeDetails() {
             this.form.task = null;
             this.taskDetailsOpen = false
+            this.getBoardLists();
         },
         reset() {
             this.form = mapValues(this.form, () => null)

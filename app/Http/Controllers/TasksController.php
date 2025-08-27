@@ -161,20 +161,29 @@ class TasksController extends Controller
     }
 
     public function getJsonTask($taskUid){
-        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)
-        ->with('project')
-        ->with('timer')
-        ->with('timerList.user')
-        ->with('cover')
-        ->with('list')
-        ->with('checklists')
-        ->with('comments.user')
-        ->with('attachments')
-        ->with('assignees')
-        ->with('createdby')
-        ->with('userUpdateList')
-        ->with('taskLabels.label')
-        ->withCount('checklistDone')->first();
+        $task = Task::where('id', $taskUid)
+        ->orWhere('slug', $taskUid)
+        ->with([
+            'project',
+            'timer',
+            'timerList.user',
+            'cover',
+            'list',
+            'checklists',
+            'comments.user',
+            'attachments',
+            'assignees',
+            'createdby',
+            'userUpdateList',
+            'taskLabels.label',
+            'sublist',
+            'subtaskList.task' => function ($q) {
+                $q->with(['list', 'sublist']); // ejemplo
+            }
+        ])
+        ->withCount('checklistDone')
+        ->first();
+
 
         if ($task && $task->timerList) {
             $userDurations = $task->timerList

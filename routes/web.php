@@ -39,6 +39,7 @@ use App\Http\Controllers\TaskNotificationController;
 use App\Http\Controllers\NotesController;
 use App\Http\Controllers\TaskCategoryController;
 use App\Http\Controllers\SublistController;
+use App\Http\Controllers\SubtaskController;
 
 /*
 |--------------------------------------------------------------------------
@@ -405,3 +406,4 @@ Route::put('sublist/update/row/{id}', [SublistController::class, 'updateRow'])->
 
 Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');
 Route::get('project/boardlists/{project_id}', [ProjectsController::class, 'getBoarListData'])->name('project.boardlists.data')->middleware('auth');
+Route::post('subtask/new', [SubtaskController::class, 'create'])->name('subtask.new')->middleware('auth');

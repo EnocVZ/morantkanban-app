@@ -163,4 +163,9 @@ class Task extends Model
     public function userUpdateList() {
         return $this->belongsTo(User::class, 'userupdate_list');
     }
+
+    public function subtaskList()
+    {
+        return $this->hasMany(SubTask::class, 'maintask_id');
+    }
 }
