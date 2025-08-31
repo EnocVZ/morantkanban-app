@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\TaskNotificationController;
 use App\Http\Controllers\NotesController;
-use App\Http\Controllers\TaskCategoryController;
+use App\Http\Controllers\RequestTypeController;
 use App\Http\Controllers\SublistController;
 use App\Http\Controllers\SubtaskController;
 
@@ -396,7 +396,7 @@ Route::get('p/note/{uid}', [ProjectsController::class, 'viewNotes'])->name('proj
 Route::post('notes/new', [NotesController::class, 'saveNote'])->name('notes.new')->middleware('auth');
 Route::post('notes/update/{id}', [NotesController::class, 'updateNote'])->name('notes.update')->middleware('auth');
 Route::delete('notes/delete/{id}', [NotesController::class, 'deleteNote'])->name('notes.delete')->middleware('auth');
-Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');
+Route::get('category/list/{workspaceid}', [RequestTypeController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');
 
 //sublist
 Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.new')->middleware('auth');

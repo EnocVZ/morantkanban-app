@@ -6,8 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TaskCategory extends Model {
+class RequestType extends Model {
     use HasFactory;
-    protected $table = 'task_category';
+    protected $table = 'request_type';
    
 }

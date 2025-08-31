@@ -18,7 +18,7 @@ use App\Models\Timer;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
-use App\Models\TaskCategory;
+use App\Models\RequestType;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -308,7 +308,7 @@ class WorkSpacesController extends Controller
     }
 
     public function viewFormLink($workspace_id, Request $request){
-        $categories = TaskCategory::where('workspace_id', $workspace_id)->get();
+        $categories = RequestType::where('workspace_id', $workspace_id)->get();
 
         return Inertia::render('Link/Index', [
             'title' => 'Solicitud',
