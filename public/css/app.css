@@ -1843,9 +1843,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .cursor-default {
   cursor: default;
 }
-.cursor-grab {
-  cursor: grab;
-}
 .cursor-move {
   cursor: move;
 }
@@ -2500,9 +2497,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .pl-\[2px\] {
   padding-left: 2px;
-}
-.pr-0 {
-  padding-right: 0px;
 }
 .pr-1 {
   padding-right: 0.25rem;

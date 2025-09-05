@@ -8,9 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class UserRequest extends Model
 {
     use HasFactory;
-
     protected $table = 'user_request';
-
+    
     protected $fillable = [
         'email',
         'title',
@@ -21,4 +20,8 @@ class UserRequest extends Model
         'request_type_id',
         'path'
     ];
+
+    public function task(){
+        return $this->belongsTo(Task::class, 'task_id');
+    }
 }
