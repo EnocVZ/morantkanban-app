@@ -19,14 +19,16 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Tu correo*</label>
           <input type="email" placeholder="solicitante@correo.com"
             v-model="formNewTask.email"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.email}" />
+            <p v-if="errorsForm.email" class="text-red-500 text-sm mt-1">{{ errorsForm.email }}</p>
         </div>
         <!-- Campo resumen -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
           <input type="text" placeholder="Titulo de la solicitud"
           v-model="formNewTask.title"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.title}"/>
+            <p v-if="errorsForm.title" class="text-red-500 text-sm mt-1">{{ errorsForm.title }}</p>
         </div>
 
         <!-- Descripción -->
@@ -41,11 +43,12 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
             <select
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.tipSolicitud}"
               v-model="formNewTask.task_category_id"
               >
               <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
             </select>
+             <p v-if="errorsForm.tipSolicitud" class="text-red-500 text-sm mt-1">{{ errorsForm.tipSolicitud }}</p>
           </div>
         <div
           class="flex flex-col justify-center items-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500"
@@ -129,7 +132,25 @@ export default {
 
       },
       notificationMessage: "",
-      notificationType: ""
+      notificationType: "",
+      errorsForm: {}, 
+    }
+  },
+  watch: {
+    'formNewTask.email'(value) {
+      if (!value) {
+        this.errorsForm.email = 'El correo es obligatorio'
+      } else if (!/\S+@\S+\.\S+/.test(value)) {
+        this.errorsForm.email = 'El correo no es válido'
+      } else {
+        this.errorsForm.email = null
+      }
+    },
+    'formNewTask.title'(value) {
+      this.errorsForm.title = value ? null : 'El título es obligatorio'
+    },
+    'formNewTask.task_category_id'(value) {
+      this.errorsForm.tipSolicitud = value ? null : 'Debe seleccionar un tipo de solicitud'
     }
   },
   methods:{
@@ -144,32 +165,20 @@ export default {
     },
 
     validarForm() {
-      if (!this.formNewTask.email) {
-        this.notificationMessage = "El correo es obligatorio"
-        this.notificationType = "error"
-        this.$refs.toast.showToast()
-        return false
+      this.errorsForm = {};  
+      if (this.formNewTask.email == "") {
+        this.errorsForm.email = 'El correo es obligatorio'
+      }else if (!this.isValidEmail(this.formNewTask.email)) {
+        this.errorsForm.email = 'El correo no es válido';
       }
-      if (!this.isValidEmail(this.formNewTask.email)) {
-        
-        this.notificationMessage = "El correo no es válido"
-        this.notificationType = "error"
-        this.$refs.toast.showToast()
-        return false
-      }
+     
       if (!this.formNewTask.title) {
-        this.notificationMessage = "El título es obligatorio"
-        this.notificationType = "error"
-        this.$refs.toast.showToast()
-        return false
+        this.errorsForm.title = "El título es obligatorio"
       }
       if (!this.formNewTask.task_category_id) {
-        this.notificationMessage = "Debe seleccionar un tipo de solicitud"
-        this.notificationType = "error"
-        this.$refs.toast.showToast()
-        return false
+        this.errorsForm.tipSolicitud = "Debe seleccionar un tipo de solicitud"
       }
-      return true
+      return Object.keys(this.errorsForm).length === 0
     },
 
     saveNewTask(e){
