@@ -14,6 +14,8 @@ use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\User;
+use App\Models\SubTask;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +66,7 @@ class TasksController extends Controller
 
             }else if($itemKey == 'list_id'){
                 $action = "update-list";
+                $this->changeRequestUserToList($taskId, $requestData);
                 $this->LogTask($taskId, $action, $task->list_id, $itemValue);
             }else if($itemKey == 'due_date'){
                // $action = "update-duedate";
@@ -438,6 +441,22 @@ class TasksController extends Controller
                 
                 return MethodHelper::successResponse($task);
             } catch (\Exception $e) {
+                return MethodHelper::errorResponse($e->getMessage());
+            }
+        }
+
+        public function changeRequestUserToList($taskId, $requestData){
+            try {
+                $findParent = SubTask::where('subtask_id', $taskId)->first();
+                
+                if($findParent){
+                    $taskParent = Task::where('id', $findParent->maintask_id)->first();
+                    if($taskParent && $taskParent->is_request == 1){
+                        $taskParent->list_id = $requestData['list_id'];
+                        $taskParent->save();
+                    }
+                }
+            }catch (\Exception $e) {
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
