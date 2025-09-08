@@ -113,7 +113,7 @@
                                   </span>
                                 </button>
                             
-                                <div v-if="showDialog" class="fixed top-0 right-0 w-96 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
+                                <div v-if="showDialog" class="fixed top-0 right-0 w-98 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
                                     <!-- Encabezado -->
                                     <div class="p-4 border-b flex justify-between items-center">
                                       <h2 class="text-xl font-semibold text-gray-800">Notificaciones</h2>
@@ -171,6 +171,7 @@
                                 
                                             <!-- Contenido de la notificación -->
                                             <div class="ml-4 flex-1">
+                                                <span>{{ notification?.task?.title }}</span>
                                             <p class="text-sm">
                                                 <span class="font-semibold text-red-600">La tarea expira mañana</span></p>
                                             <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.project.workspace.name }}</p>
@@ -204,6 +205,7 @@
                                             <div class="ml-4 flex-1">
                                             <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification?.task?.project?.workspace?.name || "Ninguno"}}</p>
                                             <p class="text-xs text-gray-400">Proyecto: {{ notification?.task?.project?.title || "Ninguno"}}</p>
+                                            <p class="text-xs text-gray-400">Tarea: {{ notification?.task?.title }}</p>
                                             <div  v-html="notification.title"/>
                                             <button @click="sendWasRead(notification)" class="text-[14px] text-blue-500">ver</button>
                                             </div>
@@ -384,7 +386,7 @@ export default {
         },
         goToLink(link){ window.location.href = link;},
         startTimer(){
-            let started = this.counter.timer.started_at ? this.moment.utc(this.counter.timer.started_at) : this.moment();
+            let started = this.counter.timer.started_at ? this.moment(this.counter.timer.started_at) : this.moment();
             let seconds = parseInt(this.moment.duration(this.moment().diff(started)).asSeconds())
             seconds = this.counter.timer.duration + seconds;
             this.counter.ticker = setInterval(() => {

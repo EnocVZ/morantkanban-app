@@ -65,6 +65,10 @@ class Task extends Model
         return $this->hasOne(Timer::class, 'task_id')->where('user_id', auth()->id())->whereNull('stopped_at');
     }
 
+    public function timerList() {
+        return $this->hasMany(Timer::class, 'task_id');
+    }
+
     public function assignees() {
         return $this->hasMany(Assignee::class)->with('user');
     }
@@ -83,6 +87,11 @@ class Task extends Model
 
     public function checklistDone(){
         return $this->hasMany(CheckList::class)->where('check_lists.is_done', '=', 1);
+    }
+
+    public function sublist()
+    {
+        return $this->belongsTo(BoardSublist::class, 'sublist_id');
     }
 
     public function scopeFilter($query, array $filters){
@@ -153,5 +162,21 @@ class Task extends Model
     }
     public function userUpdateList() {
         return $this->belongsTo(User::class, 'userupdate_list');
+    }
+
+    public function subtaskList()
+    {
+        return $this->hasMany(SubTask::class, 'maintask_id');
+    }
+
+    public function userRequest()
+    {
+        return $this->hasMany(UserRequest::class, 'id', 'task_id');
+    }
+
+    public function subTaskCompleted(){
+        return $this->hasMany(SubTask::class, 'maintask_id')
+        ->whereHas('task', fn($q) => $q->where('is_done', 1))
+        ->with('task');
     }
 }

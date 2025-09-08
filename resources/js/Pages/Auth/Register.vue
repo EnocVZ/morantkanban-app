@@ -9,8 +9,8 @@
           <div class="mx-auto mt-2 mb-6 w-24 border-b" />
             <flash-messages />
             <div class="flex flex-wrap -mb-8 -mr-6 p-3">
-                <text-input v-model="form.first_name" :error="form.errors.first_name" class="pb-8 pr-6 w-full lg:w-1/2" label="First name" type="text" autofocus autocapitalize="off" :is_required="true" required />
-                <text-input v-model="form.last_name" :error="form.errors.last_name" class="pb-8 pr-6 w-full lg:w-1/2" label="Last name" type="text" autofocus autocapitalize="off" :is_required="true" required />
+                <text-input v-model="form.first_name" :error="form.errors.first_name" class="pb-8 pr-6 w-full lg:w-1/2" label="First Name" type="text" autofocus autocapitalize="off" :is_required="true" required />
+                <text-input v-model="form.last_name" :error="form.errors.last_name" class="pb-8 pr-6 w-full lg:w-1/2" label="Last Name" type="text" autofocus autocapitalize="off" :is_required="true" required />
                 <text-input v-model="form.email" :error="form.errors.email" class="pb-8 pr-6 w-full lg:w-1/2" label="Email" type="email" autofocus autocapitalize="off" :is_required="true" required />
                 <text-input v-model="form.phone" :error="form.errors.phone" class="pb-8 pr-6 w-full lg:w-1/2" label="Phone" type="text" autofocus autocapitalize="off" />
                 <text-input v-model="form.address" :error="form.errors.address" class="pb-8 pr-6 w-full" label="Address" type="text" autofocus autocapitalize="off" />

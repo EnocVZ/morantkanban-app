@@ -24,13 +24,19 @@
                   <span class="ml-3">{{ __('My Tasks') }}</span>
               </Link>
           </li>
-          <li class="relative" v-if="workspace.member.role === 'admin'">
+          <li class="relative" v-if="isAdmin">
               <Link class="flex items-center px-3 p-2 group workspace_members" :href="route('workspace.members', workspace.id)" :class="{'active' : checkActiveClass('component', 'Workspaces_Members')}">
                   <icon class="w-4 h-4" name="user" />
                   <span class="flex-1 ml-3 whitespace-nowrap">{{ __('Team Members') }}</span>
                   <!--button v-if="workspace.member.role === 'admin'" @click="$event.preventDefault();invite_workspace = true" class="flex w-5 h-5 rounded justify-center items-center add__plus">
                       <icon class="w-4 h-4" name="plus" />
                   </button-->
+              </Link>
+          </li>
+          <li v-if="isAdmin">
+              <Link :href="route('workspace.backlog', {'uid': workspace.slug || workspace.id})" class="flex items-center px-3 py-2 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group" :class="{'active' : checkActiveClass('component', 'Workspaces_Backlog')}">
+                  <icon class="w-4 h-4" name="list" />
+                  <span class="ml-3">{{ __('Solicitudes') }}</span>
               </Link>
           </li>
       </ul>
@@ -109,6 +115,11 @@ export default {
   },
     emits: {
         enableSidebar: null,
+    },
+    computed: {
+        isAdmin() {
+            return this.$page.props.auth?.user?.role?.slug === 'admin'
+        },
     },
     data(){
       return{

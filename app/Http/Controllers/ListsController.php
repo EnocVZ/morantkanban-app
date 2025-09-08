@@ -56,7 +56,7 @@ class ListsController extends Controller
 
     public function makeArchive($list_id){
         $list = BoardList::where('id', $list_id)->first();
-        Task::where('list_id', $list->id)->update(['is_archive' => 1]);
+        #Task::where('list_id', $list->id)->update(['is_archive' => 1]);
         $list->is_archive = 1;
         $list->save();
         return response()->json($list);
@@ -71,7 +71,8 @@ class ListsController extends Controller
 
     public function getBoarListByProject($project_id){
         try {
-            $lists = BoardList::where('project_id', $project_id)->get();
+            $lists = BoardList::where('project_id', $project_id)
+            ->where('is_archive', 0)->get();
             return MethodHelper::successResponse($lists);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());

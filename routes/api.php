@@ -6,6 +6,8 @@ use App\Http\Controllers\WorkSpacesController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ListsController;
 use App\Http\Controllers\TasksController;
+use App\Http\Controllers\LabelsController;
+use App\Http\Controllers\UsersController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -22,7 +24,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 
-Route::get('workspaces/all', [WorkSpacesController::class, 'allWorkSpace']);
-Route::get('project/byworkspace/{id}', [ProjectsController::class, 'getProjectByWorkspace']);
-Route::get('list/byproject/{id}', [ListsController::class, 'getBoarListByProject']);
-Route::post('task/new', [TasksController::class, 'newTaskWithDetail']);
+Route::get('workspaces/all', [WorkSpacesController::class, 'allWorkSpace'])->middleware('auth.apitoken');
+Route::get('project/byworkspace/{id}', [ProjectsController::class, 'getProjectByWorkspace'])->middleware('auth.apitoken');
+Route::get('list/byproject/{id}', [ListsController::class, 'getBoarListByProject'])->middleware('auth.apitoken');
+Route::post('task/new', [TasksController::class, 'newTaskWithDetail'])->middleware('auth.apitoken');
+Route::get('label/all', [LabelsController::class, 'listLabels'])->middleware('auth.apidata');
+Route::get('workspaces/getusers/{id}', [WorkSpacesController::class, 'getUserByWorkSpace'])->middleware('auth.apidata');
+Route::get('user/gettoken', [UsersController::class, 'token'])->middleware('auth.basic');

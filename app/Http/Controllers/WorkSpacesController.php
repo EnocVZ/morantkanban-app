@@ -18,12 +18,14 @@ use App\Models\Timer;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
+use App\Models\RequestType;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
+use Exception;
 
 class WorkSpacesController extends Controller 
 {
@@ -117,18 +119,20 @@ class WorkSpacesController extends Controller
     public function workspaceView($uid){
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
+        $types_requests = RequestType::where('workspace_id', $workspace->id)->select('id', 'title', 'workspace_id')->get();
         return Inertia::render('Workspaces/View', [
             'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
-            'projects' => $projects
+            'projects' => $projects,
+            'requests' => $types_requests
         ]);
     }
 
     public function workspaceMembers($uid, Request $request){
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
-        if($workspace->member->role != 'admin'){
+        /*if($workspace->member->role != 'admin'){
                 return Redirect::route('workspace.view', $workspace->id);
-        }
+        }*/
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
         return Inertia::render('Workspaces/Members', [
             'title' => 'Participantes | '.$workspace->name,
@@ -175,15 +179,21 @@ class WorkSpacesController extends Controller
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
+        $taksList = Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
+                $q->where('workspace_id', $workspace->id);
+            })->with(['list','taskLabels.label', 'project.background', 'assignees','timer',
+            'subtaskList.task' => function ($q) {
+                $q->with(['list', 'sublist']);
+            }
+             ])
+            ->isOpen()->orderByOrder()->get();
         return Inertia::render('Workspaces/Table', [
             'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,
             'workspace' => $workspace,
-            'tasks' => Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
-                $q->where('workspace_id', $workspace->id);
-            })->with('list')->with('taskLabels.label')->with('project.background')->with('assignees')->with('timer')->isOpen()->orderByOrder()->get()
+            'tasks' => $taksList
         ]);
     }
 
@@ -234,6 +244,131 @@ class WorkSpacesController extends Controller
             return MethodHelper::successResponse($workspaces);
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function getUserByWorkSpace($workspace_id)
+    {
+        try {
+            
+            $workspaceUsers = TeamMember::where('workspace_id', $workspace_id)
+                ->with('user', function ($query) {
+                    $query->select('id', 'first_name', 'last_name');
+                })
+                ->get();
+    
+           
+            $sortedUsers = $workspaceUsers->sortBy(function ($item) {
+                return $item->user->name;
+            });
+    
+            return MethodHelper::successResponse($sortedUsers->values()->all());
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+    
+    public function viewBacklog($uid, Request $request){
+
+         $user = auth()->user()->load('role');
+        $requests = $request->all();
+        if(!empty($user->role)){
+            if($user->role->slug != 'admin' && empty($requests['user'])){
+                return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
+            }
+        }else{
+            return abort(404);
+        }
+
+        $list_index = [];
+        $board_lists = BoardList::orderByOrder()->get();
+        $workspace = Workspace::where('id', $uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
+        $loopIndex = 0;
+        foreach ($board_lists as &$listItem){
+            $list_index[$listItem->id] = $loopIndex;
+            $listItem['tasks'] = [];
+            $loopIndex+= 1;
+        }
+
+        $taksList = Task::where('project_id', 0)
+            ->filter($request->only('search'))
+            ->orderBy('created_at', 'DESC')
+            ->paginate(20)
+            ->withQueryString();
+
+                
+
+        return Inertia::render('Workspaces/Backlog', [
+            'title' => 'Backlog | '.$workspace->name,
+            'board_lists' => $board_lists,
+            'filters' => $requests,
+            'list_index' => $list_index,
+            'workspace' => $workspace,
+            'tasks' => $taksList
+        ]);
+
+    }
+
+    public function viewFormLink($workspace_id, Request $request){
+        $categories = RequestType::where('workspace_id', $workspace_id)->get();
+
+        return Inertia::render('Link/Index', [
+            'title' => 'Solicitud',
+            'workspace_id' => $workspace_id,
+            'categories' => $categories,
+        ]);
+
+    }
+
+
+    public function jsonAddUpdTypesRequests(Request $request) {
+        try {
+            $data = $request->validate([
+                '*.id' => 'nullable|integer|exists:request_type,id',
+                '*.title' => 'required|string|max:255',
+                '*.workspace_id' => 'required|integer|exists:workspaces,id',
+            ]);
+
+        $res = RequestType::upsert($data, ['id'], ['title', 'workspace_id']);
+
+        if($res > 0) $list_requests = RequestType::select('id', 'title', 'workspace_id')->get();
+        else $list_requests = $request->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $list_requests
+        ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+
+            ], 500);
+        }
+    }
+    
+    public function deleteRequest($id) {
+        try {
+            $requestType = RequestType::findOrFail($id);
+
+            if (!$requestType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request type not found.'
+                ], 404);
+            }
+
+            $requestType->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request type deleted successfully.'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }
