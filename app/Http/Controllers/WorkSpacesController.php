@@ -290,8 +290,7 @@ class WorkSpacesController extends Controller
             $loopIndex+= 1;
         }
 
-        $taksList = Task::where('workspace_id', $workspace->id)
-            ->where('project_id', 0)
+        $taksList = Task::where('project_id', 0)
             ->filter($request->only('search'))
             ->orderBy('created_at', 'DESC')
             ->paginate(20)

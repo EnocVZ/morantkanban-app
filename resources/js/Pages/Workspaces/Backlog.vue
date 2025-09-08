@@ -20,7 +20,6 @@
             </div>
         </div>
     </div>
-      
       <div class="flex flex-col flex-grow-1 flex-shrink-1 h-full">
           <div class="flex flex-col task__table overflow-y-auto h-full">
               <div class="inline-block min-w-full h-full py-4 align-middle md:px-3 lg:px-4">

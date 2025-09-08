@@ -56,7 +56,7 @@ export default {
             options: [
               //  { name: 'Backlog', slug: 'backlog' },
                 { name: 'Board', slug: 'board' },
-                { name: 'List', slug: 'table' },
+                { name: 'Solicitudes', slug: 'table' },
                 // {name: 'Report', slug: 'dashboard'},
                 { name: 'Calendar', slug: 'calendar' },
                 //{name: 'Time Logs', slug: 'time_logs'}

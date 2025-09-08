@@ -20,6 +20,7 @@ use App\Models\TaskNotification;
 use App\Models\BoardSublist;
 use App\Models\BasicStatus;
 
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -174,7 +175,7 @@ class ProjectsController extends Controller {
         return Inertia::render('Projects/View', [
             'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
-            'proyectLists' => $board_lists,
+            'lists' => $board_lists,
             'list_index' => $list_index,
             'filters' => $requests,
             'project' => $project,
@@ -233,6 +234,7 @@ class ProjectsController extends Controller {
                                         'checklists',
                                         'attachments',
                                     ])
+                                    ->where('is_request', 0)
                                     ->orderByOrder();
                             },
                             'tasksWithoutSubcategory' => function ($query) use ($projectId) {
@@ -250,6 +252,7 @@ class ProjectsController extends Controller {
                                         'checklists',
                                         'attachments',
                                     ])
+                                    ->where('is_request', 0)
                                     ->orderByOrder();
                             }
                         ])
@@ -306,6 +309,48 @@ class ProjectsController extends Controller {
         ]);
     }
 
+
+    private function getAllUserRequest($project){
+        $projectId = $project->id;
+        $board_lists = BoardList::where('project_id', $projectId)
+                        ->with([
+                            'tasks' => function ($query) use ($projectId) {
+                                $query->isOpen()
+                                    ->byProject($projectId)
+                                    ->with([
+                                        'taskLabels.label',
+                                        'timer',
+                                        'cover',
+                                        'assignees',
+                                        'subtaskList'
+                                    ])
+                                    ->withCount([
+                                        'checklistDone',
+                                        'comments',
+                                        'checklists',
+                                        'attachments',
+                                        'subTaskCompleted',
+                                        'subtaskList'
+                                    ])
+
+                                    ->where('is_request', 1)
+                                    ->orderByOrder();
+                            }
+                        ])
+                        
+                        ->isOpen()
+                        ->orderByOrder()
+                        ->get()
+                        ->map(function ($boardList) {
+                            $totalTask = $boardList->tasks->count();
+                            $boardList->total_tasks = $totalTask;
+                            return $boardList;
+                        })
+                        ->toArray();
+        return $board_lists;
+    }
+
+
     public function viewTable($uid, Request $request){
         $requests = $request->all();
         $auth_id = auth()->id();
@@ -314,24 +359,7 @@ class ProjectsController extends Controller {
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
-        foreach ($board_lists as &$listItem){
-            $list_index[$listItem['id']] = $loopIndex;
-            $listItem['tasks'] = [];
-            $loopIndex+= 1;
-        }
-        $tasks = Task::filter($requests)
-            ->isOpen()
-            ->byProject($project->id)
-            ->with('taskLabels.label')
-            ->with('timer')
-            ->whereHas('list')
-            ->with('assignees')
-            ->with('list')
-            ->orderByOrder()
-            ->get()->toArray();
-        foreach ($tasks as $task){
-            $board_lists[$list_index[$task['list_id']]]['tasks'][] = $task;
-        }
+        $tasks = $this->getAllUserRequest($project);
         return Inertia::render('Projects/Table', [
             'title' => 'Lista | '.$project->title,
             'board_lists' => $board_lists,
