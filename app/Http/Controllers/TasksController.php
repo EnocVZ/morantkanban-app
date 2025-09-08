@@ -14,6 +14,7 @@ use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\User;
+use App\Models\UserRequest;
 use App\Models\SubTask;
 
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,8 @@ use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
+use Illuminate\Support\Facades\Storage;
+
 
 class TasksController extends Controller
 {
@@ -401,21 +404,58 @@ class TasksController extends Controller
 
         public function taskFromLink(Request $request){
             try {
-                $requestData = $request->all();
-                $formData = $requestData;
-                unset($formData['email']);
-                $task = Task::create($formData);
+                $validated = $request->validate([
+                    'workspace_id' => 'required|integer|exists:workspaces,id',
+                    'title' => 'required|string|max:50',
+                    'description' => 'nullable|string|max:100',
+                    'email' => 'required|email|max:50',
+                    'tipo_solicitud' => 'required|exists:request_type,id',
+                    'imagen' => 'nullable|image|max:5120',
+                ]);
 
-                $slug = $this->clean($task->title);
-                $existingItem = Task::where('slug', $slug)->first();
-                if(!empty($existingItem)){
-                    $slug = $slug . '-' . $task->id;
+                DB::beginTransaction();
+
+                 $imagenPath = null;
+                if($request->hasFile('imagen')){
+                    $file = $request->file('imagen');
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $file->move(public_path('files/user_request'), $filename);
+                    $imagenPath = 'files/user_request/' . $filename;
                 }
-                $task->slug = $slug;
-                $task->save();
+
+                UserRequest::create([
+                    'workspace_id' => $validated['workspace_id'],
+                    'title' => $validated['title'],
+                    'description' => $validated['description'],
+                    'email' => $validated['email'],
+                    'request_type_id' => $validated['tipo_solicitud'],
+                    'project_id' => null, // opcional
+                    'task_id' => null,    // opcional
+                    'path' => $imagenPath,
+                ]);
+
+                DB::commit();
+
+                return response()->json(['success' => true]);
+                // $requestData = $request->all();
+                // $formData = $requestData;
+                // unset($formData['email']);
+                // $task = Task::create($formData);
+
+                // $slug = $this->clean($task->title);
+                // $existingItem = Task::where('slug', $slug)->first();
+                // if(!empty($existingItem)){
+                //     $slug = $slug . '-' . $task->id;
+                // }
+                // $task->slug = $slug;
+                // $task->save();
                 
-                return MethodHelper::successResponse($task);
+                // return MethodHelper::successResponse($task);
             } catch (\Exception $e) {
+                DB::rollBack();
+                if (!empty($imagenPath) && file_exists(public_path($imagenPath))) {
+                    unlink(public_path($imagenPath));
+                }
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
