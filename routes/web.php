@@ -90,6 +90,8 @@ Route::post('json/workspace/create', [WorkSpacesController::class, 'jsonCreate']
 Route::post('json/workspace/member/add', [WorkSpacesController::class, 'jsonAddMember'])->name('json.workspace.member.add')->middleware('auth');
 Route::post('json/workspace/change', [WorkSpacesController::class, 'jsonChangeWorkspace'])->name('json.workspace.change')->middleware('auth');
 Route::post('json/workspace/update/{id}', [WorkSpacesController::class, 'jsonUpdateWorkspace'])->name('json.workspace.update')->middleware('auth');
+Route::post('json/workspace/addupd-types-requests', [WorkSpacesController::class, 'jsonAddUpdTypesRequests'])->name('json.workspace.addUpd.types.requests')->middleware('auth');
+Route::delete('json/workspace/delete-request/{id}', [WorkSpacesController::class, 'deleteRequest'])->name('json.workspace.delete.request')->middleware('auth');
 
 Route::get('json/backgrounds/all', [BackgroundsController::class, 'jsonAll'])->name('json.backgrounds.all')->middleware('auth');
 
