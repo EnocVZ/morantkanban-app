@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
+use Exception;
 
 class WorkSpacesController extends Controller 
 {
@@ -118,10 +119,12 @@ class WorkSpacesController extends Controller
     public function workspaceView($uid){
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
+        $types_requests = RequestType::where('workspace_id', $workspace->id)->select('id', 'title', 'workspace_id')->get();
         return Inertia::render('Workspaces/View', [
             'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
-            'projects' => $projects
+            'projects' => $projects,
+            'requests' => $types_requests
         ]);
     }
 
@@ -317,5 +320,57 @@ class WorkSpacesController extends Controller
             'projects' => $projects
         ]);
 
+    }
+
+
+    public function jsonAddUpdTypesRequests(Request $request) {
+        try {
+            $data = $request->validate([
+                '*.id' => 'nullable|integer|exists:request_type,id',
+                '*.title' => 'required|string|max:255',
+                '*.workspace_id' => 'required|integer|exists:workspaces,id',
+            ]);
+
+        $res = RequestType::upsert($data, ['id'], ['title', 'workspace_id']);
+
+        if($res > 0) $list_requests = RequestType::select('id', 'title', 'workspace_id')->get();
+        else $list_requests = $request->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $list_requests
+        ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+
+            ], 500);
+        }
+    }
+    
+    public function deleteRequest($id) {
+        try {
+            $requestType = RequestType::findOrFail($id);
+
+            if (!$requestType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request type not found.'
+                ], 404);
+            }
+
+            $requestType->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request type deleted successfully.'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

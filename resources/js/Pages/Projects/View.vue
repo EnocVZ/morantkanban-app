@@ -147,7 +147,7 @@
                                     </div>
 
                                     <ul class="space-y-2 mt-2" v-if="sub.isOpen">
-                                        <draggable :data-id="sub.id" class="dragArea" :list="sub.tasklist"
+                                        <draggable :data-id="sub.id" :data-colid="column.id" class="dragArea" :list="sub.tasklist"
                                             group="tasklist" item-key="id" @start="draggingChild = true"
                                             @end="afterDrop($event)">
                                             <template #item="{ element, indexTsk }">
@@ -661,7 +661,7 @@ export default {
                 updatedlist_at: new Date(),
                 sublist_id: e.to.dataset.id,
                 userupdate_list: this.auth.user.id,
-                list_id:e.item.dataset.column
+                list_id:e.to.dataset.colid
             };
 
             if (!!e.pullMode) {

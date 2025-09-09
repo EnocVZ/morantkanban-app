@@ -1,42 +1,31 @@
 <template>
   <div class="min-h-screen bg-gray-100">
-    
     <!-- Sección azul superior -->
-    <div class="bg-blue-600 min-h-[30vh] px-4 flex items-center" :style="{backgroundImage: 'url(/images/gradients/1.svg)'}" >
-     
-    </div>
-     <toast ref="toast" :type="notificationType" >{{notificationMessage}}</toast>
+    <div class="bg-blue-600 min-h-[30vh] px-4 flex items-center" :style="{ backgroundImage: 'url(/images/gradients/1.svg)' }"></div>
+    <toast ref="toast" :type="notificationType">{{ notificationMessage }}</toast>
 
     <!-- Formulario con fondo blanco -->
-    <div class="max-w-2xl mx-auto -mt-32 bg-white rounded-xl shadow-lg p-8 relative z-10">
+    <div v-if="showForm" class="max-w-2xl mx-auto -mt-32 bg-white rounded-xl shadow-lg p-8 relative z-10">
       <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2">
-          <span class="text-black text-3xl"></span> Cree una solicitud
-        </h1>
+        <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2"><span class="text-black text-3xl"></span> Cree una solicitud</h1>
       </div>
       <div class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tu correo*</label>
-          <input type="email" placeholder="solicitante@correo.com"
-            v-model="formNewTask.email"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.email}" />
-            <p v-if="errorsForm.email" class="text-red-500 text-sm mt-1">{{ errorsForm.email }}</p>
+          <input type="email" placeholder="solicitante@correo.com" v-model="formNewTask.email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'border-red-500': errorsForm.email }" />
+          <p v-if="errorsForm.email" class="text-red-500 text-sm mt-1">{{ errorsForm.email }}</p>
         </div>
         <!-- Campo resumen -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
-          <input type="text" placeholder="Titulo de la solicitud"
-          v-model="formNewTask.title"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.title}"/>
-            <p v-if="errorsForm.title" class="text-red-500 text-sm mt-1">{{ errorsForm.title }}</p>
+          <input type="text" placeholder="Titulo de la solicitud" v-model="formNewTask.title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'border-red-500': errorsForm.title }" />
+          <p v-if="errorsForm.title" class="text-red-500 text-sm mt-1">{{ errorsForm.title }}</p>
         </div>
 
         <!-- Descripción -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
-          <textarea rows="5" placeholder="Describa su solicitud"
-          v-model="formNewTask.description"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <textarea rows="5" placeholder="Describa su solicitud" v-model="formNewTask.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
         
         <!-- proyecto -->
@@ -88,49 +77,47 @@
             <p class="truncate max-w-xs">{{ previewFile.name }}</p>
           </div>
           <div v-else class="text-center text-gray-600">
-            <svg
-              class="w-8 h-8 mx-auto text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12"
-              />
+            <svg class="w-8 h-8 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12" />
             </svg>
-            <p class="mt-2 text-sm">
-              <span class="font-medium">Haz clic</span> o arrastra una imagen aquí
-            </p>
+            <p class="mt-2 text-sm"><span class="font-medium">Haz clic</span> o arrastra una imagen aquí</p>
           </div>
         </div>
-              
+
         <!-- Botones -->
         <div class="flex items-center gap-4">
-          <loading-button :loading="loadingSave" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-            @click="saveNewTask">Enviar</loading-button>
-          
+          <loading-button :loading="loadingSave" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium" @click="saveNewTask">Enviar</loading-button>
         </div>
       </div>
+    </div>
+    <div v-else-if="showThanks">
+      <div class="max-w-2xl mx-auto -mt-16 bg-white rounded-xl shadow-lg p-8 relative z-10 cuadro-blanco">
+        <div class="space-y-2">
+          <h1 class="text-2xl font-bold text-card-foreground text-balance text-gray-600">¡{{ thanksMessage }}!</h1>
+          <p class="text-muted-foreground text-pretty leading-relaxed">Gracias por su solicitud. Hemos recibido su información y nos pondremos en contacto con usted pronto.</p>
+        </div>
+        <div class="mt-6 flex justify-center">
+          <button class="bg-blue-600 text-white text-lg px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium hover:shadow" @click="nuevaTarea">Crear nueva solicitud</button>
+        </div>
+      </div>
+      
     </div>
   </div>
 </template>
 <script>
 import axios from 'axios'
 import LoadingButton from '@/Shared/LoadingButton'
-import Toast from '@/Shared/Toast';
+import Toast from '@/Shared/Toast'
 
 export default {
-  components:{
+  components: {
     LoadingButton,
     Toast,
   },
   props: {
     categories: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     workspace_id: {
       type: Number,
@@ -141,7 +128,7 @@ export default {
       default: () => []
     }
   },
-  data(){
+  data() {
     return {
       previewUrl: null,
       previewFile: null,
@@ -155,9 +142,12 @@ export default {
          task_project_id:null,
 
       },
-      notificationMessage: "",
-      notificationType: "",
-      errorsForm: {}, 
+      notificationMessage: '',
+      notificationType: '',
+      errorsForm: {},
+      showForm: true,
+      showThanks: false,
+      thanksMessage: 'Gracias por su solicitud',
     }
   },
   watch: {
@@ -175,12 +165,12 @@ export default {
     },
     'formNewTask.task_category_id'(value) {
       this.errorsForm.tipSolicitud = value ? null : 'Debe seleccionar un tipo de solicitud'
-    }
+    },
   },
-  methods:{
-    getParam(name){
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
+  methods: {
+    getParam(name) {
+      const urlParams = new URLSearchParams(window.location.search)
+      return urlParams.get(name)
     },
 
     isValidEmail(email) {
@@ -189,28 +179,27 @@ export default {
     },
 
     validarForm() {
-      this.errorsForm = {};  
-      if (this.formNewTask.email == "") {
+      this.errorsForm = {}
+      if (this.formNewTask.email == '') {
         this.errorsForm.email = 'El correo es obligatorio'
-      }else if (!this.isValidEmail(this.formNewTask.email)) {
-        this.errorsForm.email = 'El correo no es válido';
+      } else if (!this.isValidEmail(this.formNewTask.email)) {
+        this.errorsForm.email = 'El correo no es válido'
       }
-     
+
       if (!this.formNewTask.title) {
-        this.errorsForm.title = "El título es obligatorio"
+        this.errorsForm.title = 'El título es obligatorio'
       }
       if (!this.formNewTask.task_category_id) {
-        this.errorsForm.tipSolicitud = "Debe seleccionar un tipo de solicitud"
+        this.errorsForm.tipSolicitud = 'Debe seleccionar un tipo de solicitud'
       }
       return Object.keys(this.errorsForm).length === 0
     },
 
-    saveNewTask(e){
-
+    saveNewTask(e) {
       if (!this.validarForm()) {
         return
       }
-      this.loadingSave = true;
+      this.loadingSave = true
 
       const formData = new FormData();
       formData.append('workspace_id', this.workspace_id);
@@ -241,29 +230,39 @@ export default {
               this.previewUrl = null;
               this.$refs.toast.showToast();
           }
-      }).catch((error) => {
-          this.notificationMessage = error?.response?.data?.message || "Ocurrió un error "
-          this.notificationType = "error"
+        })
+        .catch((error) => {
+          this.notificationMessage = error?.response?.data?.message || 'Ocurrió un error '
+          this.notificationType = 'error'
           this.$refs.toast.showToast()
-      }).finally(()=>{
-        this.loadingSave = false;
-      })
+        })
+        .finally(() => {
+          this.loadingSave = false
+        })
+
+      this.showForm = false
+      this.showThanks = true
+      this.thanksMessage = 'Gracias por su solicitud'
+
+      setTimeout(() => {
+        this.thanksMessage = 'Hola, envíe una nueva solicitud'
+      }, 15000)
     },
 
     handleFile(e) {
-      const file = e.target.files[0];
-      this.setFile(file);
+      const file = e.target.files[0]
+      this.setFile(file)
     },
     handleDrop(e) {
-      const file = e.dataTransfer.files[0];
-      this.setFile(file);
+      const file = e.dataTransfer.files[0]
+      this.setFile(file)
     },
 
     setFile(file) {
-      if (file && file.type.startsWith("image/")) {
-        this.formNewTask.imagen = file;
+      if (file && file.type.startsWith('image/')) {
+        this.formNewTask.imagen = file
 
-        this.previewUrl = URL.createObjectURL(file);
+        this.previewUrl = URL.createObjectURL(file)
       } else {
         this.previewUrl = null;
         this.formNewTask.imagen = file;
@@ -271,9 +270,19 @@ export default {
       }
     },
 
-    
-
+    nuevaTarea() {
+      this.showForm = true
+      this.showThanks = false
+      this.formNewTask = {
+        title: '',
+        description: '',
+        task_category_id: null,
+        email: '',
+        imagen: null,
+      }
+    },
   },
+  
   created(){
     console.log(this.getParam("id"));
     console.log(this.projects,"projects")
