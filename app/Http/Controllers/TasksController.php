@@ -29,6 +29,7 @@ use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class TasksController extends Controller
@@ -403,59 +404,97 @@ class TasksController extends Controller
         }
 
         public function taskFromLink(Request $request){
+
+
             try {
+
+                $driveFileUrl = null;
                 $validated = $request->validate([
                     'workspace_id' => 'required|integer|exists:workspaces,id',
                     'title' => 'required|string|max:50',
                     'description' => 'nullable|string|max:100',
                     'email' => 'required|email|max:50',
                     'tipo_solicitud' => 'required|exists:request_type,id',
-                    'imagen' => 'nullable|image|max:5120',
+                    'project_id' => 'nullable|integer|exists:projects,id',
+                    'file' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,docx'
                 ]);
 
                 DB::beginTransaction();
 
-                 $imagenPath = null;
-                if($request->hasFile('imagen')){
-                    $file = $request->file('imagen');
-                    $filename = time() . '_' . $file->getClientOriginalName();
-                    $file->move(public_path('files/user_request'), $filename);
-                    $imagenPath = 'files/user_request/' . $filename;
+                //Buscar la lista backlog en ese proyecto
+                $board_list = BoardList::where('project_id', $validated['project_id'])
+                    ->where('title', 'backlog')
+                    ->where('order', 0)
+                    ->where('is_basic', 1)
+                    ->firstOrFail();
+
+                 if (!$board_list) {
+                    throw new \Exception("No se encontró un board_list válido para este proyecto.");
                 }
 
+                
+                $slug = implode('-', explode(' ', $validated['title']));
+                // crear la tarea
+                $task = Task::create([
+                    'title'       => $validated['title'],
+                    'slug'        => $slug,
+                    'is_done'     => 0,
+                    'is_archive'  => 0,
+                    'is_request'  => 1,
+                    'description' => $validated['description'] ?? null,
+                    'cover'       => null,
+                    'list_id'     => $board_list->id,
+                    'sublist_id'  => null,
+                    'order'       => 0,
+                    'user_id'     => auth()->id() ?? null,
+                    'project_id'  => $validated['project_id'],
+                ]);
+
+                if($request->hasFile('file')){
+                    $file = $request->file('file');
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+
+                    // obtener carpeta del proyecto
+                    $project = Project::findOrFail($validated['project_id']);
+                    $folderKey = $project->folderkey; 
+
+                    $google = new GoogleController();
+                    $driveFileId = $google->uploadFile($project, $request, $folderKey);
+                    if ($driveFileId['error']) {
+                        throw new \Exception($driveFileId['message']);
+                    }
+                    $driveFileUrl = $driveFileId['fileId'];
+
+                    // guardar en attachments
+                    Attachment::create([
+                        'task_id' => $task->id,
+                        'name' => $fileName,
+                        'user_id' => auth()->id() ?? null,
+                        'size' => $file->getSize(),
+                        'path' => $driveFileUrl,
+                        'width' => null,
+                        'height' => null,
+                    ]);
+                }
+
+                
                 UserRequest::create([
                     'workspace_id' => $validated['workspace_id'],
-                    'title' => $validated['title'],
-                    'description' => $validated['description'],
                     'email' => $validated['email'],
                     'request_type_id' => $validated['tipo_solicitud'],
-                    'project_id' => null, // opcional
-                    'task_id' => null,    // opcional
-                    'path' => $imagenPath,
+                    'project_id' => $validated['project_id'] ?? null,
+                    'task_id' => $task->id,
                 ]);
+
+                 $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
 
                 DB::commit();
 
                 return response()->json(['success' => true]);
-                // $requestData = $request->all();
-                // $formData = $requestData;
-                // unset($formData['email']);
-                // $task = Task::create($formData);
-
-                // $slug = $this->clean($task->title);
-                // $existingItem = Task::where('slug', $slug)->first();
-                // if(!empty($existingItem)){
-                //     $slug = $slug . '-' . $task->id;
-                // }
-                // $task->slug = $slug;
-                // $task->save();
                 
                 // return MethodHelper::successResponse($task);
             } catch (\Exception $e) {
                 DB::rollBack();
-                if (!empty($imagenPath) && file_exists(public_path($imagenPath))) {
-                    unlink(public_path($imagenPath));
-                }
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
