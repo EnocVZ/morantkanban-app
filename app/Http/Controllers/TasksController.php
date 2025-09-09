@@ -411,8 +411,8 @@ class TasksController extends Controller
                 $driveFileUrl = null;
                 $validated = $request->validate([
                     'workspace_id' => 'required|integer|exists:workspaces,id',
-                    'title' => 'required|string|max:50',
-                    'description' => 'nullable|string|max:100',
+                    'title' => 'required|string|max:200',
+                    'description' => 'nullable|string',
                     'email' => 'required|email|max:50',
                     'tipo_solicitud' => 'required|exists:request_type,id',
                     'project_id' => 'nullable|integer|exists:projects,id',
@@ -446,19 +446,28 @@ class TasksController extends Controller
                     'list_id'     => $board_list->id,
                     'sublist_id'  => null,
                     'order'       => 0,
-                    'user_id'     => auth()->id() ?? null,
+                    'user_id'     => auth()->id() ?? 0,
                     'project_id'  => $validated['project_id'],
                 ]);
 
                 if($request->hasFile('file')){
                     $file = $request->file('file');
                     $fileName = time() . '_' . $file->getClientOriginalName();
-
+                    $google = new GoogleController();
                     // obtener carpeta del proyecto
                     $project = Project::findOrFail($validated['project_id']);
-                    $folderKey = $project->folderkey; 
+                    // Si no hay folderkey, lo creamos en Drive
+                    // if (!$project->folderkey) {
+                        
+                    //     $driveService = $google->getDriveService(); 
+                    //     $parentFolderId = $google->createFolder($driveService, 'morantkanban');
+                    //     $newFolderId = $google->createFolder($driveService, $project->title, $parentFolderId);
 
-                    $google = new GoogleController();
+                    //     $project->folderkey = $newFolderId;
+                    //     $project->save();
+                    // }
+                     $folderKey = $project->folderkey; 
+
                     $driveFileId = $google->uploadFile($project, $request, $folderKey);
                     if ($driveFileId['error']) {
                         throw new \Exception($driveFileId['message']);
@@ -486,13 +495,12 @@ class TasksController extends Controller
                     'task_id' => $task->id,
                 ]);
 
-                 $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
+                $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
 
                 DB::commit();
 
                 return response()->json(['success' => true]);
                 
-                // return MethodHelper::successResponse($task);
             } catch (\Exception $e) {
                 DB::rollBack();
                 return MethodHelper::errorResponse($e->getMessage());

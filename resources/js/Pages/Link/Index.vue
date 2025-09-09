@@ -25,7 +25,8 @@
         <!-- Descripción -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
-          <textarea rows="5" placeholder="Describa su solicitud" v-model="formNewTask.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <textarea rows="5" placeholder="Describa su solicitud" v-model="formNewTask.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'border-red-500': errorsForm.description }"></textarea>
+          <p v-if="errorsForm.description" class="text-red-500 text-sm mt-1">{{ errorsForm.description }}</p>
         </div>
         
         <!-- proyecto -->
@@ -163,6 +164,12 @@ export default {
     'formNewTask.title'(value) {
       this.errorsForm.title = value ? null : 'El título es obligatorio'
     },
+    'formNewTask.description'(value) {
+      this.errorsForm.description = value ? null : 'La descripción es obligatoria'
+    },
+    'formNewTask.task_project_id'(value) {
+      this.errorsForm.proyecto = value ? null : 'Debe seleccionar un proyecto'
+    },
     'formNewTask.task_category_id'(value) {
       this.errorsForm.tipSolicitud = value ? null : 'Debe seleccionar un tipo de solicitud'
     },
@@ -188,6 +195,12 @@ export default {
 
       if (!this.formNewTask.title) {
         this.errorsForm.title = 'El título es obligatorio'
+      }
+      if(!this.formNewTask.description){
+        this.errorsForm.description = 'La descripción es obligatoria'
+      }
+      if(!this.formNewTask.task_project_id){
+        this.errorsForm.proyecto = 'Debe seleccionar un proyecto'
       }
       if (!this.formNewTask.task_category_id) {
         this.errorsForm.tipSolicitud = 'Debe seleccionar un tipo de solicitud'
@@ -217,18 +230,24 @@ export default {
         headers: { 'Content-Type': 'multipart/form-data' }
       }).then((response) => {
           if(!response?.data?.error){
-              this.notificationMessage = "Solicitud enviada correctamente"
-              this.notificationType = "success"
-              this.formNewTask = {
-                  title: '',
-                  description: '',
-                  task_category_id: null,
-                  email: '',
-                  imagen: null,
-                  task_project_id:null
-              }
-              this.previewUrl = null;
-              this.$refs.toast.showToast();
+            
+            this.formNewTask = {
+              title: '',
+              description: '',
+              task_category_id: null,
+              email: '',
+              imagen: null,
+              task_project_id:null
+            }
+            this.previewUrl = null;
+            this.previewFile = null;
+            this.showForm = false
+            this.showThanks = true
+            this.thanksMessage = 'Gracias por su solicitud'
+
+            setTimeout(() => {
+              this.thanksMessage = 'Hola, envíe una nueva solicitud'
+            }, 15000)
           }
         })
         .catch((error) => {
@@ -239,14 +258,6 @@ export default {
         .finally(() => {
           this.loadingSave = false
         })
-
-      this.showForm = false
-      this.showThanks = true
-      this.thanksMessage = 'Gracias por su solicitud'
-
-      setTimeout(() => {
-        this.thanksMessage = 'Hola, envíe una nueva solicitud'
-      }, 15000)
     },
 
     handleFile(e) {
@@ -279,7 +290,9 @@ export default {
         task_category_id: null,
         email: '',
         imagen: null,
+        task_project_id:null
       }
+      this.errorsForm = {}
     },
   },
   
