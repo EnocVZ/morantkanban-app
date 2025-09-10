@@ -12,13 +12,10 @@ class UserRequest extends Model
     
     protected $fillable = [
         'email',
-        'title',
-        'description',
         'workspace_id',
         'project_id',
         'task_id',
         'request_type_id',
-        'path'
     ];
 
     public function task(){
