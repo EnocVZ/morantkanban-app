@@ -312,6 +312,7 @@ class WorkSpacesController extends Controller
     }
 
     public function viewFormLink($workspace_id, Request $request){
+
         try {
             $workspace_id_decrypt = Crypt::decryptString($workspace_id);
         } catch (\Exception $e) {
@@ -319,11 +320,13 @@ class WorkSpacesController extends Controller
         }
 
         $categories = RequestType::where('workspace_id', $workspace_id_decrypt)->get();
+        $projects = Project::where('workspace_id',$workspace_id_decrypt)->get();
 
         return Inertia::render('Link/Index', [
             'title' => 'Solicitud',
             'workspace_id' => $workspace_id_decrypt,
             'categories' => $categories,
+            'projects' => $projects
         ]);
 
     }
