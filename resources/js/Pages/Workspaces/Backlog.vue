@@ -48,7 +48,7 @@
 
                 </tr>
               </thead>
-              <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
+              <tr v-for="(listItem, listIndex) in lists" :key="listItem.id" class="list-group-item group">
                 <td>{{ listItem?.id }}</td>
                 <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                   <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
@@ -62,7 +62,7 @@
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                  <span>{{ findCategory(listItem.task_category_id)?.title || "" }}</span>
+                  <span>{{ listItem.requestTitle || "" }}</span>
                 </td>
 
                 <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">

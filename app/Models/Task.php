@@ -171,7 +171,7 @@ class Task extends Model
 
     public function userRequest()
     {
-        return $this->hasMany(UserRequest::class, 'id', 'task_id');
+        return $this->hasMany(UserRequest::class, 'task_id', 'id');
     }
 
     public function subTaskCompleted(){
