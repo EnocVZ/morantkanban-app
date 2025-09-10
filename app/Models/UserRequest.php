@@ -21,4 +21,8 @@ class UserRequest extends Model
     public function task(){
         return $this->belongsTo(Task::class, 'task_id');
     }
+    public function requestType()
+    {
+        return $this->belongsTo(RequestType::class, 'request_type_id');
+    }
 }

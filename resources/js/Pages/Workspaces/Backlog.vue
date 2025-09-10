@@ -48,7 +48,7 @@
 
                 </tr>
               </thead>
-              <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
+              <tr v-for="(listItem, listIndex) in lists" :key="listItem.id" class="list-group-item group">
                 <td>{{ listItem?.id }}</td>
                 <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                   <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
@@ -62,7 +62,7 @@
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                  <span>{{ findCategory(listItem.task_category_id)?.title || "" }}</span>
+                  <span>{{ listItem.requestTitle || "" }}</span>
                 </td>
 
                 <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
@@ -363,11 +363,14 @@ export default {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
         .then((response) => {
+          console.log(response)
           if (!response?.data?.error) {
-            this.formNewTask = this.defaultForm();
+            console.log('ya esta')
+            // this.filteredTasks.unshift(response.data.data);
+            // this.formNewTask = this.defaultForm();
+            this.$inertia.get(this.route('workspace.backlog', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
             this.projects = [];
             this.showModal = false;
-            this.filteredTasks.unshift(response.data.data);
           }
         })
         .catch((error) => {
@@ -477,13 +480,14 @@ export default {
     },
     openEditTask() {
       const task = this.filteredTasks.find(task => task.id == this.openDropdownId);
+      console.log(task)
       this.formNewTask = {
         id: task.id,
         title: task.title,
         description: task.description,
-        task_category_id: task.task_category_id || 2, // Default to 'Ayuda'
-        task_project_id: task.task_project_id || null,
-        workspace_name: get(task, 'workspace.name', ''),
+        // task_category_id: task. || 2, // Default to 'Ayuda'
+        task_project_id: task.project_id || null,
+        // workspace_name: get(task, 'workspace.name', ''),
       };
       this.openDropdownId = null;
       this.showModal = true;
