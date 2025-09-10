@@ -95,7 +95,7 @@
       <div class="max-w-2xl mx-auto -mt-16 bg-white rounded-xl shadow-lg p-8 relative z-10 cuadro-blanco">
         <div class="space-y-2">
           <h1 class="text-2xl font-bold text-card-foreground text-balance text-gray-600">¡{{ thanksMessage }}!</h1>
-          <p class="text-muted-foreground text-pretty leading-relaxed">Gracias por su solicitud. Hemos recibido su información y nos pondremos en contacto con usted pronto.</p>
+          <p class="text-muted-foreground text-pretty leading-relaxed">Hemos recibido su solicitud nos pondremos en contacto con usted mediante el  correo proporcionado.</p>
         </div>
         <div class="mt-6 flex justify-center">
           <button class="bg-blue-600 text-white text-lg px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium hover:shadow" @click="nuevaTarea">Crear nueva solicitud</button>
@@ -148,7 +148,7 @@ export default {
       errorsForm: {},
       showForm: true,
       showThanks: false,
-      thanksMessage: 'Gracias por su solicitud',
+      thanksMessage: 'Su solicitud fue creada correctamente',
     }
   },
   watch: {
@@ -243,7 +243,7 @@ export default {
             this.previewFile = null;
             this.showForm = false
             this.showThanks = true
-            this.thanksMessage = 'Gracias por su solicitud'
+            this.thanksMessage = 'Su solicitud fue creada correctamente'
 
             setTimeout(() => {
               this.thanksMessage = 'Hola, envíe una nueva solicitud'
