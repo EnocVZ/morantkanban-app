@@ -311,11 +311,13 @@ class WorkSpacesController extends Controller
 
     public function viewFormLink($workspace_id, Request $request){
         $categories = RequestType::where('workspace_id', $workspace_id)->get();
+        $projects = Project::where('workspace_id',$workspace_id)->get();
 
         return Inertia::render('Link/Index', [
             'title' => 'Solicitud',
             'workspace_id' => $workspace_id,
             'categories' => $categories,
+            'projects' => $projects
         ]);
 
     }

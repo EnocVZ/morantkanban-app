@@ -25,23 +25,57 @@
         <!-- Descripción -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
-          <textarea rows="5" placeholder="Describa su solicitud" v-model="formNewTask.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <textarea rows="5" placeholder="Describa su solicitud" v-model="formNewTask.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'border-red-500': errorsForm.description }"></textarea>
+          <p v-if="errorsForm.description" class="text-red-500 text-sm mt-1">{{ errorsForm.description }}</p>
         </div>
-
+        
+        <!-- proyecto -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto</label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.proyecto}"
+              v-model="formNewTask.task_project_id"
+              >
+              <option v-for="project in projects" :value="project.id">{{ project.title }}</option>
+            </select>
+             <p v-if="errorsForm.proyecto" class="text-red-500 text-sm mt-1">{{ errorsForm.proyecto }}</p>
+        </div>
+        
         <!-- Environment -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
-          <select class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'border-red-500': errorsForm.tipSolicitud }" v-model="formNewTask.task_category_id">
-            <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
-          </select>
-          <p v-if="errorsForm.tipSolicitud" class="text-red-500 text-sm mt-1">{{ errorsForm.tipSolicitud }}</p>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errorsForm.tipSolicitud}"
+              v-model="formNewTask.task_category_id"
+              >
+              <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
+            </select>
+             <p v-if="errorsForm.tipSolicitud" class="text-red-500 text-sm mt-1">{{ errorsForm.tipSolicitud }}</p>
         </div>
-        <div class="flex flex-col justify-center items-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500" @dragover.prevent @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+        <div
+          class="flex flex-col justify-center items-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500"
+          @dragover.prevent
+          @drop.prevent="handleDrop"
+          @click="$refs.fileInput.click()"
+        >
           <!-- Input oculto -->
-          <input id="file-upload" type="file" accept="image/*" class="hidden" ref="fileInput" @change="handleFile" />
+          <input 
+            id="file-upload" 
+            type="file" 
+            accept="image/*,application/pdf,.doc,.docx" 
+            class="hidden" 
+            ref="fileInput"
+            @change="handleFile"
+          />
 
+            <!-- Vista previa para imagen -->
           <div v-if="previewUrl" class="w-full h-full flex justify-center items-center">
             <img :src="previewUrl" alt="Preview" class="max-h-36 object-contain rounded-lg" />
+          </div>
+
+          <!-- Vista previa para otros archivos -->
+          <div v-else-if="previewFile" class="w-full h-full flex flex-col justify-center items-center text-gray-600">
+            <p class="truncate max-w-xs">{{ previewFile.name }}</p>
           </div>
           <div v-else class="text-center text-gray-600">
             <svg class="w-8 h-8 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,19 +122,26 @@ export default {
     },
     workspace_id: {
       type: Number,
-      required: true,
+      required: true
     },
+    projects:{
+      type: Array,
+      default: () => []
+    }
   },
   data() {
     return {
       previewUrl: null,
+      previewFile: null,
       loadingSave: false,
-      formNewTask: {
-        title: '',
-        description: '',
-        task_category_id: null,
-        email: '',
-        imagen: null,
+      formNewTask:{
+         title: '',
+         description: '',
+         task_category_id: null,
+         email: '',
+         imagen: null,
+         task_project_id:null,
+
       },
       notificationMessage: '',
       notificationType: '',
@@ -122,6 +163,12 @@ export default {
     },
     'formNewTask.title'(value) {
       this.errorsForm.title = value ? null : 'El título es obligatorio'
+    },
+    'formNewTask.description'(value) {
+      this.errorsForm.description = value ? null : 'La descripción es obligatoria'
+    },
+    'formNewTask.task_project_id'(value) {
+      this.errorsForm.proyecto = value ? null : 'Debe seleccionar un proyecto'
     },
     'formNewTask.task_category_id'(value) {
       this.errorsForm.tipSolicitud = value ? null : 'Debe seleccionar un tipo de solicitud'
@@ -149,6 +196,12 @@ export default {
       if (!this.formNewTask.title) {
         this.errorsForm.title = 'El título es obligatorio'
       }
+      if(!this.formNewTask.description){
+        this.errorsForm.description = 'La descripción es obligatoria'
+      }
+      if(!this.formNewTask.task_project_id){
+        this.errorsForm.proyecto = 'Debe seleccionar un proyecto'
+      }
       if (!this.formNewTask.task_category_id) {
         this.errorsForm.tipSolicitud = 'Debe seleccionar un tipo de solicitud'
       }
@@ -161,34 +214,40 @@ export default {
       }
       this.loadingSave = true
 
-      const formData = new FormData()
-      formData.append('workspace_id', this.workspace_id)
-      formData.append('title', this.formNewTask.title)
-      formData.append('description', this.formNewTask.description)
-      formData.append('email', this.formNewTask.email)
-      formData.append('tipo_solicitud', this.formNewTask.task_category_id)
+      const formData = new FormData();
+      formData.append('workspace_id', this.workspace_id);
+      formData.append('title', this.formNewTask.title);
+      formData.append('description', this.formNewTask.description);
+      formData.append('email', this.formNewTask.email);
+      formData.append('tipo_solicitud', this.formNewTask.task_category_id);
+      formData.append('project_id', this.formNewTask.task_project_id);
 
-      if (this.formNewTask.imagen) {
-        formData.append('imagen', this.formNewTask.imagen)
+      if(this.formNewTask.imagen){
+          formData.append('file', this.formNewTask.imagen);
       }
 
-      axios
-        .post(this.route('tasklink.new'), formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        .then((response) => {
-          if (!response?.data?.error) {
-            this.notificationMessage = 'Solicitud enviada correctamente'
-            this.notificationType = 'success'
+      axios.post(this.route('tasklink.new'), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }).then((response) => {
+          if(!response?.data?.error){
+            
             this.formNewTask = {
               title: '',
               description: '',
               task_category_id: null,
               email: '',
               imagen: null,
+              task_project_id:null
             }
-            this.previewUrl = null
-            this.$refs.toast.showToast()
+            this.previewUrl = null;
+            this.previewFile = null;
+            this.showForm = false
+            this.showThanks = true
+            this.thanksMessage = 'Gracias por su solicitud'
+
+            setTimeout(() => {
+              this.thanksMessage = 'Hola, envíe una nueva solicitud'
+            }, 15000)
           }
         })
         .catch((error) => {
@@ -199,14 +258,6 @@ export default {
         .finally(() => {
           this.loadingSave = false
         })
-
-      this.showForm = false
-      this.showThanks = true
-      this.thanksMessage = 'Gracias por su solicitud'
-
-      setTimeout(() => {
-        this.thanksMessage = 'Hola, envíe una nueva solicitud'
-      }, 15000)
     },
 
     handleFile(e) {
@@ -224,9 +275,9 @@ export default {
 
         this.previewUrl = URL.createObjectURL(file)
       } else {
-        this.notificationMessage = 'Por favor selecciona una imagen válida.'
-        this.notificationType = 'error'
-        this.$refs.toast.showToast()
+        this.previewUrl = null;
+        this.formNewTask.imagen = file;
+        this.previewFile = file;
       }
     },
 
@@ -239,11 +290,16 @@ export default {
         task_category_id: null,
         email: '',
         imagen: null,
+        task_project_id:null
       }
+      this.errorsForm = {}
     },
   },
-  created() {
-    console.log(this.getParam('id'))
-  },
+  
+  created(){
+    console.log(this.getParam("id"));
+    console.log(this.projects,"projects")
+    
+  }
 }
 </script>
