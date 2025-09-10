@@ -485,9 +485,9 @@ export default {
         id: task.id,
         title: task.title,
         description: task.description,
-        // task_category_id: task. || 2, // Default to 'Ayuda'
+        task_category_id: task.request_type_id || 2, // Default to 'Ayuda'
         task_project_id: task.project_id || null,
-        // workspace_name: get(task, 'workspace.name', ''),
+        workspace_id: task.workspace_id || null,
       };
       this.openDropdownId = null;
       this.showModal = true;
