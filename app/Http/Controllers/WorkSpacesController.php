@@ -291,9 +291,9 @@ class WorkSpacesController extends Controller
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
-
+        
         $taksList = Task::query()
-            ->select('tasks.*', 'request_type.title as requestTitle')
+            ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id','user_request.request_type_id')
             ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
             ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
             ->where('is_request', 1)
