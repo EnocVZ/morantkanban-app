@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
 use Exception;
+use Illuminate\Support\Facades\Crypt;
 
 class WorkSpacesController extends Controller 
 {
@@ -304,17 +305,24 @@ class WorkSpacesController extends Controller
             'filters' => $requests,
             'list_index' => $list_index,
             'workspace' => $workspace,
-            'tasks' => $taksList
+            'tasks' => $taksList,
+            'workspace_id' => Crypt::encryptString($workspace->id),
         ]);
 
     }
 
     public function viewFormLink($workspace_id, Request $request){
-        $categories = RequestType::where('workspace_id', $workspace_id)->get();
+        try {
+            $workspace_id_decrypt = Crypt::decryptString($workspace_id);
+        } catch (\Exception $e) {
+            abort(404, 'ID inválido');
+        }
+
+        $categories = RequestType::where('workspace_id', $workspace_id_decrypt)->get();
 
         return Inertia::render('Link/Index', [
             'title' => 'Solicitud',
-            'workspace_id' => $workspace_id,
+            'workspace_id' => $workspace_id_decrypt,
             'categories' => $categories,
         ]);
 
