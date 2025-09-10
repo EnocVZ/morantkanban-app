@@ -273,17 +273,18 @@ class WorkSpacesController extends Controller
 
          $user = auth()->user()->load('role');
         $requests = $request->all();
-        if(!empty($user->role)){
-            if($user->role->slug != 'admin' && empty($requests['user'])){
-                return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
-            }
-        }else{
-            return abort(404);
-        }
+        // if(!empty($user->role)){
+        //     if($user->role->slug != 'admin' && empty($requests['user'])){
+        //         return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
+        //     }
+        // }else{
+        //     return abort(404);
+        // }
 
         $list_index = [];
         $board_lists = BoardList::orderByOrder()->get();
         $workspace = Workspace::where('id', $uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
+        $allWorkSpace = Workspace::orderBy('name')->get();
         $loopIndex = 0;
         foreach ($board_lists as &$listItem){
             $list_index[$listItem->id] = $loopIndex;
@@ -307,6 +308,7 @@ class WorkSpacesController extends Controller
             'workspace' => $workspace,
             'tasks' => $taksList,
             'workspace_id' => Crypt::encryptString($workspace->id),
+            'allWorkSpace' => $allWorkSpace,
         ]);
 
     }

@@ -8,7 +8,7 @@
 
           <button
             class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-            @click="showModal = true">
+            @click="openNewTaskModal">
             Agregar tarea
           </button>
           <button
@@ -111,7 +111,11 @@
           Agregar nueva tarea al backlog
         </h1>
       </div>
-
+      <div class="mb-4" v-if="errors.length">
+        <ul class="text-red-600 text-sm list-disc pl-5">
+          <li v-for="(err, i) in errors" :key="i">{{ err }}</li>
+        </ul>
+      </div>
       <!-- Tu formulario -->
       <div class="space-y-6">
         <!-- Campo resumen -->
@@ -129,7 +133,30 @@
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             v-model="formNewTask.description"></textarea>
         </div>
-
+        <!-- espacio de trabajo -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Espacio de trabajo *</label>
+          <select
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            v-model="formNewTask.workspace_id" @change="getProjects(formNewTask.workspace_id)">
+            <option value="">Seleccione un espacio</option>
+            <option v-for="ws in allWorkSpace" :key="ws.id" :value="ws.id">
+              {{ ws.name }}
+            </option>
+          </select>
+        </div>
+        <!-- Proyecto -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto</label>
+          <select
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            v-model="formNewTask.task_project_id">
+            <option value="">Seleccione un proyecto</option>
+            <option v-for="project in projects" :key="project.id" :value="project.id">
+              {{ project.title }}
+            </option>
+          </select>
+        </div>
         <!-- Environment -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
@@ -235,7 +262,7 @@ export default {
     workspace: Object,
     list_index: Object,
     board_lists: Object,
-    workspace_id: String,
+    allWorkSpace: Object,
   },
   remember: 'form',
   data() {
@@ -258,6 +285,7 @@ export default {
       lodadingDelete: false,
       dropdownPosition: { top: 0, left: 0 },
       loadingSaveTask: false,
+      projects: [],
     }
   },
   watch: {
@@ -281,10 +309,32 @@ export default {
   created() {
     this.moment = moment
     this.getCategory();
+    this.getProjects(this.workspace.id);
     this.filteredTasks = this.tasks.data
 
   },
   methods: {
+    validarForm() {
+      const camposObligatorios = [
+        'workspace_id',
+        'title',
+        'description',
+        'task_category_id',
+        'task_project_id'
+      ];
+      let valido = true;
+      this.errors = [];
+
+      camposObligatorios.forEach(campo => {
+        if (!this.formNewTask[campo]) {
+          this.errors.push(`El campo ${campo} es obligatorio.`);
+          valido = false;
+        }
+      });
+
+      return valido;
+    },
+
     validateSaveOrEdit() {
       if (this.formNewTask.id > 0) {
         this.updateTask();
@@ -293,20 +343,40 @@ export default {
       }
     },
     saveNewTask() {
+      if (!this.validarForm()) {
+        return;
+      }
       this.loadingSaveTask = true;
-      const requestData = { ...this.formNewTask, workspace_id: this.workspace.id };
-      axios.post(this.route('tasklink.new'), requestData)
+      // const requestData = { ...this.formNewTask, workspace_id: this.workspace.id };
+
+      const formData = new FormData();
+      formData.append('workspace_id', this.formNewTask.workspace_id);
+      formData.append('title', this.formNewTask.title);
+      formData.append('description', this.formNewTask.description);
+      formData.append('tipo_solicitud', this.formNewTask.task_category_id);
+      formData.append('project_id', this.formNewTask.task_project_id);
+
+      if (this.formNewTask.imagen) {
+        formData.append('file', this.formNewTask.imagen);
+      }
+      axios.post(this.route('tasklink.new'), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
         .then((response) => {
-          if (response?.data?.error == false) {
+          if (!response?.data?.error) {
             this.formNewTask = this.defaultForm();
+            this.projects = [];
             this.showModal = false;
-            this.filteredTasks.unshift(response.data.data)
+            this.filteredTasks.unshift(response.data.data);
           }
-        }).catch((error) => {
-          console.log(error)
-        }).finally(() => {
-          this.loadingSaveTask = false;
         })
+        .catch((error) => {
+          // Manejo de error
+          alert('Ocurrió un error al guardar la tarea');
+        })
+        .finally(() => {
+          this.loadingSaveTask = false;
+        });
     },
     updateTask() {
       this.loadingSaveTask = true;
@@ -333,7 +403,7 @@ export default {
     },
     copyLink() {
       const link = window.location.origin; // obtiene la URL actual
-      navigator.clipboard.writeText(link + '/w/request/link/' + this.workspace_id)
+      navigator.clipboard.writeText(link + '/w/request/link/' + this.workspace.id)
         .then(() => {
           alert('✅ Link copiado al portapapeles');
         })
@@ -357,6 +427,22 @@ export default {
         }
         //  this.workspaces = response.data;
       });
+    },
+    getProjects(workspace_id) {
+      if (!workspace_id) {
+        this.projects = [];
+        return;
+      }
+      axios.get(this.route('json.projects.all', workspace_id))
+        .then(response => {
+          this.projects = response.data;
+        });
+    },
+
+    openNewTaskModal() {
+      this.formNewTask = this.defaultForm();
+      this.projects = []; // <-- Limpia la lista de proyectos
+      this.showModal = true;
     },
 
     findCategory(id) {
@@ -396,6 +482,8 @@ export default {
         title: task.title,
         description: task.description,
         task_category_id: task.task_category_id || 2, // Default to 'Ayuda'
+        task_project_id: task.task_project_id || null,
+        workspace_name: get(task, 'workspace.name', ''),
       };
       this.openDropdownId = null;
       this.showModal = true;
@@ -406,6 +494,8 @@ export default {
         title: '',
         description: '',
         task_category_id: 2, // Default to 'Ayuda'
+        task_project_id: null,
+        workspace_name: '',
       }
     },
     cancelNewTask() {
