@@ -3,23 +3,30 @@
 
     <Head :title="__(title)" />
     <div class="min-w-full py-4 align-middle md:px-3 lg:px-4">
-      <div class="flex justify-between items-center">
-        <div class="flex">
-
-          <button
-            class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-            @click="openNewTaskModal">
-            Agregar tarea
-          </button>
-          <button
-            class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-            @click="copyLink">
-            Obtener link para formulario
-          </button>
-        </div>
-        <h2 class="text mb-1 px-2 text-[20px] font-medium">Solicitudes </h2>
-        <div class="tiny__time__log__bar">
-          <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
+      <div class="">
+        <div class="block space-y-2 lg:flex gap-4 w-full lg:justify-between">
+          <div>
+            <h2 class="text mb-1 px-2 text-2xl font-medium">Solicitudes </h2>
+          </div>
+          <div>
+            <div class="flex gap-6">
+              <button
+                class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                @click="openNewTaskModal">
+                Agregar tarea
+              </button>
+              <button
+                class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                @click="copyLink">
+                Obtener link para formulario
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <div class="tiny__time__log__bar">
+              <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -54,7 +61,7 @@
                   <th scope="col" class=" w-[17%]">
                     {{ __('Tipo de tarea') }}
                   </th>
-
+                  <th scope="col" class="w-[50px]"></th>
                 </tr>
               </thead>
               <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
@@ -77,7 +84,7 @@
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                   <span>{{ listItem.projectTitle || "" }}</span>
                 </td>
-                 <td
+                <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                   <span>{{ listItem.listName || "" }}</span>
                 </td>
