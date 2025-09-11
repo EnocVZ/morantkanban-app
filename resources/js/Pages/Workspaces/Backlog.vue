@@ -48,7 +48,7 @@
 
                 </tr>
               </thead>
-              <tr v-for="(listItem, listIndex) in lists" :key="listItem.id" class="list-group-item group">
+              <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
                 <td>{{ listItem?.id }}</td>
                 <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                   <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
@@ -150,7 +150,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto</label>
           <select
             class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.task_project_id">
+            v-model="formNewTask.project_id">
             <option value="">Seleccione un proyecto</option>
             <option v-for="project in projects" :key="project.id" :value="project.id">
               {{ project.title }}
@@ -162,7 +162,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
           <select
             class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.task_category_id">
+            v-model="formNewTask.request_type_id">
             <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
           </select>
         </div>
@@ -320,8 +320,8 @@ export default {
         'workspace_id',
         'title',
         'description',
-        'task_category_id',
-        'task_project_id'
+        'request_type_id',
+        'project_id'
       ];
       let valido = true;
       this.errors = [];
@@ -354,8 +354,8 @@ export default {
       formData.append('workspace_id', this.formNewTask.workspace_id);
       formData.append('title', this.formNewTask.title);
       formData.append('description', this.formNewTask.description);
-      formData.append('tipo_solicitud', this.formNewTask.task_category_id);
-      formData.append('project_id', this.formNewTask.task_project_id);
+      formData.append('tipo_solicitud', this.formNewTask.request_type_id);
+      formData.append('project_id', this.formNewTask.project_id);
 
       if (this.formNewTask.imagen) {
         formData.append('file', this.formNewTask.imagen);
@@ -471,7 +471,7 @@ export default {
         this.openConfirmDialog = false;
       }).finally(() => {
         this.lodadingDelete = false
-        this.notify()
+        //this.notify()
       });
     },
     openDelete(taskId) {
@@ -486,8 +486,8 @@ export default {
         id: task.id,
         title: task.title,
         description: task.description,
-        task_category_id: task.request_type_id || 2, // Default to 'Ayuda'
-        task_project_id: task.project_id || null,
+        request_type_id: task.request_type_id ,
+        project_id: task.project_id || null,
         workspace_id: task.workspace_id || null,
       };
       this.openDropdownId = null;
@@ -498,9 +498,11 @@ export default {
         id: 0,
         title: '',
         description: '',
-        task_category_id: 2, // Default to 'Ayuda'
-        task_project_id: null,
+        request_type_id: null, // Default to 'Ayuda'
+        project_id: null,
         workspace_name: '',
+        workspace_id: null,
+        imagen: null,
       }
     },
     cancelNewTask() {
