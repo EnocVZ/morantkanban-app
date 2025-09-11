@@ -19,6 +19,7 @@ use App\Models\Workspace;
 use App\Models\TaskNotification;
 use App\Models\BoardSublist;
 use App\Models\BasicStatus;
+use App\Models\UserRequest;
 
 
 use Carbon\Carbon;
@@ -167,7 +168,8 @@ class ProjectsController extends Controller {
         $board_lists = $this->boardListWithDetails($project);
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
-       
+        $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
+
         if($project->is_private && (auth()->user()['role_id'] != 1)){
             $requests['private_task'] = $auth_id;
         }
@@ -181,6 +183,8 @@ class ProjectsController extends Controller {
             'project' => $project,
             'notification'=>$notification,
             'existBasicList' => $this->validateIfExistList($project),
+            'requestNoRead' => $requestNoRead,
+
         ]);
     }
 
@@ -322,7 +326,9 @@ class ProjectsController extends Controller {
                                         'timer',
                                         'cover',
                                         'assignees',
-                                        'subtaskList'
+                                        'subtaskList',
+                                        'userRequest',
+                                    
                                     ])
                                     ->withCount([
                                         'checklistDone',
@@ -343,6 +349,7 @@ class ProjectsController extends Controller {
                         ->get()
                         ->map(function ($boardList) {
                             $totalTask = $boardList->tasks->count();
+                            //$totalTask = $boardList->tasks->count();
                             $boardList->total_tasks = $totalTask;
                             return $boardList;
                         })
@@ -359,6 +366,7 @@ class ProjectsController extends Controller {
         $list_index = [];
         $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
+        $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
         $tasks = $this->getAllUserRequest($project);
         return Inertia::render('Projects/Table', [
             'title' => 'Lista | '.$project->title,
@@ -367,7 +375,8 @@ class ProjectsController extends Controller {
             'list_index' => $list_index,
             'project' => $project,
             'filters' => $requests,
-            'tasks' => $tasks
+            'tasks' => $tasks,
+            'requestNoRead' => $requestNoRead
         ]);
     }
 

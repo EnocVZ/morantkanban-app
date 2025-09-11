@@ -3,7 +3,8 @@
 
         <Head :title="__(title)" />
         <board-view-menu :project="project" @filter-toggle="open_filter = !open_filter"
-            @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="filters" view="board" />
+            @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="filters" view="board" 
+            />
         <board-filter :project="project" @board-filter="open_filter = false" :filters="filters" v-if="open_filter"
             @do-filter="doFilter" options="user,due,label" />
         <div class="task_board">
@@ -20,7 +21,7 @@
                             <div class="__t_l_2"></div>
                         </div>
                         <icon class="__t_l_r" name="user" />
-                    </div><span class="sr-only">Loading...</span>
+                    </div><span class="sr-only">Cargando...</span>
                 </div>
                 <div role="status" class="l__b">
                     <div class="__img">

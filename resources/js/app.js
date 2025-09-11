@@ -32,8 +32,10 @@ createInertiaApp({
             .mixin(require('./base'))
             .use(plugin)
             .use(VueApexCharts)
-           
             .directive("click-outside", clickOutside)
             .mount(el)
     },
 })
+
+
+
