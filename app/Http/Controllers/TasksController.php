@@ -413,7 +413,7 @@ class TasksController extends Controller
                     'workspace_id' => 'required|integer|exists:workspaces,id',
                     'title' => 'required|string|max:200',
                     'description' => 'nullable|string',
-                    'email' => 'required|email|max:50',
+                    'email' => 'nullable|email|max:50',
                     'tipo_solicitud' => 'required|exists:request_type,id',
                     'project_id' => 'nullable|integer|exists:projects,id',
                     'file' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,docx'
@@ -489,7 +489,7 @@ class TasksController extends Controller
                 
                 UserRequest::create([
                     'workspace_id' => $validated['workspace_id'],
-                    'email' => $validated['email'],
+                    'email' => $validated['email'] ?? null,
                     'request_type_id' => $validated['tipo_solicitud'],
                     'project_id' => $validated['project_id'] ?? null,
                     'task_id' => $task->id,
