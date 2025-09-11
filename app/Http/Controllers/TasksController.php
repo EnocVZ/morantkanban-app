@@ -449,6 +449,7 @@ class TasksController extends Controller
                     'order'       => 0,
                     'user_id'     => auth()->id() ?? 0,
                     'project_id'  => $validated['project_id'],
+                    'updatedlist_at' => now(),
                 ]);
 
                 if($request->hasFile('file')){
@@ -494,6 +495,7 @@ class TasksController extends Controller
                     'request_type_id' => $validated['tipo_solicitud'],
                     'project_id' => $validated['project_id'] ?? null,
                     'task_id' => $task->id,
+                    'user_id' => auth()->id() ?? null,
                 ]);
 
                 $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
@@ -542,9 +544,12 @@ class TasksController extends Controller
                         'tasks.*',
                         'request_type.title as requestTitle',
                         'user_request.workspace_id','user_request.request_type_id',
-                        )
+                        'projects.title as projectTitle','workspaces.name as workspaceName','board_lists.title as listName')
                     ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
                     ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+                    ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+                    ->join('projects', 'tasks.project_id', '=', 'projects.id')
+                    ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
                     ->where('tasks.id', $task->id)
                     ->first();
                 

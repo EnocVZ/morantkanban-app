@@ -41,6 +41,15 @@
                   <th scope="col">
                     {{ __('Descripción') }}
                   </th>
+                  <th scope="col">
+                    {{ __('Espacio de trabajo') }}
+                  </th>
+                  <th scope="col">
+                    {{ __('Proyecto') }}
+                  </th>
+                  <th scope="col">
+                    {{ __('Lista') }}
+                  </th>
 
                   <th scope="col" class=" w-[17%]">
                     {{ __('Tipo de tarea') }}
@@ -59,6 +68,18 @@
                     class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
                     {{ listItem?.description }}
                   </div>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.workspaceName || "" }}</span>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.projectTitle || "" }}</span>
+                </td>
+                 <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.listName || "" }}</span>
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
@@ -250,6 +271,7 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import draggable from 'vuedraggable'
 import moment from 'moment'
 import throttle from "lodash/throttle";
+import { debounce } from 'lodash'
 import pickBy from "lodash/pickBy";
 import axios from 'axios'
 import SearchInput from '@/Shared/SearchInput'
@@ -300,9 +322,9 @@ export default {
   watch: {
     form: {
       deep: true,
-      handler: throttle(function () {
+      handler: debounce(function () {
         this.$inertia.get(this.route('workspace.backlog', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
-      }, 150),
+      }, 400),
     },
   },
   computed: {
@@ -380,9 +402,7 @@ export default {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
         .then((response) => {
-          console.log(response)
           if (!response?.data?.error) {
-            console.log('ya esta')
             // this.filteredTasks.unshift(response.data.data);
             // this.formNewTask = this.defaultForm();
             this.$inertia.get(this.route('workspace.backlog', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
