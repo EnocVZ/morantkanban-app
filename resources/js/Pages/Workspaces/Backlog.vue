@@ -274,6 +274,7 @@ export default {
     },
     lists() {
       //return items;
+      this.filteredTasks = this.tasks.data
       return this.tasks.data
     },
 
