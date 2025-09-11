@@ -96,7 +96,7 @@
   </div>
   <!-- Modal -->
   <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 relative">
       <!-- Botón cerrar -->
       <button @click="showModal = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
         ✖
@@ -111,61 +111,69 @@
           Agregar nueva tarea al backlog
         </h1>
       </div>
-      <div class="mb-4" v-if="errors.length">
-        <ul class="text-red-600 text-sm list-disc pl-5">
-          <li v-for="(err, i) in errors" :key="i">{{ err }}</li>
-        </ul>
-      </div>
       <!-- Tu formulario -->
       <div class="space-y-6">
         <!-- Campo resumen -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Titulo <span class="text-red-600">*</span></label>
           <input type="text" placeholder="Titulo de la solicitud"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             v-model="formNewTask.title" />
+          <p v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</p>
         </div>
 
         <!-- Descripción -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción <span
+              class="text-red-600">*</span></label>
           <textarea rows="5" placeholder="Describa su solicitud"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             v-model="formNewTask.description"></textarea>
+          <p v-if="errors.description" class="text-red-600 text-sm mt-1">{{ errors.description }}</p>
         </div>
         <!-- espacio de trabajo -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Espacio de trabajo *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Espacio de trabajo <span
+              class="text-red-600">*</span></label>
           <select
             class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.workspace_id"  @change="onWorkspaceChange">
+            v-model="formNewTask.workspace_id" @change="onWorkspaceChange">
             <option value="">Seleccione un espacio</option>
             <option v-for="ws in allWorkSpace" :key="ws.id" :value="ws.id">
               {{ ws.name }}
             </option>
           </select>
+          <p v-if="errors.workspace_id" class="text-red-600 text-sm mt-1">{{ errors.workspace_id }}</p>
         </div>
         <!-- Proyecto -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto</label>
-          <select
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.project_id">
-            <option value="">Seleccione un proyecto</option>
-            <option v-for="project in projects" :key="project.id" :value="project.id">
-              {{ project.title }}
-            </option>
-          </select>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto <span
+                class="text-red-600">*</span></label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.project_id">
+              <option value="">Seleccione un proyecto</option>
+              <option v-for="project in projects" :key="project.id" :value="project.id">
+                {{ project.title }}
+              </option>
+            </select>
+            <p v-if="errors.project_id" class="text-red-600 text-sm mt-1">{{ errors.project_id }}</p>
+          </div>
+          <!-- Environment -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud <span
+                class="text-red-600">*</span></label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.request_type_id">
+              <option value="">Seleccione un tipo de solicitud</option>
+              <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
+            </select>
+            <p v-if="errors.request_type_id" class="text-red-600 text-sm mt-1">{{ errors.request_type_id }}</p>
+          </div>
         </div>
-        <!-- Environment -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
-          <select
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.request_type_id">
-            <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
-          </select>
-        </div>
+
         <div class="flex justify-center items-center w-full" v-if="!formNewTask.id">
           <label for="file-upload"
             class="flex flex-col justify-center items-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500">
@@ -310,7 +318,7 @@ export default {
   },
   created() {
     this.moment = moment
-    this.getCategory();
+    this.getCategory(this.workspace.id);
     this.getProjects(this.workspace.id);
     this.filteredTasks = this.tasks.data
 
@@ -324,12 +332,19 @@ export default {
         'request_type_id',
         'project_id'
       ];
+      const nombresCampos = {
+        workspace_id: 'Espacio de trabajo',
+        title: 'Título',
+        description: 'Descripción',
+        request_type_id: 'Tipo solicitud',
+        project_id: 'Proyecto'
+      };
       let valido = true;
-      this.errors = [];
+      this.errors = {};
 
       camposObligatorios.forEach(campo => {
         if (!this.formNewTask[campo]) {
-          this.errors.push(`El campo ${campo} es obligatorio.`);
+          this.errors[campo] = `El campo ${nombresCampos[campo]} es obligatorio.`;
           valido = false;
         }
       });
@@ -429,7 +444,7 @@ export default {
     onWorkspaceChange() {
       this.getProjects(this.formNewTask.workspace_id);
       this.getCategory(this.formNewTask.workspace_id);
-      this.formNewTask.project_id = null; 
+      this.formNewTask.project_id = null;
       this.formNewTask.request_type_id = null;
     },
 
@@ -496,12 +511,12 @@ export default {
     },
     openEditTask() {
       const task = this.filteredTasks.find(task => task.id == this.openDropdownId);
-      console.log(task)
+      this.getProjects(task.workspace_id);
       this.formNewTask = {
         id: task.id,
         title: task.title,
         description: task.description,
-        request_type_id: task.request_type_id ,
+        request_type_id: task.request_type_id,
         project_id: task.project_id || null,
         workspace_id: task.workspace_id || null,
       };
