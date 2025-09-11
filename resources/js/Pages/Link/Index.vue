@@ -297,8 +297,6 @@ export default {
   },
   
   created(){
-    console.log(this.getParam("id"));
-    console.log(this.projects,"projects")
     
   }
 }

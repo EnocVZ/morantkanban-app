@@ -293,15 +293,23 @@ class WorkSpacesController extends Controller
         }
         
         $taksList = Task::query()
-            ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id','user_request.request_type_id')
+            ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id',
+                    'user_request.request_type_id','projects.title as projectTitle',
+                    'workspaces.name as workspaceName','board_lists.title as listName')
             ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
             ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+            ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+            ->join('projects', 'tasks.project_id', '=', 'projects.id')
+            ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
             ->where('is_request', 1)
             ->when($search, function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('tasks.title', 'like', "%$search%")
                     ->orWhere('tasks.description', 'like', "%$search%")
-                    ->orWhere('request_type.title', 'like', "%$search%");
+                    ->orWhere('request_type.title', 'like', "%$search%")
+                    ->orWhere('projects.title', 'like', "%$search%")
+                    ->orWhere('workspaces.name', 'like', "%$search%")
+                    ->orWhere('board_lists.title', 'like', "%$search%");
                 });
             })
             ->orderBy('created_at', 'DESC')
