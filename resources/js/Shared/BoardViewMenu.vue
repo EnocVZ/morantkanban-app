@@ -18,7 +18,8 @@
                     :class="{ 'active': view === option.slug }"
                     :href="route('projects.view.' + option.slug, project.slug || project.id)">
                 <icon :name="icons[option_index]" class="w-4 fill-[#ffffff] h-4 mr-[5px]" />
-                {{ __(option.name) }}
+                {{ __(option.name) }}<span class="bg-blue-50 bg-opacity-30 cursor-default font-semibold inline-flex items-center justify-center ml-1 mr-1 px-3 py-1 rounded-full text-xs"
+                v-if="requestNoRead > 0 && option.slug == 'table'">{{ requestNoRead }}</span>
                 </Link>
             </div>
             <div class="flex items-center flex-start gap-1 ml-auto view__menus">
@@ -47,7 +48,7 @@ export default {
         filters: { required: false },
         view: {
             required: false
-        }
+        },
     },
     components: { BoardFilter, Icon, Link },
     data() {
@@ -63,7 +64,11 @@ export default {
                 { name: 'Notas', slug: 'notes' },
             ],
             position: { top: 0, left: 0, right: 'inherit' },
+            requestNoRead: 0
         }
+    },
+    created() {
+        this.getCountRequestNoRead();
     },
     methods: {
         clearFilter(e) {
@@ -90,6 +95,13 @@ export default {
             e.preventDefault();
             axios.post(this.route('json.p.starred.save', id));
             this.project.star = !this.project.star;
+        },
+        getCountRequestNoRead() {
+            axios.get(this.route('userrequest.count', this.project.id)).then(res => {
+                if(!res.data.error) {
+                    this.requestNoRead = res.data.data;
+                }
+            })
         }
     }
 }

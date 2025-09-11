@@ -20,8 +20,9 @@
                         </div>
                         <ul class="space-y-2 mt-2 p-4">
                             <li  v-for="element in column.tasks" :key="element.id"
-                                @click="taskDetailsPopup(element.id)"
-                                class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
+                                @click="taskDetailsPopup(element)"
+                                class="li_box p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded"
+                                :class="{ 'bg-blue-50': element.user_request.read == 0}">
                                 <!-- Etiquetas -->
                                 <!--div v-if="element.task_labels.length"
                                     class="mb-2 flex flex-wrap gap-1">
@@ -44,7 +45,7 @@
                                     <div 
                                         :class="['flex items-center gap-1']">
                                         <icon name="time" class="w-4 h-4" />
-                                        <span aria-label="Numero de días en la lista">6 días</span>
+                                        <span aria-label="Numero de días en la lista">{{ element.time_elapsed }}</span>
                                     </div>
 
 
@@ -262,11 +263,22 @@ export default {
         this.getOtherData();
     },
     methods: {
-        taskDetailsPopup(id) {
+        makeReadRequest(idRequest){
+            axios.post(this.route('userrequest.makeread', idRequest)).then(res => {
+                
+            })
+        },
+        taskDetailsPopup(task) {
+            const {id}= task;
             this.form.task = id;
             this.td_pop = true;
             this.taskDetailsId = id;
             this.taskDetailsOpen = true;
+            if(task.user_request.read == 0){
+                this.makeReadRequest(task.user_request.id);
+                task.user_request.read = 1;
+            }
+
         },
         closeDetails() {
             this.form.task = null;

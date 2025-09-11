@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class UserRequest extends Model
 {
@@ -17,12 +18,14 @@ class UserRequest extends Model
         'task_id',
         'request_type_id',
     ];
+    protected $appends = ['time_elapsed'];
 
     public function task(){
         return $this->belongsTo(Task::class, 'task_id');
     }
-    public function requestType()
+
+    public function getTimeElapsedAttribute()
     {
-        return $this->belongsTo(RequestType::class, 'request_type_id');
+        return $this->created_at->diffForHumans();
     }
 }
