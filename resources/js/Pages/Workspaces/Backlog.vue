@@ -202,18 +202,32 @@
           </div>
         </div>
 
-        <div class="flex justify-center items-center w-full" v-if="!formNewTask.id">
-          <label for="file-upload"
-            class="flex flex-col justify-center items-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500">
-            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12" />
-            </svg>
-            <p class="mt-2 text-sm text-gray-600">
-              <span class="font-medium">Haz clic para subir</span> o arrastra y suelta
-            </p>
-            <input id="file-upload" type="file" class="hidden" />
-          </label>
+        <div v-if="!formNewTask.id">
+          <!-- ...dentro del modal, donde va el campo de archivo... -->
+          <div
+            class="flex flex-col justify-center items-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500"
+            @dragover.prevent @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+            <!-- Input oculto -->
+            <input id="file-upload" type="file" accept="image/*,application/pdf,.doc,.docx" class="hidden"
+              ref="fileInput" @change="handleFile" />
+
+            <!-- Vista previa para imagen -->
+            <div v-if="previewUrl" class="w-full h-full flex justify-center items-center">
+              <img :src="previewUrl" alt="Preview" class="max-h-36 object-contain rounded-lg" />
+            </div>
+
+            <!-- Vista previa para otros archivos -->
+            <div v-else-if="previewFile" class="w-full h-full flex flex-col justify-center items-center text-gray-600">
+              <p class="truncate max-w-xs">{{ previewFile.name }}</p>
+            </div>
+            <div v-else class="text-center text-gray-600">
+              <svg class="w-8 h-8 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12" />
+              </svg>
+              <p class="mt-2 text-sm"><span class="font-medium">Haz clic</span> o arrastra una imagen aquí</p>
+            </div>
+          </div>
         </div>
 
         <!-- Botones -->
@@ -324,6 +338,8 @@ export default {
       dropdownPosition: { top: 0, left: 0 },
       loadingSaveTask: false,
       projects: [],
+      previewUrl: null,
+      previewFile: null,
     }
   },
   watch: {
@@ -565,6 +581,25 @@ export default {
     cancelNewTask() {
       this.formNewTask = this.defaultForm();
       this.showModal = false;
+    },
+    handleFile(e) {
+      const file = e.target.files[0]
+      this.setFile(file)
+    },
+    handleDrop(e) {
+      const file = e.dataTransfer.files[0]
+      this.setFile(file)
+    },
+    setFile(file) {
+      if (file && file.type.startsWith('image/')) {
+        this.formNewTask.imagen = file
+        this.previewUrl = URL.createObjectURL(file)
+        this.previewFile = null
+      } else {
+        this.previewUrl = null
+        this.formNewTask.imagen = file
+        this.previewFile = file
+      }
     },
   },
 }
