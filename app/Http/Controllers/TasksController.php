@@ -162,6 +162,7 @@ class TasksController extends Controller
             Comment::where('task_id', $task->id)->delete();
             Assignee::where('task_id', $task->id)->delete();
             TaskLabel::where('task_id', $task->id)->delete();
+            UserRequest::where('task_id', $task->id)->delete();
             $result = $task->delete();
         }
         return response()->json($result);
@@ -489,7 +490,7 @@ class TasksController extends Controller
                 
                 UserRequest::create([
                     'workspace_id' => $validated['workspace_id'],
-                    'email' => $validated['email'] ?? null,
+                    'email' => $validated['email'] ?? auth()->user()?->email,
                     'request_type_id' => $validated['tipo_solicitud'],
                     'project_id' => $validated['project_id'] ?? null,
                     'task_id' => $task->id,
@@ -510,9 +511,12 @@ class TasksController extends Controller
         public function updateTaskBacklog($taskId, Request $request){
             try {
                 $requestData = $request->all();
+
+                $taskData = collect($requestData)->except(['workspace_id', 'request_type_id']);
+                $userRequestData = collect($requestData)->only(['workspace_id', 'request_type_id','project_id']);
                 
                 $task = Task::whereId($taskId)->first();
-                foreach ($requestData as $itemKey => $itemValue){
+                foreach ($taskData as $itemKey => $itemValue){
                     if($itemKey == 'title'){
                         $slug = $this->clean($itemValue);
                         $existingItem = Task::where('slug', $slug)->first();
@@ -525,8 +529,26 @@ class TasksController extends Controller
                 }
 
                 $task->save();
+
+                if ($userRequestData->isNotEmpty()) {
+                    $userRequest = UserRequest::where('task_id', $task->id)->first();
+                    if ($userRequest) {
+                        $userRequest->update($userRequestData->toArray());
+                    }
+                }
+
+                $updatedTask = Task::query()
+                    ->select(
+                        'tasks.*',
+                        'request_type.title as requestTitle',
+                        'user_request.workspace_id','user_request.request_type_id',
+                        )
+                    ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
+                    ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+                    ->where('tasks.id', $task->id)
+                    ->first();
                 
-                return MethodHelper::successResponse($task);
+                return MethodHelper::successResponse($updatedTask);
             } catch (\Exception $e) {
                 return MethodHelper::errorResponse($e->getMessage());
             }
