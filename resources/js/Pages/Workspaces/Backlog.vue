@@ -3,23 +3,30 @@
 
     <Head :title="__(title)" />
     <div class="min-w-full py-4 align-middle md:px-3 lg:px-4">
-      <div class="flex justify-between items-center">
-        <div class="flex">
-
-          <button
-            class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-            @click="showModal = true">
-            Agregar tarea
-          </button>
-          <button
-            class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-            @click="copyLink">
-            Obtener link para formulario
-          </button>
-        </div>
-        <h2 class="text mb-1 px-2 text-[20px] font-medium">Solicitudes </h2>
-        <div class="tiny__time__log__bar">
-          <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
+      <div class="">
+        <div class="block space-y-2 lg:flex gap-4 w-full lg:justify-between">
+          <div>
+            <h2 class="text mb-1 px-2 text-2xl font-medium">Solicitudes </h2>
+          </div>
+          <div>
+            <div class="flex gap-6">
+              <button
+                class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                @click="openNewTaskModal">
+                Agregar solicitud
+              </button>
+              <button
+                class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                @click="copyLink">
+                Obtener link para formulario
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <div class="tiny__time__log__bar">
+              <search-input v-model="form.search" class="w-full max-w-md mr-4" @reset="reset" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -34,22 +41,31 @@
                   <th scope="col" class="w-[20px]">ID</th>
                   <th scope="col" class="w-[17%]">
                     <button class="flex items-center gap-x-3 focus:outline-none">
-                      <span>{{ __('Tareas') }}</span>
+                      <span>{{ __('Solicitudes') }}</span>
                     </button>
                   </th>
 
                   <th scope="col">
                     {{ __('Descripción') }}
                   </th>
-
-                  <th scope="col" class=" w-[17%]">
-                    {{ __('Tipo de tarea') }}
+                  <th scope="col">
+                    {{ __('Espacio de trabajo') }}
+                  </th>
+                  <th scope="col">
+                    {{ __('Proyecto') }}
+                  </th>
+                  <th scope="col">
+                    {{ __('Lista') }}
                   </th>
 
+                  <th scope="col" class=" w-[17%]">
+                    {{ __('Tipo de solicitud') }}
+                  </th>
+                  <th scope="col" class="w-[50px]"></th>
                 </tr>
               </thead>
               <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
-                <td>{{ listItem?.id }}</td>
+                <td class="px-2 py-2">{{ listItem?.id }}</td>
                 <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
                   <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
                 </td>
@@ -62,14 +78,26 @@
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                  <span>{{ findCategory(listItem.task_category_id)?.title || "" }}</span>
+                  <span>{{ listItem.workspaceName || "" }}</span>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.projectTitle || "" }}</span>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.listName || "" }}</span>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.requestTitle || "" }}</span>
                 </td>
 
                 <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
                   <div class="inline-block text-left">
                     <div>
                       <button @click.stop="toggleDropdown(listItem.id, $event)" type="button"
-                        class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200">
+                        class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200 items-center">
                         ⋮
                       </button>
                     </div>
@@ -96,7 +124,7 @@
   </div>
   <!-- Modal -->
   <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 relative">
       <!-- Botón cerrar -->
       <button @click="showModal = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
         ✖
@@ -105,52 +133,101 @@
       <!-- Título -->
       <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-if="formNewTask.id > 0">
-          Editar tarea
+          Editar solicitud
         </h1>
         <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-else>
-          Agregar nueva tarea al backlog
+          Agregar nueva solicitud al backlog
         </h1>
       </div>
-
       <!-- Tu formulario -->
       <div class="space-y-6">
         <!-- Campo resumen -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Titulo <span class="text-red-600">*</span></label>
           <input type="text" placeholder="Titulo de la solicitud"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             v-model="formNewTask.title" />
+          <p v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</p>
         </div>
 
         <!-- Descripción -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción <span
+              class="text-red-600">*</span></label>
           <textarea rows="5" placeholder="Describa su solicitud"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             v-model="formNewTask.description"></textarea>
+          <p v-if="errors.description" class="text-red-600 text-sm mt-1">{{ errors.description }}</p>
         </div>
-
-        <!-- Environment -->
+        <!-- espacio de trabajo -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Espacio de trabajo <span
+              class="text-red-600">*</span></label>
           <select
             class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            v-model="formNewTask.task_category_id">
-            <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
+            v-model="formNewTask.workspace_id" @change="onWorkspaceChange">
+            <option value="">Seleccione un espacio</option>
+            <option v-for="ws in allWorkSpace" :key="ws.id" :value="ws.id">
+              {{ ws.name }}
+            </option>
           </select>
+          <p v-if="errors.workspace_id" class="text-red-600 text-sm mt-1">{{ errors.workspace_id }}</p>
         </div>
-        <div class="flex justify-center items-center w-full" v-if="!formNewTask.id">
-          <label for="file-upload"
-            class="flex flex-col justify-center items-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500">
-            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12" />
-            </svg>
-            <p class="mt-2 text-sm text-gray-600">
-              <span class="font-medium">Haz clic para subir</span> o arrastra y suelta
-            </p>
-            <input id="file-upload" type="file" class="hidden" />
-          </label>
+        <!-- Proyecto -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto <span
+                class="text-red-600">*</span></label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.project_id">
+              <option value="">Seleccione un proyecto</option>
+              <option v-for="project in projects" :key="project.id" :value="project.id">
+                {{ project.title }}
+              </option>
+            </select>
+            <p v-if="errors.project_id" class="text-red-600 text-sm mt-1">{{ errors.project_id }}</p>
+          </div>
+          <!-- Environment -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo solicitud <span
+                class="text-red-600">*</span></label>
+            <select
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              v-model="formNewTask.request_type_id">
+              <option value="">Seleccione un tipo de solicitud</option>
+              <option v-for="category in categories" :value="category.id">{{ category.title }}</option>
+            </select>
+            <p v-if="errors.request_type_id" class="text-red-600 text-sm mt-1">{{ errors.request_type_id }}</p>
+          </div>
+        </div>
+
+        <div v-if="!formNewTask.id">
+          <!-- ...dentro del modal, donde va el campo de archivo... -->
+          <div
+            class="flex flex-col justify-center items-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500"
+            @dragover.prevent @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+            <!-- Input oculto -->
+            <input id="file-upload" type="file" accept="image/*,application/pdf,.doc,.docx" class="hidden"
+              ref="fileInput" @change="handleFile" />
+
+            <!-- Vista previa para imagen -->
+            <div v-if="previewUrl" class="w-full h-full flex justify-center items-center">
+              <img :src="previewUrl" alt="Preview" class="max-h-36 object-contain rounded-lg" />
+            </div>
+
+            <!-- Vista previa para otros archivos -->
+            <div v-else-if="previewFile" class="w-full h-full flex flex-col justify-center items-center text-gray-600">
+              <p class="truncate max-w-xs">{{ previewFile.name }}</p>
+            </div>
+            <div v-else class="text-center text-gray-600">
+              <svg class="w-8 h-8 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16v-4a4 4 0 014-4h3m4 4l-5-5m0 0l-5 5m5-5v12" />
+              </svg>
+              <p class="mt-2 text-sm"><span class="font-medium">Haz clic</span> o arrastra una imagen aquí</p>
+            </div>
+          </div>
         </div>
 
         <!-- Botones -->
@@ -190,13 +267,13 @@
       left: dropdownPosition.left + 'px'
     }" class="z-50 w-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5">
       <div class="py-1" role="menu" aria-orientation="vertical">
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openMoveTask(openDropdownId)">
+        <!--<a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openMoveTask(openDropdownId)">
           <icon name="clipboard" class="fill-gray-400 h-4 mr-2" /> Asignar
-        </a>
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openEditTask()">
+        </a> -->
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center" @click="openEditTask()">
           <icon name="edit" class="fill-gray-400 h-4 mr-2" /> Editar
         </a>
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openDelete(openDropdownId)">
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center" @click="openDelete(openDropdownId)">
           <icon name="trash" class="fill-gray-400 h-4 mr-2" /> Eliminar
         </a>
       </div>
@@ -215,6 +292,7 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import draggable from 'vuedraggable'
 import moment from 'moment'
 import throttle from "lodash/throttle";
+import { debounce } from 'lodash'
 import pickBy from "lodash/pickBy";
 import axios from 'axios'
 import SearchInput from '@/Shared/SearchInput'
@@ -236,6 +314,7 @@ export default {
     list_index: Object,
     board_lists: Object,
     workspace_id: String,
+    allWorkSpace: Object,
   },
   remember: 'form',
   data() {
@@ -258,14 +337,17 @@ export default {
       lodadingDelete: false,
       dropdownPosition: { top: 0, left: 0 },
       loadingSaveTask: false,
+      projects: [],
+      previewUrl: null,
+      previewFile: null,
     }
   },
   watch: {
     form: {
       deep: true,
-      handler: throttle(function () {
+      handler: debounce(function () {
         this.$inertia.get(this.route('workspace.backlog', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
-      }, 150),
+      }, 400),
     },
   },
   computed: {
@@ -274,17 +356,47 @@ export default {
     },
     lists() {
       //return items;
+      this.filteredTasks = this.tasks.data
       return this.tasks.data
     },
 
   },
   created() {
     this.moment = moment
-    this.getCategory();
+    this.getCategory(this.workspace.id);
+    this.getProjects(this.workspace.id);
     this.filteredTasks = this.tasks.data
 
   },
   methods: {
+    validarForm() {
+      const camposObligatorios = [
+        'workspace_id',
+        'title',
+        'description',
+        'request_type_id',
+        'project_id'
+      ];
+      const nombresCampos = {
+        workspace_id: 'Espacio de trabajo',
+        title: 'Título',
+        description: 'Descripción',
+        request_type_id: 'Tipo solicitud',
+        project_id: 'Proyecto'
+      };
+      let valido = true;
+      this.errors = {};
+
+      camposObligatorios.forEach(campo => {
+        if (!this.formNewTask[campo]) {
+          this.errors[campo] = `El campo ${nombresCampos[campo]} es obligatorio.`;
+          valido = false;
+        }
+      });
+
+      return valido;
+    },
+
     validateSaveOrEdit() {
       if (this.formNewTask.id > 0) {
         this.updateTask();
@@ -293,20 +405,41 @@ export default {
       }
     },
     saveNewTask() {
+      if (!this.validarForm()) {
+        return;
+      }
       this.loadingSaveTask = true;
-      const requestData = { ...this.formNewTask, workspace_id: this.workspace.id };
-      axios.post(this.route('tasklink.new'), requestData)
+      // const requestData = { ...this.formNewTask, workspace_id: this.workspace.id };
+
+      const formData = new FormData();
+      formData.append('workspace_id', this.formNewTask.workspace_id);
+      formData.append('title', this.formNewTask.title);
+      formData.append('description', this.formNewTask.description);
+      formData.append('tipo_solicitud', this.formNewTask.request_type_id);
+      formData.append('project_id', this.formNewTask.project_id);
+
+      if (this.formNewTask.imagen) {
+        formData.append('file', this.formNewTask.imagen);
+      }
+      axios.post(this.route('tasklink.new'), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
         .then((response) => {
-          if (response?.data?.error == false) {
-            this.formNewTask = this.defaultForm();
+          if (!response?.data?.error) {
+            // this.filteredTasks.unshift(response.data.data);
+            // this.formNewTask = this.defaultForm();
+            this.$inertia.get(this.route('workspace.backlog', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
+            this.projects = [];
             this.showModal = false;
-            this.filteredTasks.unshift(response.data.data)
           }
-        }).catch((error) => {
-          console.log(error)
-        }).finally(() => {
-          this.loadingSaveTask = false;
         })
+        .catch((error) => {
+          // Manejo de error
+          alert(error?.response?.data?.errors || 'Ocurrió un error al guardar la tarea');
+        })
+        .finally(() => {
+          this.loadingSaveTask = false;
+        });
     },
     updateTask() {
       this.loadingSaveTask = true;
@@ -350,13 +483,46 @@ export default {
       this.filteredTasks = this.filteredTasks.filter(task => task.id !== this.taskId);
       this.moveToList = false;
     },
-    getCategory() {
-      axios.get(this.route('category.list', this.workspace.id)).then((response) => {
-        if (response?.data?.error == false) {
-          this.categories = response.data.data;
-        }
-        //  this.workspaces = response.data;
-      });
+
+    onWorkspaceChange() {
+      this.getProjects(this.formNewTask.workspace_id);
+      this.getCategory(this.formNewTask.workspace_id);
+      this.formNewTask.project_id = null;
+      this.formNewTask.request_type_id = null;
+    },
+
+    getCategory(workspace_id) {
+      if (!workspace_id) {
+        this.categories = [];
+        return;
+      }
+      axios.get(this.route('category.list', workspace_id))
+        .then((response) => {
+          if (response?.data?.error == false) {
+            this.categories = response.data.data;
+          } else {
+            this.categories = [];
+          }
+        });
+    },
+    getProjects(workspace_id) {
+      if (!workspace_id) {
+        this.projects = [];
+        return;
+      }
+      axios.get(this.route('json.projects.all', workspace_id))
+        .then(response => {
+          this.projects = response.data;
+        });
+    },
+
+    openNewTaskModal() {
+      this.formNewTask = this.defaultForm();
+      this.projects = []; // <-- Limpia la lista de proyectos
+      this.showModal = true;
+      this.previewUrl= null;
+      this.previewFile = null;
+      this.errors = {}
     },
 
     findCategory(id) {
@@ -381,7 +547,7 @@ export default {
         this.openConfirmDialog = false;
       }).finally(() => {
         this.lodadingDelete = false
-        this.notify()
+        //this.notify()
       });
     },
     openDelete(taskId) {
@@ -391,26 +557,53 @@ export default {
     },
     openEditTask() {
       const task = this.filteredTasks.find(task => task.id == this.openDropdownId);
+      this.getProjects(task.workspace_id);
       this.formNewTask = {
         id: task.id,
         title: task.title,
         description: task.description,
-        task_category_id: task.task_category_id || 2, // Default to 'Ayuda'
+        request_type_id: task.request_type_id,
+        project_id: task.project_id || null,
+        workspace_id: task.workspace_id || null,
       };
       this.openDropdownId = null;
       this.showModal = true;
+      this.errors = {}  
     },
     defaultForm() {
       return {
         id: 0,
         title: '',
         description: '',
-        task_category_id: 2, // Default to 'Ayuda'
+        request_type_id: null, // Default to 'Ayuda'
+        project_id: null,
+        workspace_name: '',
+        workspace_id: null,
+        imagen: null,
       }
     },
     cancelNewTask() {
       this.formNewTask = this.defaultForm();
       this.showModal = false;
+    },
+    handleFile(e) {
+      const file = e.target.files[0]
+      this.setFile(file)
+    },
+    handleDrop(e) {
+      const file = e.dataTransfer.files[0]
+      this.setFile(file)
+    },
+    setFile(file) {
+      if (file && file.type.startsWith('image/')) {
+        this.formNewTask.imagen = file
+        this.previewUrl = URL.createObjectURL(file)
+        this.previewFile = null
+      } else {
+        this.previewUrl = null
+        this.formNewTask.imagen = file
+        this.previewFile = file
+      }
     },
   },
 }

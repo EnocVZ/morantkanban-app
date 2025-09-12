@@ -28,6 +28,7 @@ use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -70,8 +71,10 @@ class TasksController extends Controller
 
             }else if($itemKey == 'list_id'){
                 $action = "update-list";
-                $this->changeRequestUserToList($taskId, $requestData);
                 $this->LogTask($taskId, $action, $task->list_id, $itemValue);
+                if($this->validateListComplete($itemValue)){
+                    $task->is_done = 1;
+                }
             }else if($itemKey == 'due_date'){
                // $action = "update-duedate";
             }else if($itemKey == 'description'){
@@ -81,10 +84,17 @@ class TasksController extends Controller
         }
         //$this->LogTask($taskId, $action);
         $task->save();
+        $this->changeRequestUserToList($taskId, $requestData, $task->is_done);
         $task->load('list')->load('taskLabels.label')->load('assignees');
         return response()->json($task);
     }
-
+    public function validateListComplete($list_id){
+        $list = Boardlist::where('id', $list_id)->first();
+        if($list->title == 'Hecho' && $list->is_basic == 1){
+            return true;
+        }
+        return false;
+    }
     public function jsonArchiveTasks($project_id){
         $archiveTasks = Task::where('is_archive', 1)
             ->byProject($project_id)
@@ -162,6 +172,7 @@ class TasksController extends Controller
             Comment::where('task_id', $task->id)->delete();
             Assignee::where('task_id', $task->id)->delete();
             TaskLabel::where('task_id', $task->id)->delete();
+            UserRequest::where('task_id', $task->id)->delete();
             $result = $task->delete();
         }
         return response()->json($result);
@@ -413,7 +424,7 @@ class TasksController extends Controller
                     'workspace_id' => 'required|integer|exists:workspaces,id',
                     'title' => 'required|string|max:200',
                     'description' => 'nullable|string',
-                    'email' => 'required|email|max:50',
+                    'email' => 'nullable|email|max:50',
                     'tipo_solicitud' => 'required|exists:request_type,id',
                     'project_id' => 'nullable|integer|exists:projects,id',
                     'file' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,docx'
@@ -426,10 +437,10 @@ class TasksController extends Controller
                     ->where('title', 'backlog')
                     ->where('order', 0)
                     ->where('is_basic', 1)
-                    ->firstOrFail();
+                    ->first();
 
                  if (!$board_list) {
-                    throw new \Exception("No se encontró un board_list válido para este proyecto.");
+                    throw new \Exception("No se encontró una lista backlog válida para este proyecto.");
                 }
 
                 
@@ -448,6 +459,7 @@ class TasksController extends Controller
                     'order'       => 0,
                     'user_id'     => auth()->id() ?? 0,
                     'project_id'  => $validated['project_id'],
+                    'updatedlist_at' => now(),
                 ]);
 
                 if($request->hasFile('file')){
@@ -489,10 +501,11 @@ class TasksController extends Controller
                 
                 UserRequest::create([
                     'workspace_id' => $validated['workspace_id'],
-                    'email' => $validated['email'],
+                    'email' => $validated['email'] ?? auth()->user()?->email,
                     'request_type_id' => $validated['tipo_solicitud'],
                     'project_id' => $validated['project_id'] ?? null,
                     'task_id' => $task->id,
+                    'user_id' => auth()->id() ?? null,
                 ]);
 
                 $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
@@ -510,9 +523,12 @@ class TasksController extends Controller
         public function updateTaskBacklog($taskId, Request $request){
             try {
                 $requestData = $request->all();
+
+                $taskData = collect($requestData)->except(['workspace_id', 'request_type_id']);
+                $userRequestData = collect($requestData)->only(['workspace_id', 'request_type_id','project_id']);
                 
                 $task = Task::whereId($taskId)->first();
-                foreach ($requestData as $itemKey => $itemValue){
+                foreach ($taskData as $itemKey => $itemValue){
                     if($itemKey == 'title'){
                         $slug = $this->clean($itemValue);
                         $existingItem = Task::where('slug', $slug)->first();
@@ -525,22 +541,60 @@ class TasksController extends Controller
                 }
 
                 $task->save();
+
+                if ($userRequestData->isNotEmpty()) {
+                    $userRequest = UserRequest::where('task_id', $task->id)->first();
+                    if ($userRequest) {
+                        $userRequest->update($userRequestData->toArray());
+                    }
+                }
+
+                $updatedTask = Task::query()
+                    ->select(
+                        'tasks.*',
+                        'request_type.title as requestTitle',
+                        'user_request.workspace_id','user_request.request_type_id',
+                        'projects.title as projectTitle','workspaces.name as workspaceName','board_lists.title as listName')
+                    ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
+                    ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+                    ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+                    ->join('projects', 'tasks.project_id', '=', 'projects.id')
+                    ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+                    ->where('tasks.id', $task->id)
+                    ->first();
                 
-                return MethodHelper::successResponse($task);
+                return MethodHelper::successResponse($updatedTask);
             } catch (\Exception $e) {
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
 
-        public function changeRequestUserToList($taskId, $requestData){
+        public function changeRequestUserToList($taskId, $requestData, $isDoneList){
             try {
+                $isDoneAllTask = false;
                 $findParent = SubTask::where('subtask_id', $taskId)->first();
                 
                 if($findParent){
+                    $findSubTask = SubTask::where('maintask_id', $findParent->maintask_id)
+                    ->with('task')
+                    ->get();
+                    $totalsubtask = $findSubTask->count();
+                    $doneTasks = $findSubTask->where('task.is_done', 1)->count();
+                    if($totalsubtask == $doneTasks){
+                        $isDoneAllTask = true;
+                    }
                     $taskParent = Task::where('id', $findParent->maintask_id)->first();
-                    if($taskParent && $taskParent->is_request == 1){
+                    if($taskParent->is_request == 1){
                         $taskParent->list_id = $requestData['list_id'];
-                        $taskParent->save();
+                        $taskParent->updatedlist_at = now();
+                        $taskParent->userupdate_list = auth()->id();
+                        
+                        if($isDoneList == 1 && $isDoneAllTask){
+                            $taskParent->is_done = 1;
+                            $taskParent->save();
+                        }else if($isDoneList == 0){
+                            $taskParent->save();
+                        }
                     }
                 }
             }catch (\Exception $e) {

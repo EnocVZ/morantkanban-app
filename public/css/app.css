@@ -1931,6 +1931,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .gap-5 {
   gap: 1.25rem;
 }
+.gap-6 {
+  gap: 1.5rem;
+}
 .gap-\[1px\] {
   gap: 1px;
 }
@@ -3271,6 +3274,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   }
 }
 @media (min-width: 1024px) {
+  .lg\:flex {
+    display: flex;
+  }
   .lg\:w-1\/2 {
     width: 50%;
   }
@@ -3303,6 +3309,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   }
   .lg\:flex-row {
     flex-direction: row;
+  }
+  .lg\:justify-between {
+    justify-content: space-between;
   }
   .lg\:space-x-14 > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 0;

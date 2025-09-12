@@ -271,28 +271,47 @@ class WorkSpacesController extends Controller
     
     public function viewBacklog($uid, Request $request){
 
-         $user = auth()->user()->load('role');
+        $user = auth()->user()->load('role');
         $requests = $request->all();
-        if(!empty($user->role)){
-            if($user->role->slug != 'admin' && empty($requests['user'])){
-                return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
-            }
-        }else{
-            return abort(404);
-        }
-
+        $search = $request->input('search');
+        // if(!empty($user->role)){
+        //     if($user->role->slug != 'admin' && empty($requests['user'])){
+        //         return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
+        //     }
+        // }else{
+        //     return abort(404);
+        // }
         $list_index = [];
         $board_lists = BoardList::orderByOrder()->get();
         $workspace = Workspace::where('id', $uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
+        $allWorkSpace = Workspace::orderBy('name')->get();
         $loopIndex = 0;
         foreach ($board_lists as &$listItem){
             $list_index[$listItem->id] = $loopIndex;
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
-
-        $taksList = Task::where('project_id', 0)
-            ->filter($request->only('search'))
+        
+        $taksList = Task::query()
+            ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id',
+                    'user_request.request_type_id','projects.title as projectTitle',
+                    'workspaces.name as workspaceName','board_lists.title as listName')
+            ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
+            ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+            ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+            ->join('projects', 'tasks.project_id', '=', 'projects.id')
+            ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+            ->where('is_request', 1)
+            ->when($search, function($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('tasks.title', 'like', "%$search%")
+                    ->orWhere('tasks.description', 'like', "%$search%")
+                    ->orWhere('request_type.title', 'like', "%$search%")
+                    ->orWhere('projects.title', 'like', "%$search%")
+                    ->orWhere('workspaces.name', 'like', "%$search%")
+                    ->orWhere('board_lists.title', 'like', "%$search%");
+                });
+            })
             ->orderBy('created_at', 'DESC')
             ->paginate(20)
             ->withQueryString();
@@ -307,6 +326,7 @@ class WorkSpacesController extends Controller
             'workspace' => $workspace,
             'tasks' => $taksList,
             'workspace_id' => Crypt::encryptString($workspace->id),
+            'allWorkSpace' => $allWorkSpace,
         ]);
 
     }
