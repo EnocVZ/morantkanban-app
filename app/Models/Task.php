@@ -10,6 +10,9 @@ class Task extends Model
 {
     use HasFactory;
     protected $appends = ['time_elapsed'];
+    protected $casts = [
+        'updatedlist_at' => 'datetime',
+    ];
     public function resolveRouteBinding($value, $field = null) {
         return $this->where($field ?? 'id', $value)->firstOrFail();
     }
@@ -182,6 +185,13 @@ class Task extends Model
 
     public function getTimeElapsedAttribute()
     {
-        return $this->created_at->diffForHumans();
+        $time = $this->updatedlist_at;
+        if(is_null($this->updatedlist_at)){
+            $time =  $this->created_at;
+        }
+
+        $time = $time->diffForHumans(['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE,]);
+
+        return "En lista hace {$time}";
     }
 }
