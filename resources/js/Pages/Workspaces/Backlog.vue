@@ -13,7 +13,7 @@
               <button
                 class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
                 @click="openNewTaskModal">
-                Agregar tarea
+                Agregar solicitud
               </button>
               <button
                 class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
@@ -41,7 +41,7 @@
                   <th scope="col" class="w-[20px]">ID</th>
                   <th scope="col" class="w-[17%]">
                     <button class="flex items-center gap-x-3 focus:outline-none">
-                      <span>{{ __('Tareas') }}</span>
+                      <span>{{ __('Solicitudes') }}</span>
                     </button>
                   </th>
 
@@ -59,7 +59,7 @@
                   </th>
 
                   <th scope="col" class=" w-[17%]">
-                    {{ __('Tipo de tarea') }}
+                    {{ __('Tipo de solicitud') }}
                   </th>
                   <th scope="col" class="w-[50px]"></th>
                 </tr>
@@ -97,7 +97,7 @@
                   <div class="inline-block text-left">
                     <div>
                       <button @click.stop="toggleDropdown(listItem.id, $event)" type="button"
-                        class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200">
+                        class="inline-flex justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-200 items-center">
                         ⋮
                       </button>
                     </div>
@@ -267,13 +267,13 @@
       left: dropdownPosition.left + 'px'
     }" class="z-50 w-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5">
       <div class="py-1" role="menu" aria-orientation="vertical">
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openMoveTask(openDropdownId)">
+        <!--<a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openMoveTask(openDropdownId)">
           <icon name="clipboard" class="fill-gray-400 h-4 mr-2" /> Asignar
-        </a>
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openEditTask()">
+        </a> -->
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center" @click="openEditTask()">
           <icon name="edit" class="fill-gray-400 h-4 mr-2" /> Editar
         </a>
-        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="openDelete(openDropdownId)">
+        <a class="flex block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center" @click="openDelete(openDropdownId)">
           <icon name="trash" class="fill-gray-400 h-4 mr-2" /> Eliminar
         </a>
       </div>
