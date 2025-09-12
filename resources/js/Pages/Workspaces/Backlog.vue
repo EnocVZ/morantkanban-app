@@ -133,10 +133,10 @@
       <!-- Título -->
       <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-if="formNewTask.id > 0">
-          Editar tarea
+          Editar solicitud
         </h1>
         <h1 class="text-2xl font-semibold text-gray-800 mt-2 flex items-center gap-2" v-else>
-          Agregar nueva tarea al backlog
+          Agregar nueva solicitud al backlog
         </h1>
       </div>
       <!-- Tu formulario -->
@@ -520,6 +520,9 @@ export default {
       this.formNewTask = this.defaultForm();
       this.projects = []; // <-- Limpia la lista de proyectos
       this.showModal = true;
+      this.previewUrl= null;
+      this.previewFile = null;
+      this.errors = {}
     },
 
     findCategory(id) {
@@ -565,6 +568,7 @@ export default {
       };
       this.openDropdownId = null;
       this.showModal = true;
+      this.errors = {}  
     },
     defaultForm() {
       return {
