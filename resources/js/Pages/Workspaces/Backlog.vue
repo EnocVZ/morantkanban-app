@@ -435,7 +435,7 @@ export default {
         })
         .catch((error) => {
           // Manejo de error
-          alert('Ocurrió un error al guardar la tarea');
+          alert(error?.response?.data?.errors || 'Ocurrió un error al guardar la tarea');
         })
         .finally(() => {
           this.loadingSaveTask = false;

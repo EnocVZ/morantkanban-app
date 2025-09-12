@@ -28,6 +28,7 @@ use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -436,10 +437,10 @@ class TasksController extends Controller
                     ->where('title', 'backlog')
                     ->where('order', 0)
                     ->where('is_basic', 1)
-                    ->firstOrFail();
+                    ->first();
 
                  if (!$board_list) {
-                    throw new \Exception("No se encontró un board_list válido para este proyecto.");
+                    throw new \Exception("No se encontró una lista backlog válida para este proyecto.");
                 }
 
                 
