@@ -39,7 +39,7 @@
                                     {{ __('Labels') }}
                                 </th>
 
-                                <th scope="col" class=" w-[17%]">
+                                <th scope="col" class="w-[17%]">
                                 {{ __('Assignees') }}
                                 </th>
 
@@ -133,15 +133,10 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                        <button aria-label="Archivar" data-a="" @click="makeArchive($event, element.id, listItem.tasks, index)" class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
-                                            <icon class="mr-2 h-4 w-4 " name="archive" />
-                                        </button>
-                                    </td>
                                     <td class="px-4 py-3 text-right">
                                     <button
                                     class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
-                                    @click.stop="toggle(i)"
+                                    @click.stop="toggle(i,element)"
                                     :aria-expanded="isOpen(i)"
                                     :aria-controls="`row-details-${element.id}`"
                                     >
@@ -160,32 +155,41 @@
 
                             <!-- Detalle colapsable -->
                             <tr v-show="isOpen(i)" :id="`row-details-${element.id}`" class="bg-white">
-                            <td colspan="4" class="px-4 py-0">
+                            <td colspan="12" class="px-4 py-0">
                                 <transition name="collapse">
-                                <div v-show="isOpen(i)" class="px-4 py-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div class="p-3 rounded-lg bg-gray-50">
-                                        <p class="text-xs text-gray-500">Teléfono</p>
-                                        <p class="text-sm font-medium text-gray-800">{{ element.phone || '—' }}</p>
-                                    </div>
-                                    <div class="p-3 rounded-lg bg-gray-50">
-                                        <p class="text-xs text-gray-500">Dirección</p>
-                                        <p class="text-sm font-medium text-gray-800">{{ element.address || '—' }}</p>
-                                    </div>
-                                    <div class="p-3 rounded-lg bg-gray-50">
-                                        <p class="text-xs text-gray-500">Estado</p>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                                            :class="element.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                                        {{ element.active ? 'Activo' : 'Inactivo' }}
-                                        </span>
-                                    </div>
-                                    </div>
+                                    <div v-show="isOpen(i)" class="px-4 py-4">
+                                        <table class="min-w-full border border-gray-200 divide-y divide-gray-200 rounded-lg">
+                                            <!-- Encabezado -->
+                                            <thead class="bg-gray-50">
+                                            <tr>
+                                                <th
+                                                v-for="header in headers"
+                                                :key="header"
+                                                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                                                >
+                                                {{ header }}
+                                                </th>
+                                            </tr>
+                                            </thead>
 
-                                    <div class="mt-4 flex gap-2">
-                                    <button class="px-3 py-1.5 text-sm rounded-lg border hover:bg-gray-50">Editar</button>
-                                    <button class="px-3 py-1.5 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Ver perfil</button>
+                                            <!-- Cuerpo -->
+                                            <tbody class="divide-y divide-gray-200">
+                                               
+                                            <tr
+                                                v-for="(item, index) in element.subtask_list"
+                                                :key="index"
+                                                class="hover:bg-gray-50 transition"
+                                            >
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.title }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.description }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.list?.title }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.sublist?.title }}</td>
+                                                <td class="px-6 py-4 text-right">
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
                                 </transition>
                             </td>
                             </tr>
@@ -311,10 +315,26 @@ export default {
             },
             search: '',
             filteredTasks: [],
-            rows: [
-        { id: 1, name: 'María Pérez', email: 'maria@example.com', role: 'Admin', phone: '555-0101', address: 'Lima', active: true },
-        { id: 2, name: 'Juan Gómez', email: 'juan@example.com', role: 'User',  phone: '555-0123', address: 'Bogotá', active: false },
-        { id: 3, name: 'Ana Ruiz',   email: 'ana@example.com',  role: 'User',  phone: '555-0456', address: 'CDMX',  active: true },
+            headers: ["Tarea", "Descripción", "Lista", "Sublista", "Acciones"],
+      rows: [
+        {
+          name: "Analizar requerimientos",
+          email: "Se recomienda revisar los requisitos del proyecto.",
+          phone: "En proceso",
+          status: "Sprint 1"
+        },
+        {
+          name: "Analizar diseño de la interfaz y experiencia de usuario",
+          email: "Revisar el diseño de la interfaz y la experiencia de usuario.",
+          phone: "En proceso",
+          status: "Sprint 1"
+        },
+        {
+          name: "Crear prototipo",
+          email: "crear un prototipo funcional.",
+          phone: "Tareas por hacer",
+          status: "Sprint 2"
+        }
       ],
       openIndexes: new Set(),
       singleOpen: false
@@ -364,7 +384,9 @@ export default {
         isOpen(index) {
       return this.openIndexes.has(index)
     },
-    toggle(index) {
+    toggle(index, item) {
+        console.log(item);
+        
       if (this.singleOpen) {
         this.openIndexes = this.isOpen(index) ? new Set() : new Set([index])
       } else {

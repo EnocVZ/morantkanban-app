@@ -9,158 +9,62 @@
                 @do-filter="doFilter" options="user,due,label" />
             <div class="flex flex-col task__table overflow-y-auto h-full">
                 <div class="inline-block min-w-full h-full py-4 align-middle md:px-3 lg:px-4">
+                    <div class="flex space-x-4 overflow-x-auto p-4  min-h-screen bg-gray-100">
+                        
+                    <div v-for="(column, index) in tasks" :key="index"
+                        class="bg-white rounded-xl shadow-md w-96 flex flex-col">
+                        <div class="flex justify-between p-4 border-b">
+                            <h2 class="text-lg font-semibold">{{ column.title }}</h2>
+                            <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
+                            aria-label="Total de tareas">{{ column.total_tasks }}</span>
+                        </div>
+                        <ul class="space-y-2 mt-2 p-4">
+                            <li  v-for="element in column.tasks" :key="element.id"
+                                @click="taskDetailsPopup(element)"
+                                class="li_box p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded"
+                                :class="{ 'bg-blue-50': element.user_request.read == 0}">
+                                <!-- Etiquetas -->
+                                <!--div v-if="element.task_labels.length"
+                                    class="mb-2 flex flex-wrap gap-1">
+                                    <button v-for="(la, l_index) in element.task_labels"
+                                        :key="l_index"
+                                        class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
+                                        :style="{ backgroundColor: la.label.color }"
+                                        :aria-label="la.label.name">
+                                        {{ la.label.name }}
+                                    </button>
+                                </div-->
+
+                                <!-- Título -->
+                                <div class="font-medium text-sm text-gray-800 mb-2">{{ element.title }}</div>
+
+                                <!-- Footer -->
+                                <div
+                                    class="flex flex-wrap items-center text-gray-500 text-xs gap-3">
+                                    <!-- Fecha de entrega -->
+                                    <div 
+                                        :class="['flex items-center gap-1']">
+                                        <icon name="time" class="w-4 h-4" />
+                                        <span aria-label="Numero de días en la lista">{{ element.time_elapsed }}</span>
+                                    </div>
+
+
+                                    <!-- Checklist -->
+                                    <div class="flex items-center gap-1 text-gray-500"
+                                        v-if="element?.subtask_list_count > 0">
+                                        <icon name="checklist" class="w-4 h-4" />
+                                        <span>
+                                            {{ element?.sub_task_completed_count + '/' +
+                                            element?.subtask_list_count }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+      </div>
                     <div class="table__view">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th scope="col" class="w-[20px]">
-                                    </th>
-                                    <th scope="col" class="w-[calc(32%-70px)]]">
-                                        <button class="flex items-center gap-x-3 focus:outline-none">
-                                            <span>{{ __('Task') }}</span>
-                                        </button>
-                                    </th>
-
-                                    <th scope="col" class="w-[17%]">
-                                        {{ __('List') }}
-                                    </th>
-
-                                    <th scope="col" class="w-[17%]">
-                                        {{ __('Labels') }}
-                                    </th>
-
-                                    <th scope="col" class="w-[17%]">
-                                        {{ __('Assignees') }}
-                                    </th>
-
-                                    <th scope="col" class="w-[17%]">
-                                        {{ __('Due Date') }}
-                                    </th>
-
-                                    <th scope="col" class="relative w-[50px]">
-                                        <span class="sr-only">{{ __('Edit') }}</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <draggable v-for="(listItem, listIndex) in lists" :key="listItem.id" :data-index="listIndex"
-                                :data-id="listItem.id" tag="tbody" handle=".handle" class="t__drag"
-                                :list="listItem.tasks" group="task" item-key="id" @end="afterDrop($event)">
-                                <template #item="{ element, index }">
-                                    <tr class="list-group-item group" :data-id="element.id">
-                                        <td
-                                            class="pl-2 pr-0 opacity-0 group-hover:opacity-100 py-2 border-none text-sm font-medium whitespace-nowrap w-[20px]">
-                                            <!--div class="cursor-grab handle"><icon class="w-6 h-6" name="drag" /></div-->
-                                        </td>
-                                        <td
-                                            class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
-                                            <div class="cursor-pointer"
-                                                @click="taskDetailsPopup(element.slug || element.id)"
-                                                :data-id="element.id">
-                                                <icon v-if="element.timer" name="blink" class="w-2 h-2" />
-                                                <h2 class="font-medium t__title text-pretty">{{ element.title }}</h2>
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                                            <div
-                                                class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
-                                                {{ element.list.title }}
-                                                <!--div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="arrow-down" />
-                                              </div-->
-                                            </div>
-                                        </td>
-                                        <td class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100"
-                                            @click="addAction($event, element.id, index, listIndex, 'showLabelBox')">
-                                            <div class="task__labels overflow-hidden" v-if="element.task_labels.length">
-                                                <button class="color" v-for="(la, l_index) in element.task_labels"
-                                                    :style="{ backgroundColor: la.label.color }">{{ la.label.name
-                                                    }}</button>
-                                                <div
-                                                    class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                    <icon class="w-4 h-4" name="arrow-down" />
-                                                </div>
-                                            </div>
-                                            <div v-else>
-                                                <div
-                                                    class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
-                                                    <icon class="w-4 h-4" name="plus" />
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100"
-                                            @click="addAction($event, element.id, index, listIndex, 'showAssigneeBox')">
-                                            <div class="flex items-center" v-if="element.assignees.length">
-                                                <div v-for="assignee in element.assignees"
-                                                    :aria-label="assignee.user.name" class="block rounded-full h-6 w-6">
-                                                    <img v-if="assignee.user.photo_path" class="user_photo w-10 h-10"
-                                                        :alt="assignee.user.name" :src="assignee.user.photo_path" />
-                                                    <img v-else src="/images/svg/profile.svg" class="w-10 h-10"
-                                                        alt="user profile" />
-                                                </div>
-                                                <div
-                                                    class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                    <icon class="w-4 h-4" name="arrow-down" />
-                                                </div>
-                                            </div>
-                                            <div v-else>
-                                                <div
-                                                    class="absolute show_arrow_hover top-0 left-0 h-full flex justify-center w-9 items-center">
-                                                    <icon class="w-4 h-4" name="plus" />
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td
-                                            class="px-2 py-2 hide_arrow text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
-                                            <div class="t__title" v-if="element.due_date">
-                                                <Datepicker v-model="element.due_date"
-                                                    @update:modelValue="saveTask(element.id, { due_date: element.due_date }, listIndex)"
-                                                    disabled>
-                                                    <template #trigger>
-                                                        <div class="flex t__title items-center">
-                                                            <icon class="w-4 w-4" name="time" />
-                                                            <span class="ml-1 font-light leading-none"
-                                                                aria-label="Fecha vencimiento"> {{
-                                                                moment(element.due_date).format('MMM D') }} </span>
-                                                        </div>
-                                                    </template>
-                                                </Datepicker>
-                                                <!--div class="absolute show_arrow_hover top-0 right-0 h-full flex justify-center w-9 items-center">
-                                                  <icon class="w-4 h-4" name="arrow-down" />
-                                              </div-->
-                                            </div>
-                                            <div v-else class="w-full h-full">
-                                                <Datepicker v-model="element.due_date"
-                                                    @update:modelValue="saveTask(element.id, { due_date: element.due_date }, listIndex)"
-                                                    disabled>
-                                                    <template #trigger>
-                                                        <div
-                                                            class="show_arrow_hover top-0 left-0 w-full h-full flex justify-start items-center">
-                                                            <!--icon class="w-4 h-4" name="plus" / -->
-                                                        </div>
-                                                    </template>
-                                                </Datepicker>
-                                            </div>
-                                        </td>
-
-                                        <td class="px-2 py-2 text-sm whitespace-nowrap w-[50px] relative">
-                                            <button aria-label="Archivar" data-a=""
-                                                @click="makeArchive($event, element.id, listItem.tasks, index)"
-                                                class="flex w-full items-center text-xs font-medium focus:outline-none focus:ring-0">
-                                                <icon class="mr-2 h-4 w-4 " name="archive" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </draggable>
-                            <tbody v-if="!tasks.length">
-                                <tr>
-                                    <td class="border-t px-6 py-4 text-center" colspan="7">{{ __('To tasks found') }}!
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        
                         <!-- List Popup Board -->
                         <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow"
                             :style="{ top: selected.top, left: selected.left }" v-if="showListBox">
@@ -359,11 +263,22 @@ export default {
         this.getOtherData();
     },
     methods: {
-        taskDetailsPopup(id) {
+        makeReadRequest(idRequest){
+            axios.post(this.route('userrequest.makeread', idRequest)).then(res => {
+                
+            })
+        },
+        taskDetailsPopup(task) {
+            const {id}= task;
             this.form.task = id;
             this.td_pop = true;
             this.taskDetailsId = id;
             this.taskDetailsOpen = true;
+            if(task.user_request.read == 0){
+                this.makeReadRequest(task.user_request.id);
+                task.user_request.read = 1;
+            }
+
         },
         closeDetails() {
             this.form.task = null;

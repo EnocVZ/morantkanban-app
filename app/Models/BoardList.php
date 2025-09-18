@@ -55,8 +55,17 @@ class BoardList extends Model
     }
 
     public function tasksWithoutSubcategory()
-{
-    return $this->hasMany(Task::class, 'list_id')
-                ->whereNull('sublist_id'); // Solo tareas sin subcategoría
-}
+    {
+        return $this->hasMany(Task::class, 'list_id')
+            ->where(function ($q) {
+                $q->where('sublist_id', 0)
+                ->orWhereNull('sublist_id');
+            });
+    }
+
+    public function userRequest()
+    {
+        return $this->hasMany(UserRequest::class, 'list_id');
+    }
+
 }

@@ -9,7 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     use HasFactory;
-
+    protected $appends = ['time_elapsed'];
+    protected $casts = [
+        'updatedlist_at' => 'datetime',
+    ];
     public function resolveRouteBinding($value, $field = null) {
         return $this->where($field ?? 'id', $value)->firstOrFail();
     }
@@ -162,5 +165,33 @@ class Task extends Model
     }
     public function userUpdateList() {
         return $this->belongsTo(User::class, 'userupdate_list');
+    }
+
+    public function subtaskList()
+    {
+        return $this->hasMany(SubTask::class, 'maintask_id');
+    }
+
+    public function userRequest()
+    {
+        return $this->belongsTo(UserRequest::class, 'id', 'task_id');
+    }
+
+    public function subTaskCompleted(){
+        return $this->hasMany(SubTask::class, 'maintask_id')
+        ->whereHas('task', fn($q) => $q->where('is_done', 1))
+        ->with('task');
+    }
+
+    public function getTimeElapsedAttribute()
+    {
+        $time = $this->updatedlist_at;
+        if(is_null($this->updatedlist_at)){
+            $time =  $this->created_at;
+        }
+
+        $time = $time->diffForHumans(['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE,]);
+
+        return "En lista hace {$time}";
     }
 }

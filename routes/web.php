@@ -37,8 +37,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\TaskNotificationController;
 use App\Http\Controllers\NotesController;
-use App\Http\Controllers\TaskCategoryController;
+use App\Http\Controllers\RequestTypeController;
 use App\Http\Controllers\SublistController;
+use App\Http\Controllers\SubtaskController;
+use App\Http\Controllers\UserRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -89,6 +91,8 @@ Route::post('json/workspace/create', [WorkSpacesController::class, 'jsonCreate']
 Route::post('json/workspace/member/add', [WorkSpacesController::class, 'jsonAddMember'])->name('json.workspace.member.add')->middleware('auth');
 Route::post('json/workspace/change', [WorkSpacesController::class, 'jsonChangeWorkspace'])->name('json.workspace.change')->middleware('auth');
 Route::post('json/workspace/update/{id}', [WorkSpacesController::class, 'jsonUpdateWorkspace'])->name('json.workspace.update')->middleware('auth');
+Route::post('json/workspace/addupd-types-requests', [WorkSpacesController::class, 'jsonAddUpdTypesRequests'])->name('json.workspace.addUpd.types.requests')->middleware('auth');
+Route::delete('json/workspace/delete-request/{id}', [WorkSpacesController::class, 'deleteRequest'])->name('json.workspace.delete.request')->middleware('auth');
 
 Route::get('json/backgrounds/all', [BackgroundsController::class, 'jsonAll'])->name('json.backgrounds.all')->middleware('auth');
 
@@ -117,7 +121,7 @@ Route::get('w/{uid}/members', [WorkSpacesController::class, 'workspaceMembers'])
 Route::get('w/{uid}/tables', [WorkSpacesController::class, 'workspaceTables'])->name('workspace.tables')->middleware('auth');
 Route::delete('workspace/destroy/{id}', [WorkSpacesController::class, 'destroy'])->name('workspace.destroy')->middleware('auth');
 Route::get('w/{uid}/backlog', [WorkSpacesController::class, 'viewBacklog'])->name('workspace.backlog')->middleware('auth');
-Route::get('w/request/link/{idWorkspace}', [WorkSpacesController::class, 'viewFormLink'])->name('workspace.link')->middleware('auth');
+Route::get('w/request/link/{idWorkspace}', [WorkSpacesController::class, 'viewFormLink'])->name('workspace.link');
 
 Route::delete('project/destroy/{id}', [ProjectsController::class, 'destroy'])->name('project.destroy')->middleware('auth');
 Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index')->middleware('auth');
@@ -395,7 +399,7 @@ Route::get('p/note/{uid}', [ProjectsController::class, 'viewNotes'])->name('proj
 Route::post('notes/new', [NotesController::class, 'saveNote'])->name('notes.new')->middleware('auth');
 Route::post('notes/update/{id}', [NotesController::class, 'updateNote'])->name('notes.update')->middleware('auth');
 Route::delete('notes/delete/{id}', [NotesController::class, 'deleteNote'])->name('notes.delete')->middleware('auth');
-Route::get('category/list/{workspaceid}', [TaskCategoryController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');
+Route::get('category/list/{workspaceid}', [RequestTypeController::class, 'categoriesbyWorkSpace'])->name('category.list')->middleware('auth');
 
 //sublist
 Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.new')->middleware('auth');
@@ -405,3 +409,8 @@ Route::put('sublist/update/row/{id}', [SublistController::class, 'updateRow'])->
 
 Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');
 Route::get('project/boardlists/{project_id}', [ProjectsController::class, 'getBoarListData'])->name('project.boardlists.data')->middleware('auth');
+Route::post('subtask/new', [SubtaskController::class, 'create'])->name('subtask.new')->middleware('auth');
+
+
+Route::get('userrequest/byproject/{project_id}', [UserRequestController::class, 'countRequestNoRead'])->name('userrequest.count')->middleware('auth');
+Route::post('userrequest/makeread/{idrequest}', [UserRequestController::class, 'makeRead'])->name('userrequest.makeread')->middleware('auth');

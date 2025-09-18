@@ -14,6 +14,9 @@ use App\Models\TaskLabel;
 use App\Models\TeamMember;
 use App\Models\Timer;
 use App\Models\User;
+use App\Models\UserRequest;
+use App\Models\SubTask;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +28,10 @@ use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
 
 class TasksController extends Controller
 {
@@ -65,6 +72,9 @@ class TasksController extends Controller
             }else if($itemKey == 'list_id'){
                 $action = "update-list";
                 $this->LogTask($taskId, $action, $task->list_id, $itemValue);
+                if($this->validateListComplete($itemValue)){
+                    $task->is_done = 1;
+                }
             }else if($itemKey == 'due_date'){
                // $action = "update-duedate";
             }else if($itemKey == 'description'){
@@ -74,10 +84,17 @@ class TasksController extends Controller
         }
         //$this->LogTask($taskId, $action);
         $task->save();
+        $this->changeRequestUserToList($taskId, $requestData, $task->is_done);
         $task->load('list')->load('taskLabels.label')->load('assignees');
         return response()->json($task);
     }
-
+    public function validateListComplete($list_id){
+        $list = Boardlist::where('id', $list_id)->first();
+        if($list->title == 'Hecho' && $list->is_basic == 1){
+            return true;
+        }
+        return false;
+    }
     public function jsonArchiveTasks($project_id){
         $archiveTasks = Task::where('is_archive', 1)
             ->byProject($project_id)
@@ -155,26 +172,36 @@ class TasksController extends Controller
             Comment::where('task_id', $task->id)->delete();
             Assignee::where('task_id', $task->id)->delete();
             TaskLabel::where('task_id', $task->id)->delete();
+            UserRequest::where('task_id', $task->id)->delete();
             $result = $task->delete();
         }
         return response()->json($result);
     }
 
     public function getJsonTask($taskUid){
-        $task = Task::where('id', $taskUid)->orWhere('slug', $taskUid)
-        ->with('project')
-        ->with('timer')
-        ->with('timerList.user')
-        ->with('cover')
-        ->with('list')
-        ->with('checklists')
-        ->with('comments.user')
-        ->with('attachments')
-        ->with('assignees')
-        ->with('createdby')
-        ->with('userUpdateList')
-        ->with('taskLabels.label')
-        ->withCount('checklistDone')->first();
+        $task = Task::where('id', $taskUid)
+        ->orWhere('slug', $taskUid)
+        ->with([
+            'project',
+            'timer',
+            'timerList.user',
+            'cover',
+            'list',
+            'checklists',
+            'comments.user',
+            'attachments',
+            'assignees',
+            'createdby',
+            'userUpdateList',
+            'taskLabels.label',
+            'sublist',
+            'subtaskList.task' => function ($q) {
+                $q->with(['list', 'sublist']);
+            }
+        ])
+        ->withCount('checklistDone')
+        ->first();
+
 
         if ($task && $task->timerList) {
             $userDurations = $task->timerList
@@ -388,22 +415,107 @@ class TasksController extends Controller
         }
 
         public function taskFromLink(Request $request){
-            try {
-                $requestData = $request->all();
-                $formData = $requestData;
-                unset($formData['email']);
-                $task = Task::create($formData);
 
-                $slug = $this->clean($task->title);
-                $existingItem = Task::where('slug', $slug)->first();
-                if(!empty($existingItem)){
-                    $slug = $slug . '-' . $task->id;
+
+            try {
+
+                $driveFileUrl = null;
+                $validated = $request->validate([
+                    'workspace_id' => 'required|integer|exists:workspaces,id',
+                    'title' => 'required|string|max:200',
+                    'description' => 'nullable|string',
+                    'email' => 'nullable|email|max:50',
+                    'tipo_solicitud' => 'required|exists:request_type,id',
+                    'project_id' => 'nullable|integer|exists:projects,id',
+                    'file' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,docx'
+                ]);
+
+                DB::beginTransaction();
+
+                //Buscar la lista backlog en ese proyecto
+                $board_list = BoardList::where('project_id', $validated['project_id'])
+                    ->where('title', 'backlog')
+                    ->where('order', 0)
+                    ->where('is_basic', 1)
+                    ->first();
+
+                 if (!$board_list) {
+                    throw new \Exception("No se encontró una lista backlog válida para este proyecto.");
                 }
-                $task->slug = $slug;
-                $task->save();
+
                 
-                return MethodHelper::successResponse($task);
+                $slug = implode('-', explode(' ', $validated['title']));
+                // crear la tarea
+                $task = Task::create([
+                    'title'       => $validated['title'],
+                    'slug'        => $slug,
+                    'is_done'     => 0,
+                    'is_archive'  => 0,
+                    'is_request'  => 1,
+                    'description' => $validated['description'] ?? null,
+                    'cover'       => null,
+                    'list_id'     => $board_list->id,
+                    'sublist_id'  => null,
+                    'order'       => 0,
+                    'user_id'     => auth()->id() ?? 0,
+                    'project_id'  => $validated['project_id'],
+                    'updatedlist_at' => now(),
+                ]);
+
+                if($request->hasFile('file')){
+                    $file = $request->file('file');
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+                    $google = new GoogleController();
+                    // obtener carpeta del proyecto
+                    $project = Project::findOrFail($validated['project_id']);
+                    // Si no hay folderkey, lo creamos en Drive
+                    // if (!$project->folderkey) {
+                        
+                    //     $driveService = $google->getDriveService(); 
+                    //     $parentFolderId = $google->createFolder($driveService, 'morantkanban');
+                    //     $newFolderId = $google->createFolder($driveService, $project->title, $parentFolderId);
+
+                    //     $project->folderkey = $newFolderId;
+                    //     $project->save();
+                    // }
+                     $folderKey = $project->folderkey; 
+
+                    $driveFileId = $google->uploadFile($project, $request, $folderKey);
+                    if ($driveFileId['error']) {
+                        throw new \Exception($driveFileId['message']);
+                    }
+                    $driveFileUrl = $driveFileId['fileId'];
+
+                    // guardar en attachments
+                    Attachment::create([
+                        'task_id' => $task->id,
+                        'name' => $fileName,
+                        'user_id' => auth()->id() ?? null,
+                        'size' => $file->getSize(),
+                        'path' => $driveFileUrl,
+                        'width' => null,
+                        'height' => null,
+                    ]);
+                }
+
+                
+                UserRequest::create([
+                    'workspace_id' => $validated['workspace_id'],
+                    'email' => $validated['email'] ?? auth()->user()?->email,
+                    'request_type_id' => $validated['tipo_solicitud'],
+                    'project_id' => $validated['project_id'] ?? null,
+                    'task_id' => $task->id,
+                    'user_id' => auth()->id() ?? null,
+                ]);
+
+                $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
+
+                DB::commit();
+
+                return response()->json(['success' => true]);
+                
             } catch (\Exception $e) {
+                DB::rollBack();
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }
@@ -411,9 +523,12 @@ class TasksController extends Controller
         public function updateTaskBacklog($taskId, Request $request){
             try {
                 $requestData = $request->all();
+
+                $taskData = collect($requestData)->except(['workspace_id', 'request_type_id']);
+                $userRequestData = collect($requestData)->only(['workspace_id', 'request_type_id','project_id']);
                 
                 $task = Task::whereId($taskId)->first();
-                foreach ($requestData as $itemKey => $itemValue){
+                foreach ($taskData as $itemKey => $itemValue){
                     if($itemKey == 'title'){
                         $slug = $this->clean($itemValue);
                         $existingItem = Task::where('slug', $slug)->first();
@@ -426,9 +541,63 @@ class TasksController extends Controller
                 }
 
                 $task->save();
+
+                if ($userRequestData->isNotEmpty()) {
+                    $userRequest = UserRequest::where('task_id', $task->id)->first();
+                    if ($userRequest) {
+                        $userRequest->update($userRequestData->toArray());
+                    }
+                }
+
+                $updatedTask = Task::query()
+                    ->select(
+                        'tasks.*',
+                        'request_type.title as requestTitle',
+                        'user_request.workspace_id','user_request.request_type_id',
+                        'projects.title as projectTitle','workspaces.name as workspaceName','board_lists.title as listName')
+                    ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
+                    ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+                    ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+                    ->join('projects', 'tasks.project_id', '=', 'projects.id')
+                    ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+                    ->where('tasks.id', $task->id)
+                    ->first();
                 
-                return MethodHelper::successResponse($task);
+                return MethodHelper::successResponse($updatedTask);
             } catch (\Exception $e) {
+                return MethodHelper::errorResponse($e->getMessage());
+            }
+        }
+
+        public function changeRequestUserToList($taskId, $requestData, $isDoneList){
+            try {
+                $isDoneAllTask = false;
+                $findParent = SubTask::where('subtask_id', $taskId)->first();
+                
+                if($findParent){
+                    $findSubTask = SubTask::where('maintask_id', $findParent->maintask_id)
+                    ->with('task')
+                    ->get();
+                    $totalsubtask = $findSubTask->count();
+                    $doneTasks = $findSubTask->where('task.is_done', 1)->count();
+                    if($totalsubtask == $doneTasks){
+                        $isDoneAllTask = true;
+                    }
+                    $taskParent = Task::where('id', $findParent->maintask_id)->first();
+                    if($taskParent->is_request == 1){
+                        $taskParent->list_id = $requestData['list_id'];
+                        $taskParent->updatedlist_at = now();
+                        $taskParent->userupdate_list = auth()->id();
+                        
+                        if($isDoneList == 1 && $isDoneAllTask){
+                            $taskParent->is_done = 1;
+                            $taskParent->save();
+                        }else if($isDoneList == 0){
+                            $taskParent->save();
+                        }
+                    }
+                }
+            }catch (\Exception $e) {
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }

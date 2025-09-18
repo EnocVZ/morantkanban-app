@@ -3,7 +3,8 @@
 
         <Head :title="__(title)" />
         <board-view-menu :project="project" @filter-toggle="open_filter = !open_filter"
-            @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="filters" view="board" />
+            @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="filters" view="board" 
+            />
         <board-filter :project="project" @board-filter="open_filter = false" :filters="filters" v-if="open_filter"
             @do-filter="doFilter" options="user,due,label" />
         <div class="task_board">
@@ -20,7 +21,7 @@
                             <div class="__t_l_2"></div>
                         </div>
                         <icon class="__t_l_r" name="user" />
-                    </div><span class="sr-only">Loading...</span>
+                    </div><span class="sr-only">Cargando...</span>
                 </div>
                 <div role="status" class="l__b">
                     <div class="__img">
@@ -147,7 +148,7 @@
                                     </div>
 
                                     <ul class="space-y-2 mt-2" v-if="sub.isOpen">
-                                        <draggable :data-id="sub.id" class="dragArea" :list="sub.tasklist"
+                                        <draggable :data-id="sub.id" :data-colid="column.id" class="dragArea" :list="sub.tasklist"
                                             group="tasklist" item-key="id" @start="draggingChild = true"
                                             @end="afterDrop($event)">
                                             <template #item="{ element, indexTsk }">
@@ -307,6 +308,7 @@
                                             @end="afterDrop($event)">
                                             <template #item="{ element, indexTsk }">
                                                 <li :key="indexTsk" :id="element.id" :data-id="element.id"
+                                                :data-column="column.id"
                                                     @click="taskDetailsPopup(element.id)"
                                                     class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
                                                     <!-- Etiquetas -->
@@ -446,7 +448,7 @@ export default {
         project: Object,
         list_index: Object,
         filters: Object,
-        proyectLists: {
+        lists: {
             required: false
         },
         task: {
@@ -495,7 +497,7 @@ export default {
             },
             draggingChild: false,
             loaderBasicStatus: false,
-            lists:[]
+            //lists:[]
 
         }
     },
@@ -510,6 +512,7 @@ export default {
                 this.$inertia.get(this.route('projects.view.board', this.project.slug || this.project.id), pickBy(this.form), { preserveState: true })
             }, 150),
         },
+        
     },
     mounted(){
     },
@@ -534,7 +537,7 @@ export default {
         if (!!this.filters.task) {
             this.taskDetailsPopup(this.filters.task)
         }
-        this.lists = this.proyectLists || [];
+        //this.lists = this.proyectLists || [];
         this.existingBasicStatus = this.existBasicList;
     },
     methods: {
@@ -542,7 +545,7 @@ export default {
             return list.tasks.filter((t) => !!t.is_done).length;
         },
         getDue(element) {
-            return element.is_done ? 'done' : moment().isAfter(element.due_date) ? 'over_due' : moment(element.due_date).isBetween(moment(), moment().add(1, 'day')) ? 'due_soon' : '';
+            return element.is_done ? 'text-green-600' : moment().isAfter(element.due_date) ? 'over_due' : moment(element.due_date).isBetween(moment(), moment().add(1, 'day')) ? 'due_soon' : '';
         },
         openNewTask(listItem) {
             for (let n = 0; n < this.lists.length; n++) {
@@ -569,6 +572,7 @@ export default {
         closeDetails() {
             this.form.task = null;
             this.taskDetailsOpen = false
+           // this.getBoardLists();
         },
         reset() {
             this.form = mapValues(this.form, () => null)
@@ -658,7 +662,7 @@ export default {
                 updatedlist_at: new Date(),
                 sublist_id: e.to.dataset.id,
                 userupdate_list: this.auth.user.id,
-                list_id:e.item.dataset.column
+                list_id:e.to.dataset.colid
             };
 
             if (!!e.pullMode) {
