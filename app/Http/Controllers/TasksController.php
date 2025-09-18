@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+
 use Mavinoo\Batch\Batch;
 use App\Http\Controllers\GoogleController;
 use Carbon\Carbon;
@@ -501,6 +502,22 @@ class TasksController extends Controller
                 $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
 
                 DB::commit();
+
+                try {
+                    if (!empty($validated['email'])) {
+                        $userEmail = $validated['email'];
+                        $subject = "Gracias por tu solicitud";
+                        $htmlTemplate = File::get(public_path('html/email_templates/solicitud.html'));
+                        $variables = [
+                            '{correo}' => $userEmail,
+                            '{folio}' => 'TASK-' . $task->id,
+                        ];
+                        $html = str_replace(array_keys($variables), array_values($variables), $htmlTemplate);
+                        \App\Helpers\MailerHelper::sendMail([$userEmail], $subject, $html);
+                    }
+                } catch (\Exception $e) {
+                    // Log error si quieres
+                }
 
                 return response()->json(['success' => true]);
                 
