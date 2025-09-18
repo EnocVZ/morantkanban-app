@@ -29,6 +29,7 @@ use App\Models\TaskNotification;
 use App\Helpers\MailerHelper;
 use App\Models\LogTask;
 use App\Helpers\MethodHelper;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -71,8 +72,10 @@ class TasksController extends Controller
 
             }else if($itemKey == 'list_id'){
                 $action = "update-list";
-                $this->changeRequestUserToList($taskId, $requestData);
                 $this->LogTask($taskId, $action, $task->list_id, $itemValue);
+                if($this->validateListComplete($itemValue)){
+                    $task->is_done = 1;
+                }
             }else if($itemKey == 'due_date'){
                // $action = "update-duedate";
             }else if($itemKey == 'description'){
@@ -82,10 +85,17 @@ class TasksController extends Controller
         }
         //$this->LogTask($taskId, $action);
         $task->save();
+        $this->changeRequestUserToList($taskId, $requestData, $task->is_done);
         $task->load('list')->load('taskLabels.label')->load('assignees');
         return response()->json($task);
     }
-
+    public function validateListComplete($list_id){
+        $list = Boardlist::where('id', $list_id)->first();
+        if($list->title == 'Hecho' && $list->is_basic == 1){
+            return true;
+        }
+        return false;
+    }
     public function jsonArchiveTasks($project_id){
         $archiveTasks = Task::where('is_archive', 1)
             ->byProject($project_id)
@@ -428,10 +438,10 @@ class TasksController extends Controller
                     ->where('title', 'backlog')
                     ->where('order', 0)
                     ->where('is_basic', 1)
-                    ->firstOrFail();
+                    ->first();
 
                  if (!$board_list) {
-                    throw new \Exception("No se encontró un board_list válido para este proyecto.");
+                    throw new \Exception("No se encontró una lista backlog válida para este proyecto.");
                 }
 
                 
@@ -576,15 +586,32 @@ class TasksController extends Controller
             }
         }
 
-        public function changeRequestUserToList($taskId, $requestData){
+        public function changeRequestUserToList($taskId, $requestData, $isDoneList){
             try {
+                $isDoneAllTask = false;
                 $findParent = SubTask::where('subtask_id', $taskId)->first();
                 
                 if($findParent){
+                    $findSubTask = SubTask::where('maintask_id', $findParent->maintask_id)
+                    ->with('task')
+                    ->get();
+                    $totalsubtask = $findSubTask->count();
+                    $doneTasks = $findSubTask->where('task.is_done', 1)->count();
+                    if($totalsubtask == $doneTasks){
+                        $isDoneAllTask = true;
+                    }
                     $taskParent = Task::where('id', $findParent->maintask_id)->first();
-                    if($taskParent && $taskParent->is_request == 1){
+                    if($taskParent->is_request == 1){
                         $taskParent->list_id = $requestData['list_id'];
-                        $taskParent->save();
+                        $taskParent->updatedlist_at = now();
+                        $taskParent->userupdate_list = auth()->id();
+                        
+                        if($isDoneList == 1 && $isDoneAllTask){
+                            $taskParent->is_done = 1;
+                            $taskParent->save();
+                        }else if($isDoneList == 0){
+                            $taskParent->save();
+                        }
                     }
                 }
             }catch (\Exception $e) {
