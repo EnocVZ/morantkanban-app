@@ -516,7 +516,7 @@ class TasksController extends Controller
                 try {
                     if (!empty($validated['email'])) {
                         $userEmail = $validated['email'];
-                        $subject = "Gracias por tu solicitud";
+                        $subject = "Ticket de Solicitud";
                         $htmlTemplate = File::get(public_path('html/email_templates/solicitud.html'));
                         $variables = [
                             '{correo}' => $userEmail,
