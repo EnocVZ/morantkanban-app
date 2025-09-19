@@ -27,6 +27,7 @@ use Inertia\Inertia;
 use App\Helpers\MethodHelper;
 use Exception;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class WorkSpacesController extends Controller 
 {
@@ -295,13 +296,18 @@ class WorkSpacesController extends Controller
         $taksList = Task::query()
             ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id',
                     'user_request.request_type_id','projects.title as projectTitle',
-                    'workspaces.name as workspaceName','board_lists.title as listName')
+                    'workspaces.name as workspaceName','board_lists.title as listName',
+                    DB::raw("CASE WHEN users.id IS NOT NULL THEN CONCAT(users.first_name, ' ', users.last_name) ELSE user_request.email END AS userName"))
             ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
             ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
             ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
             ->join('projects', 'tasks.project_id', '=', 'projects.id')
             ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+            ->leftjoin('users', 'user_request.user_id', '=', 'users.id')
             ->where('is_request', 1)
+            ->when($user->role->slug != 'admin', function ($query) use ($user) {
+                $query->where('user_request.user_id', $user->id);
+            })
             ->when($search, function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('tasks.title', 'like', "%$search%")
