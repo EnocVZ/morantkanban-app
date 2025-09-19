@@ -197,7 +197,8 @@ class TasksController extends Controller
             'sublist',
             'subtaskList.task' => function ($q) {
                 $q->with(['list', 'sublist']);
-            }
+            },
+            'parentTask'
         ])
         ->withCount('checklistDone')
         ->first();

@@ -194,4 +194,11 @@ class Task extends Model
 
         return "En lista hace {$time}";
     }
+
+    public function parentTask(){
+        $find = SubTask::where('subtask_id', $this->id)->first();
+        
+        $task = Task::where('id', $find->maintask_id)->first();
+        return $task;
+    }
 }
