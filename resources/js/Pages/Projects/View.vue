@@ -448,7 +448,7 @@ export default {
         project: Object,
         list_index: Object,
         filters: Object,
-        lists: {
+        board_lists: {
             required: false
         },
         task: {
@@ -497,7 +497,7 @@ export default {
             },
             draggingChild: false,
             loaderBasicStatus: false,
-            //lists:[]
+            lists:[]
 
         }
     },
@@ -518,18 +518,11 @@ export default {
     },
     created() {
         this.moment = moment
-        // for (let i = 0; i < this.list.length; i++) {
-        //     this.list[i].tasks = [...this.tasks];
-        // }
-        // console.log(this.list[1].tasks);
+        
 
         let currentUrl = this.$page.url.substr(1)
         const currentUrlArray = currentUrl.split('/');
 
-        // if (urls[0] === '') {
-        //     return currentUrl === ''
-        // }
-        // return urls.filter(url => currentUrl.startsWith(url)).length
         if (this.task) {
             this.taskDetailsId = this.task.slug || this.task.id;
             this.taskDetailsOpen = true;
@@ -537,7 +530,7 @@ export default {
         if (!!this.filters.task) {
             this.taskDetailsPopup(this.filters.task)
         }
-        //this.lists = this.proyectLists || [];
+        this.lists = this.board_lists || [];
         this.existingBasicStatus = this.existBasicList;
     },
     methods: {
