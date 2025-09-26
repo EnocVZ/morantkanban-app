@@ -70,7 +70,9 @@
               <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
                 <td class="px-2 py-2">{{ listItem?.id }}</td>
                 <td class="px-2 py-2 text-sm font-medium w-[calc(32%-70px)] hover:bg-gray-100">
-                  <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
+                  <Link class="cursor-pointer" :href="this.route('projects.view.table',{uid: listItem.project_id, task: listItem.id})" :data-id="listItem.id">
+                      <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
+                  </Link>
                 </td>
                 <td
                   class="px-4 hide_arrow py-2 align-top text-sm font-medium w-[30%] cursor-pointer hover:bg-gray-100">

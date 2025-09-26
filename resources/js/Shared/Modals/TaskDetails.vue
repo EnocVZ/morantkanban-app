@@ -271,9 +271,12 @@
                               <input type="checkbox" class="rounded text-indigo-600" />
 
                               <!-- Issue key -->
-                              <span class="text-blue-600 text-sm font-medium cursor-pointer hover:underline">
+                               <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: task.project.id, task: parentTask.id})" :data-id=" parentTask.id">
+                                 <span class="text-blue-600 text-sm font-medium cursor-pointer hover:underline">
                                  {{ parentTask.id }}
                               </span>
+                              </Link>
+                              
 
                               <!-- Issue title -->
                               <span class="text-sm text-gray-700">{{ parentTask.title }}</span>
@@ -430,7 +433,8 @@
                                  >
                                  <div class="flex items-center gap-2">
                                     <span class="text-blue-500 font-semibold">{{ subtask.task.id }}</span>
-                                    <span class="text-gray-700">{{ subtask.task.title }}</span>
+                                    <span class="text-gray-700" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask.task.id)"
+                                    @blur="(e)=>saveTitle(e, subtask.task.id)">{{ subtask.task.title }}</span>
                                  </div>
                                  <div class="flex items-center gap-3">
                                     <!-- Status dropdown 
@@ -1550,15 +1554,15 @@ export default {
             alert('something went wrong');
          }
       },
-      saveTitle(e) {
+      saveTitle(e, id) {
          if (e.keyCode === 13 || e.type === 'blur') {
             e.preventDefault();
             e.target.blur();
             if (e.target.innerText) {
                const title = e.target.innerText;
-               axios.post(this.route('task.update', this.task.id), { title }).then((response) => {
+               axios.post(this.route('task.update', id > 0 ? id: this.task.id), { title }).then((response) => {
                   if (response.data) {
-                     this.sendNotification('send.mail.task_update', response.data.id)
+                     //this.sendNotification('send.mail.task_update', response.data.id)
                   }
                })
             }
