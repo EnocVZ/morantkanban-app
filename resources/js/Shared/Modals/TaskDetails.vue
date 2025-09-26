@@ -227,7 +227,6 @@
                                  class="small cancel">{{ __('Delete') }}</button>
                            </div>
                         </div>
-
                         <section class="s__2">
                            <div class="__details_top">
                               <icon name="details" />
@@ -256,6 +255,46 @@
                            </div>
 
                         </section>
+                        <div v-if="parentTask?.id" class="mt-6">
+                           <!-- Header -->
+                           <div class="flex items-center mb-3">
+                              <icon name="branch" class="w-5 h-5 mr-3"/>
+                              <h3 class="text-sm font-medium">Ligado a una solicitud</h3>
+                           </div>
+                           
+                           <!-- Issue item -->
+                           <div
+                              class="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-md p-2 border"
+                           >
+                              <div class="flex items-center space-x-2">
+                              <!-- Checkbox -->
+                              <input type="checkbox" class="rounded text-indigo-600" />
+
+                              <!-- Issue key -->
+                               <Link class="cursor-pointer" :href="this.route('projects.view.board',{uid: task.project.id, task: parentTask.id})" :data-id=" parentTask.id">
+                                 <span class="text-blue-600 text-sm font-medium cursor-pointer hover:underline">
+                                 {{ parentTask.id }}
+                              </span>
+                              </Link>
+                              
+
+                              <!-- Issue title -->
+                              <span class="text-sm text-gray-700">{{ parentTask.title }}</span>
+                              </div>
+
+                              <!-- Right side (avatar + status) -->
+                              <div class="flex items-center space-x-3">
+                             
+
+                              <!-- Status -->
+                              <span
+                                 class="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700"
+                              >
+                                 {{ parentTask.list.title }}
+                              </span>
+                              </div>
+                           </div>
+                        </div>
 
                         <section class="mt-6" id="checklist">
                            <div>
@@ -318,34 +357,7 @@
                                        </div>
                                     </template>
                                  </draggable>
-                                 <!--div v-for="(check_list, c_index) in task.checklists" class="group relative flex items-center">
-                                                <div class="checklist-box2" v-if="!check_list.modify">
-                                                    <input class="inp-cbx" :id="'cbx-' + check_list.id" :checked="!!check_list.is_done" @click="check_list.is_done = $event.target.checked;saveCheckList(check_list.id, {is_done: check_list.is_done})" type="checkbox" style="display: none;"/>
-                                                    <label class="cbx" :for="'cbx-' + check_list.id">
-                                                        <span>
-                                                          <icon class="w-4 h-4" name="checklist_box_2" />
-                                                        </span>
-                                                        <span class="text-sm">{{ check_list.title }}</span>
-                                                    </label>
-                                                    <div class="absolute right-0 hidden pl-12 group-hover:flex" v-if="!check_list.modify">
-                                                        <icon class="w-4 h-4 mr-3 cursor-pointer" name="edit" @click="modifyCheck(check_list)" />
-                                                        <icon class="w-4 h-4 cursor-pointer" name="trash" @click="deleteCheckList(check_list.id, c_index, task.checklists)" />
-                                                    </div>
-                                                </div>
-                                                <div class="checklist-box2 pl-6 w-full" v-if="check_list.modify">
-                                                    <input :id="'modify_'+check_list.id" class="border rounded p-2 text-sm bg-white w-full" v-model="check_list.title" @keyup="$event.keyCode === 13?modifyCheckListSubmit(check_list, c_index, task.checklists):''" />
-                                                    <div class="flex">
-                                                        <div class="flex items-center action__buttons mt-2">
-                                                            <button type="button" class="small save" @click="modifyCheckListSubmit(check_list, c_index, task.checklists)">
-                                                                {{ __('Save') }}</button>
-                                                            <button @click="check_list.modify = false" type="button" class="small cancel">
-                                                                {{ __('Cancel') }}</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                            </div -->
-                                 <div v-show="newCheckList" class="group relative flex">
+                                <div v-show="newCheckList" class="group relative flex">
                                     <div class="checklist-box2 pl-6 w-full">
                                        <textarea class="border rounded p-2 text-sm bg-white w-full" ref="ncl"
                                           v-model="new_chek_list.title"
@@ -369,6 +381,7 @@
                               </button>
                            </div>
                         </section>
+                        
                        
                         <div class="bg-white rounded-lg shadow p-4 mt-5">
                            <!-- Header -->
@@ -420,7 +433,8 @@
                                  >
                                  <div class="flex items-center gap-2">
                                     <span class="text-blue-500 font-semibold">{{ subtask.task.id }}</span>
-                                    <span class="text-gray-700">{{ subtask.task.title }}</span>
+                                    <span class="text-gray-700" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask.task.id)"
+                                    @blur="(e)=>saveTitle(e, subtask.task.id)">{{ subtask.task.title }}</span>
                                  </div>
                                  <div class="flex items-center gap-3">
                                     <!-- Status dropdown 
@@ -565,13 +579,7 @@
                                     <!--textarea v-model="new_comment.details" class="autosize p-3 comment-textarea block max-h-40 w-full resize-none rounded-md border-0 text-sm focus:ring-0" placeholder="Write a comment..." style="overflow: hidden; overflow-wrap: break-word;background:transparent">{{ new_comment.details || '' }}</textarea -->
 
                                     <div class="relative">
-                                       <!--textarea
-                                                      v-model="new_comment.details"
-                                                      @input="detectAtSymbol"
-                                                      class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                      rows="5"
-                                                      placeholder="Escribe un comentario..."
-                                                    ></textarea-->
+                                       
                                        <quill-editor ref="editDescription" @ready="onEditorReady"
                                           class="task__description" v-model:content="new_comment.details"
                                           :options="editorOptions" contentType="html" theme="snow"
@@ -1009,7 +1017,8 @@ export default {
          optionSection: 1,
          showFormSubTask: false,
          titleSubTask: '',
-         boardList: []
+         boardList: [],
+         parentTask:{}
       }
    },
    components: {
@@ -1532,6 +1541,7 @@ export default {
          const taskResponse = await axios.get(this.route('json.task.get', id));
          if (Object.keys(taskResponse.data).length) {
             this.task = await taskResponse.data
+            this.parentTask = this.task?.subtask?.parent_task || {}
             this.counter.timer = this.task.timer || null;
             if (this.counter.timer && (this.counter.timer.task_id === this.task.id)) {
                this.startTimer()
@@ -1544,15 +1554,15 @@ export default {
             alert('something went wrong');
          }
       },
-      saveTitle(e) {
+      saveTitle(e, id) {
          if (e.keyCode === 13 || e.type === 'blur') {
             e.preventDefault();
             e.target.blur();
             if (e.target.innerText) {
                const title = e.target.innerText;
-               axios.post(this.route('task.update', this.task.id), { title }).then((response) => {
+               axios.post(this.route('task.update', id > 0 ? id: this.task.id), { title }).then((response) => {
                   if (response.data) {
-                     this.sendNotification('send.mail.task_update', response.data.id)
+                     //this.sendNotification('send.mail.task_update', response.data.id)
                   }
                })
             }

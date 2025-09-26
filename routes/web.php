@@ -154,7 +154,7 @@ Route::post('task/attachment/delete/{id}', [TasksController::class, 'removeAttac
 Route::post('task/attachment/link/{id}', [TasksController::class, 'addAttachmentFromLink'])->name('task.attachment.link')->middleware('auth');
 Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpire'])->name('task.list.expre')->middleware('auth');
 Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
-Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new')->middleware('auth');
+Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new');
 Route::put('taskbacklog/update/{taskid}', [TasksController::class, 'updateTaskBacklog'])->name('taskbacklog.update')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');

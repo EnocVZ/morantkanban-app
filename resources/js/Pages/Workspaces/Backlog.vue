@@ -49,6 +49,9 @@
                     {{ __('Descripción') }}
                   </th>
                   <th scope="col">
+                    {{ __('Usuario') }}
+                  </th>
+                  <th scope="col">
                     {{ __('Espacio de trabajo') }}
                   </th>
                   <th scope="col">
@@ -66,15 +69,21 @@
               </thead>
               <tr v-for="(listItem, listIndex) in filteredTasks" :key="listItem.id" class="list-group-item group">
                 <td class="px-2 py-2">{{ listItem?.id }}</td>
-                <td class="px-2 py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] hover:bg-gray-100">
-                  <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
+                <td class="px-2 py-2 text-sm font-medium w-[calc(32%-70px)] hover:bg-gray-100">
+                  <Link class="cursor-pointer" :href="this.route('projects.view.table',{uid: listItem.project_id, task: listItem.id})" :data-id="listItem.id">
+                      <h2 class="font-medium t__title text-pretty">{{ listItem?.title }}</h2>
+                  </Link>
                 </td>
                 <td
-                  class="px-2 hide_arrow py-2 text-sm font-medium whitespace-nowrap w-[calc(32%-70px)] cursor-pointer hover:bg-gray-100">
+                  class="px-4 hide_arrow py-2 align-top text-sm font-medium w-[30%] cursor-pointer hover:bg-gray-100">
                   <div
-                    class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800">
+                    class="inline t__title text-sm font-normal rounded-full text-emerald-500 gap-x-2 bg-emerald-100/60 dark:bg-gray-800  break-all ">
                     {{ listItem?.description }}
                   </div>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.userName || "" }}</span>
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
@@ -114,7 +123,6 @@
             <div class="flex w-full px-3 pb-3">
               <pagination class="mt-1" :links="tasks.links" />
             </div>
-
           </div>
         </div>
       </div>

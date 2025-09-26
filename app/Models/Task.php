@@ -194,4 +194,8 @@ class Task extends Model
 
         return "En lista hace {$time}";
     }
+
+    public function subtask(){
+        return $this->hasOne(SubTask::class, 'subtask_id', 'id')->with('parentTask');
+    }
 }

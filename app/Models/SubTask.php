@@ -13,4 +13,9 @@ class SubTask extends Model {
    public function task(){
         return $this->hasOne(Task::class, 'id', 'subtask_id');
     }
+
+    public function parentTask()
+    {
+        return $this->belongsTo(Task::class, 'maintask_id')->with('list');
+    }
 }

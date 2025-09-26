@@ -261,6 +261,9 @@ export default {
         // return urls.filter(url => currentUrl.startsWith(url)).length
         this.checkTaskUri();
         this.getOtherData();
+        if (!!this.filters.task) {
+            this.taskDetailsPopup({id: this.filters.task}, true)
+        }
     },
     methods: {
         makeReadRequest(idRequest){
@@ -268,13 +271,13 @@ export default {
                 
             })
         },
-        taskDetailsPopup(task) {
+        taskDetailsPopup(task, onStar = false) {
             const {id}= task;
             this.form.task = id;
             this.td_pop = true;
             this.taskDetailsId = id;
             this.taskDetailsOpen = true;
-            if(task.user_request.read == 0){
+            if(task?.user_request?.read == 0 && !onStar){
                 this.makeReadRequest(task.user_request.id);
                 task.user_request.read = 1;
             }
