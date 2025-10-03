@@ -6,10 +6,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 class Task extends Model
 {
     use HasFactory;
-    protected $appends = ['time_elapsed'];
+    protected $appends = ['time_elapsed', 'created_at_for_humans'];
     protected $casts = [
         'updatedlist_at' => 'datetime',
     ];
@@ -197,5 +199,9 @@ class Task extends Model
 
     public function subtask(){
         return $this->hasOne(SubTask::class, 'subtask_id', 'id')->with('parentTask');
+    }
+    protected function createdAtForHumans(): Attribute
+    {
+        return Attribute::get(fn () => $this->created_at?->diffForHumans());
     }
 }

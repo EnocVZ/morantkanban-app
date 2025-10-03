@@ -197,7 +197,7 @@ class TasksController extends Controller
             'taskLabels.label',
             'sublist',
             'subtaskList.task' => function ($q) {
-                $q->with(['list', 'sublist']);
+                $q->with(['list', 'sublist', 'assignees']);
             },
             'subtask'
         ])

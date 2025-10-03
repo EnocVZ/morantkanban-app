@@ -60,6 +60,9 @@
                   <th scope="col">
                     {{ __('Lista') }}
                   </th>
+                  <th scope="col">
+                    {{ __('Creado hace') }}
+                  </th>
 
                   <th scope="col" class=" w-[17%]">
                     {{ __('Tipo de solicitud') }}
@@ -96,6 +99,10 @@
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
                   <span>{{ listItem.listName || "" }}</span>
+                </td>
+                <td
+                  class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">
+                  <span>{{ listItem.created_at_for_humans || "" }}</span>
                 </td>
                 <td
                   class="px-1 py-1 hide_arrow t_label text-sm whitespace-nowrap w-[17%] cursor-pointer hover:bg-gray-100">

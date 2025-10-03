@@ -1634,6 +1634,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .max-h-48 {
   max-height: 12rem;
 }
+.max-h-60 {
+  max-height: 15rem;
+}
 .max-h-\[200px\] {
   max-height: 200px;
 }
@@ -1708,6 +1711,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .w-8 {
   width: 2rem;
+}
+.w-80 {
+  width: 20rem;
 }
 .w-9 {
   width: 2.25rem;
@@ -1994,6 +2000,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
   --tw-divide-opacity: 1;
   border-color: rgb(226 232 240 / var(--tw-divide-opacity));
+}
+.overflow-auto {
+  overflow: auto;
 }
 .overflow-hidden {
   overflow: hidden;
@@ -5884,7 +5893,6 @@ body .dark .task__details .wrapper .container .content .m__body {
 .task__details .wrapper .container .content .m__body .main {
   flex: 1 1 0%;
   padding-left: 1.5rem;
-  padding-right: 1.5rem;
   padding-top: 2rem;
   padding-bottom: 2rem;
 }

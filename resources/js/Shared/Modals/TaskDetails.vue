@@ -72,6 +72,7 @@
             </div>
             <div v-else>
                <div class="content">
+                
                   <FolderSelection v-if="exploreFolder" :loaderUpload="isLoadingAttach" @onUploadFile="uploadAttachment"
                      @close="exploreFolder = false" :project="task.project" />
                   <toast ref="toast" :type="notificationType">{{ notificationMessage }}</toast>
@@ -93,6 +94,7 @@
                         </button>
                      </div>
                   </div>
+                  
                   <div class="mv__card" v-if="showMoveCard" :class="{ '!left-auto right-6 top-23': is_move }">
                      <h4 class="text-center mb-3 font-bold">{{ __('Move Card') }}</h4>
                      <div class="close__b absolute cursor-pointer hover:bg-gray-200 top-3 right-3 p-1.5 rounded"
@@ -437,6 +439,24 @@
                                     @blur="(e)=>saveTitle(e, subtask.task.id)">{{ subtask.task.title }}</span>
                                  </div>
                                  <div class="flex items-center gap-3">
+                                    <SelectMultiple
+                                       :modelValue="mapAssignData(subtask.task.assignees)"
+                                       :users="this.team_members"
+                                       keyName="user_id"
+                                       label="name"
+                                       title="Asignar usuarios"
+                                       @update:modelValue="onAssignUsers(subtask.task.assignees, $event, subtask.task.id)"
+                                    >
+                                    <template #title>
+                                       <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
+                                       <span v-for="assignee in subtask.task.assignees" :aria-label="assignee?.user?.name" data-a=""
+                                             class="block rounded-full h-8 w-8 border-2 border-white">
+                                             <img class="h-full w-full rounded-full" :src="assignee?.user?.photo_path"
+                                             :alt="assignee?.user?.name">
+                                       </span>
+                                       </div>
+                                    </template>
+                                 </SelectMultiple>
                                     <!-- Status dropdown 
                                     <select
                                        v-model="task.list_id"
@@ -939,6 +959,7 @@ import Toast from '@/Shared/Toast';
 //import { useToast } from "vue-toastification";
 import draggable from 'vuedraggable'
 import FolderSelection from '@/Shared/Modals/FolderSelection'
+import SelectMultiple from '@/Shared/SelectMultiple.vue';
 
 export default {
    props: {
@@ -1018,11 +1039,12 @@ export default {
          showFormSubTask: false,
          titleSubTask: '',
          boardList: [],
-         parentTask:{}
+         parentTask:{},
+         selectedUsers: []
       }
    },
    components: {
-      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection
+      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection, SelectMultiple
    },
    computed: {
       sortedTasks: () => {
@@ -1555,12 +1577,12 @@ export default {
          }
       },
       saveTitle(e, id) {
+         const VALUE = e.target.innerText
          if (e.keyCode === 13 || e.type === 'blur') {
             e.preventDefault();
             e.target.blur();
-            if (e.target.innerText) {
-               const title = e.target.innerText;
-               axios.post(this.route('task.update', id > 0 ? id: this.task.id), { title }).then((response) => {
+            if (VALUE) {
+               axios.post(this.route('task.update', id > 0 ? id: this.task.id), { title: VALUE }).then((response) => {
                   if (response.data) {
                      //this.sendNotification('send.mail.task_update', response.data.id)
                   }
@@ -1707,6 +1729,27 @@ export default {
             this.loadSublist = false;
          });
       },
+      assignUserToSubTask(taskId, userId) {
+         axios.post(this.route('task.assignees.add'), { task_id: taskId, user_id: userId }).then((response) => {
+            if (response.data) {
+               
+            }
+         }).catch((error) => {
+            console.log(error)
+         })
+      },
+      mapAssignData(data){
+         return data.map(item=> item.user.id)
+      },
+      onAssignUsers(listItem, event, taskId){
+         const findUserInTeam = this.team_members.find(tm => tm.user.id === event.id)
+         if(event.checked){
+            listItem.push(findUserInTeam);
+         }else{
+            listItem.splice(listItem.findIndex(i => i.user.id === event.id), 1);
+         }
+         this.assignUserToSubTask(taskId, event.id)
+      }
    },
    created() {
       this.moment = moment
