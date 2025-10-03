@@ -47,6 +47,12 @@
                                         <icon name="time" class="w-4 h-4" />
                                         <span aria-label="Numero de días en la lista">{{ element.time_elapsed }}</span>
                                     </div>
+                                    <div 
+                                        :class="['flex items-center gap-1']">
+                                        <icon name="time" class="w-4 h-4" />
+                                        <span aria-label="Numero de días en la lista">Creado hace {{ element.created_at_for_humans }}</span>
+                                    </div>
+                                    
 
 
                                     <!-- Checklist -->
