@@ -61,6 +61,16 @@
                     <textarea v-model="project.description" class="rounded border" type="text" required="" aria-required="true" autocomplete="off" />
                 </label>
             </div>
+            <div class="flex" v-show="!edit">
+                <label class="flex flex-col w-full">
+                    <div>{{ __('Tipo de proyecto') }}</div>
+                    <select-input v-model="project.project_type" class=" mr-2 w-full">
+                        <option disabled>{{ __('Seleccione') }}</option>
+                        <option value="1">Basico</option>
+                        <option value="2">Configurar carriles</option>
+                    </select-input>
+                </label>
+            </div>
             <div class="flex">
                 <label class="w-full flex flex-col text-left">
                     <div>ID Carpeta<small>(Google drive)</small></div>
