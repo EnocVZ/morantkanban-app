@@ -46,7 +46,8 @@ class TaskNotificationController extends Controller
             '{workspacename}' => $task->project->workspace->name,
             '{proyect}' => $task->project->title,
             '{task}' => $task->title,
-            '{comment}' => $request['title']
+            '{comment}' => $request['title'],
+            '{url}' => env('APP_URL') . "p/board/{$task->project_id}?task={$task->id}",
         ];
         
         // Reemplazar las variables en el template

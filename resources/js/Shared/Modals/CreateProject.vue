@@ -127,14 +127,14 @@ export default {
     },
     methods: {
         async getData(){
+            const backgroundResp = await axios.get(this.route('json.backgrounds.all'));
+            this.backgrounds = backgroundResp.data;
             if(!this.edit){
                 const workspaceResp = await axios.get(this.route('json.workspaces.all'));
                 this.workspaces = workspaceResp.data;
+                this.project.color = this.backgrounds[0]
             }
             
-            const backgroundResp = await axios.get(this.route('json.backgrounds.all'));
-            this.backgrounds = backgroundResp.data;
-            this.project.color = this.backgrounds[0]
             this.loading = false;
             if(this.$page.props.workspace || this.$page.props.project){
                 this.project.workspace_id = this.$page.props.workspace ? this.$page.props.workspace.id : this.$page.props.project? this.$page.props.project.workspace_id : '';
@@ -173,11 +173,11 @@ export default {
         }
     },
     created() {
+        this.getData();
         if(this.edit){
             this.setDataToForm()
         }
         
-        this.getData();
     },
 }
 </script>

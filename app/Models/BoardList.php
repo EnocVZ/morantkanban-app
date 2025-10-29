@@ -37,6 +37,10 @@ class BoardList extends Model
         return $this->hasMany(Task::class, 'list_id');
     }
 
+    public function sublist(){
+        return $this->hasMany(BoardSublist::class, 'list_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -49,4 +53,19 @@ class BoardList extends Model
             });
         });
     }
+
+    public function tasksWithoutSubcategory()
+    {
+        return $this->hasMany(Task::class, 'list_id')
+            ->where(function ($q) {
+                $q->where('sublist_id', 0)
+                ->orWhereNull('sublist_id');
+            });
+    }
+
+    public function userRequest()
+    {
+        return $this->hasMany(UserRequest::class, 'list_id');
+    }
+
 }

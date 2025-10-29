@@ -26,6 +26,7 @@ export default {
             type: Boolean,
             default: true,
         },
+        
     },
     data() {
         return {
@@ -35,6 +36,7 @@ export default {
     watch: {
         show(show) {
             if (show) {
+                this.$emit('onStarOpen')
                 this.$nextTick(() => {
                     this.popper = createPopper(this.$el, this.$refs.dropdown, {
                         placement: this.placement,

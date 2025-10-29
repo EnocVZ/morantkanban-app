@@ -18,12 +18,16 @@ use App\Models\Timer;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\TaskNotification;
+use App\Models\RequestType;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
+use Exception;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class WorkSpacesController extends Controller 
 {
@@ -117,10 +121,12 @@ class WorkSpacesController extends Controller
     public function workspaceView($uid){
         $workspace = Workspace::whereId($uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
         $projects = Project::where('workspace_id', $workspace->id)->with('star')->with('background')->get();
+        $types_requests = RequestType::where('workspace_id', $workspace->id)->select('id', 'title', 'workspace_id')->get();
         return Inertia::render('Workspaces/View', [
             'title' => 'Proyectos | '.$workspace->name,
             'workspace' => $workspace,
-            'projects' => $projects
+            'projects' => $projects,
+            'requests' => $types_requests
         ]);
     }
 
@@ -175,15 +181,21 @@ class WorkSpacesController extends Controller
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
+        $taksList = Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
+                $q->where('workspace_id', $workspace->id);
+            })->with(['list','taskLabels.label', 'project.background', 'assignees','timer',
+            'subtaskList.task' => function ($q) {
+                $q->with(['list', 'sublist']);
+            }
+             ])
+            ->isOpen()->orderByOrder()->get();
         return Inertia::render('Workspaces/Table', [
             'title' => 'Tareas | '.$workspace->name,
             'board_lists' => $board_lists,
             'filters' => $requests,
             'list_index' => $list_index,
             'workspace' => $workspace,
-            'tasks' => Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
-                $q->where('workspace_id', $workspace->id);
-            })->with('list')->with('taskLabels.label')->with('project.background')->with('assignees')->with('timer')->isOpen()->orderByOrder()->get()
+            'tasks' => $taksList
         ]);
     }
 
@@ -256,5 +268,144 @@ class WorkSpacesController extends Controller
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
-    }  
+    }
+    
+    public function viewBacklog($uid, Request $request){
+
+        $user = auth()->user()->load('role');
+        $requests = $request->all();
+        $search = $request->input('search');
+        // if(!empty($user->role)){
+        //     if($user->role->slug != 'admin' && empty($requests['user'])){
+        //         return Redirect::route('workspace.tables', ['uid' => $uid, 'user' => $user->id]);
+        //     }
+        // }else{
+        //     return abort(404);
+        // }
+        $list_index = [];
+        $board_lists = BoardList::orderByOrder()->get();
+        $workspace = Workspace::where('id', $uid)->orWhere('slug', $uid)->whereHas('member')->with('member')->first();
+        $allWorkSpace = Workspace::orderBy('name')->get();
+        $loopIndex = 0;
+        foreach ($board_lists as &$listItem){
+            $list_index[$listItem->id] = $loopIndex;
+            $listItem['tasks'] = [];
+            $loopIndex+= 1;
+        }
+        
+        $taksList = Task::query()
+            ->select('tasks.*', 'request_type.title as requestTitle','user_request.workspace_id',
+                    'user_request.request_type_id','projects.title as projectTitle',
+                    'workspaces.name as workspaceName','board_lists.title as listName',
+                    DB::raw("CASE WHEN users.id IS NOT NULL THEN CONCAT(users.first_name, ' ', users.last_name) ELSE user_request.email END AS userName"))
+            ->join('user_request', 'tasks.id', '=', 'user_request.task_id')
+            ->join('request_type', 'user_request.request_type_id', '=', 'request_type.id')
+            ->join('workspaces', 'user_request.workspace_id', '=', 'workspaces.id')
+            ->join('projects', 'tasks.project_id', '=', 'projects.id')
+            ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+            ->leftjoin('users', 'user_request.user_id', '=', 'users.id')
+            ->where('is_request', 1)
+            ->when($user->role->slug != 'admin', function ($query) use ($user) {
+                $query->where('user_request.user_id', $user->id);
+            })
+            ->when($search, function($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('tasks.title', 'like', "%$search%")
+                    ->orWhere('tasks.description', 'like', "%$search%")
+                    ->orWhere('request_type.title', 'like', "%$search%")
+                    ->orWhere('projects.title', 'like', "%$search%")
+                    ->orWhere('workspaces.name', 'like', "%$search%")
+                    ->orWhere('board_lists.title', 'like', "%$search%");
+                });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->paginate(20)
+            ->withQueryString();
+
+                
+
+        return Inertia::render('Workspaces/Backlog', [
+            'title' => 'Backlog | '.$workspace->name,
+            'board_lists' => $board_lists,
+            'filters' => $requests,
+            'list_index' => $list_index,
+            'workspace' => $workspace,
+            'tasks' => $taksList,
+            'workspace_id' => Crypt::encryptString($workspace->id),
+            'allWorkSpace' => $allWorkSpace,
+        ]);
+
+    }
+
+    public function viewFormLink($workspace_id, Request $request){
+
+        try {
+            $workspace_id_decrypt = Crypt::decryptString($workspace_id);
+        } catch (\Exception $e) {
+            abort(404, 'ID inválido');
+        }
+
+        $categories = RequestType::where('workspace_id', $workspace_id_decrypt)->get();
+        $projects = Project::where('workspace_id',$workspace_id_decrypt)->get();
+
+        return Inertia::render('Link/Index', [
+            'title' => 'Solicitud',
+            'workspace_id' => $workspace_id_decrypt,
+            'categories' => $categories,
+            'projects' => $projects
+        ]);
+
+    }
+
+
+    public function jsonAddUpdTypesRequests(Request $request) {
+        try {
+            $data = $request->validate([
+                '*.id' => 'nullable|integer|exists:request_type,id',
+                '*.title' => 'required|string|max:255',
+                '*.workspace_id' => 'required|integer|exists:workspaces,id',
+            ]);
+
+        $res = RequestType::upsert($data, ['id'], ['title', 'workspace_id']);
+
+        if($res > 0) $list_requests = RequestType::select('id', 'title', 'workspace_id')->get();
+        else $list_requests = $request->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $list_requests
+        ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+
+            ], 500);
+        }
+    }
+    
+    public function deleteRequest($id) {
+        try {
+            $requestType = RequestType::findOrFail($id);
+
+            if (!$requestType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request type not found.'
+                ], 404);
+            }
+
+            $requestType->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request type deleted successfully.'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
