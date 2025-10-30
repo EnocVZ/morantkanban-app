@@ -42,6 +42,9 @@
                     {{ !!role.create_project }}
                 </Link>
             </td>
+          <td class="border-t w-px" @click="openModal(role.id)" style="cursor: pointer;">
+          <span class="font-semibold hover:text-blue-600 rounded text-blue-700">Permisos</span>
+        </td>
           <td class="border-t w-px">
             <Link class="px-4 flex items-center" :href="this.route('roles.edit', role.id)" tabindex="-1">
               <icon name="cheveron-right" class="block w-6 h-6 fill-gray-400" />
@@ -49,11 +52,43 @@
           </td>
         </tr>
         <tr v-if="roles.data.length === 0">
-          <td class="border-t px-6 py-4" colspan="4">No roles found.</td>
+          <td class="border-t px-6 py-4" colspan="4">No se encontraron roles</td>
         </tr>
       </table>
     </div>
     <pagination class="mt-6" :links="roles.links" />
+  </div>
+  <div v-if="showModalRole" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" >
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 relative">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b p-4">
+        <h2 class="text-lg font-semibold">Permisos para el rol</h2>
+        <button
+          @click="showModalRole = false"
+          class="text-gray-400 hover:text-white text-xl leading-none"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div class="p-4 overflow-y-auto max-h-[70vh]">
+        <permission :roleId="roleId" @onSelectPermission="onSelectPermission"/>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end border-t p-4">
+        <button
+          @click="showModalRole = false"
+          class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          Cerrar
+        </button>
+        <loading-button :loading="loadingSavePermission" @click="saveSelection"
+          class="ml-2 px-4 py-2 text-white bg-indigo-600 rounded hover:bg-indigo-700">Guardar cambios</loading-button>
+        
+      </div>
+    </div>
   </div>
 </template>
 
@@ -66,6 +101,9 @@ import throttle from 'lodash/throttle'
 import mapValues from 'lodash/mapValues'
 import Pagination from '@/Shared/Pagination'
 import SearchInput from '@/Shared/SearchInput'
+import Permission from '@/Pages/Roles/Permission.vue'
+import LoadingButton from '@/Shared/LoadingButton'
+import axios from 'axios'
 
 export default {
   metaInfo: { title: 'Roles' },
@@ -74,7 +112,9 @@ export default {
     Link,
     Head,
     Pagination,
-      SearchInput,
+    SearchInput,
+    Permission,
+    LoadingButton
   },
   layout: Layout,
   props: {
@@ -84,9 +124,13 @@ export default {
   },
   data() {
     return {
+      showModalRole: false,
       form: {
         search: this.filters.search,
       },
+      roleId:0,
+      permissionSelected: [],
+      loadingSavePermission: false
     }
   },
   watch: {
@@ -98,9 +142,26 @@ export default {
     },
   },
   methods: {
+    openModal(roleId){
+        this.roleId = roleId;
+        this.showModalRole = true;
+    },
+    onSelectPermission(data){
+      this.permissionSelected = data;
+    },
     reset() {
       this.form = mapValues(this.form, () => null)
     },
+    saveSelection(){
+      this.loadingSavePermission = true;
+      const request = {data: this.permissionSelected};
+      axios.post(this.route('permission.assign'), request).then(response =>{
+   
+      }).finally(()=>{
+          this.loadingSavePermission = false;
+          this.showModalRole = false;
+      });
+    }
   },
 }
 </script>

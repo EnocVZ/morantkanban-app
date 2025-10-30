@@ -59,14 +59,16 @@ class ProjectsController extends Controller {
         $project->slug = $slug;
         $project->save();
 
-        foreach ($this->taskstatus as $index => $status) {
-            BoardList::create([
-                'title' => $status,
-                'project_id' => $project->id,
-                'user_id' => auth()->id(), // si necesitas asignar el usuario
-                'order' => $index,
-                'is_basic' => 1
-            ]);
+        if($project->project_type == 1) {
+            foreach ($this->taskstatus as $index => $status) {
+                BoardList::create([
+                    'title' => $status,
+                    'project_id' => $project->id,
+                    'user_id' => auth()->id(), // si necesitas asignar el usuario
+                    'order' => $index,
+                    'is_basic' => 1
+                ]);
+            }
         }
 
         return response()->json($project);
@@ -173,8 +175,10 @@ class ProjectsController extends Controller {
         if($project->is_private && (auth()->user()['role_id'] != 1)){
             $requests['private_task'] = $auth_id;
         }
+
+        $renderOption = $project->project_type == 1 ? 'Projects/View' : 'Projects/KanbanBoard';
         
-        return Inertia::render('Projects/View', [
+        return Inertia::render($renderOption, [
             'title' => 'Proyecto | '.$project->title,
             'board_lists' => $board_lists,
             'lists' => $board_lists,
@@ -663,5 +667,37 @@ class ProjectsController extends Controller {
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
+    }
+
+    public function viewKanbanBoard($uid, Request $request){
+        $auth_id = auth()->id();
+        $requests = $request->all();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
+        $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
+        
+
+        RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
+        $list_index = [];
+        $board_lists = $this->boardListWithDetails($project);
+        $loopIndex = 0;
+        $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
+        $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
+
+        if($project->is_private && (auth()->user()['role_id'] != 1)){
+            $requests['private_task'] = $auth_id;
+        }
+        
+        return Inertia::render('Projects/KanbanBoard', [
+            'title' => 'Proyecto | '.$project->title,
+            'board_lists' => $board_lists,
+            'lists' => $board_lists,
+            'list_index' => $list_index,
+            'filters' => $requests,
+            'project' => $project,
+            'notification'=>$notification,
+            'existBasicList' => $this->validateIfExistList($project),
+            'requestNoRead' => $requestNoRead,
+
+        ]);
     }
 }

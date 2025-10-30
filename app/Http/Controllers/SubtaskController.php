@@ -40,7 +40,7 @@ class SubtaskController extends Controller
                 'updated_at' => Carbon::now(),
             ];
             $subTask = SubTask::create($newSubtask);
-            $getTask = Task::with(['list', 'sublist'])->where('id', $task->id)->first();
+            $getTask = Task::with(['list', 'sublist', 'assignees'])->where('id', $task->id)->first();
             $subTask['task'] = $getTask;
             return MethodHelper::successResponse($subTask);
         } catch (\Exception $e) {

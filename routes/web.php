@@ -41,6 +41,7 @@ use App\Http\Controllers\RequestTypeController;
 use App\Http\Controllers\SublistController;
 use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\UserRequestController;
+use App\Http\Controllers\PermissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -414,3 +415,7 @@ Route::post('subtask/new', [SubtaskController::class, 'create'])->name('subtask.
 
 Route::get('userrequest/byproject/{project_id}', [UserRequestController::class, 'countRequestNoRead'])->name('userrequest.count')->middleware('auth');
 Route::post('userrequest/makeread/{idrequest}', [UserRequestController::class, 'makeRead'])->name('userrequest.makeread')->middleware('auth');
+
+Route::get('permission/roles/{roleId}', [PermissionController::class, 'getAllRoleWithPermission'])->name('permission.roles')->middleware('auth');
+Route::post('permission/assign', [PermissionController::class, 'savePermissionToRole'])->name('permission.assign')->middleware('auth');
+Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');
