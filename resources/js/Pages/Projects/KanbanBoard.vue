@@ -14,12 +14,15 @@
                class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
                <!-- Header del Sprint -->
                <div class="flex justify-between items-center px-4 py-3 bg-gray-100 cursor-pointer"
-                  @click="toggleSprint(column)">
-                  <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                  >
+                  <h2 class="font-semibold text-gray-800 flex items-center gap-2"
+                  contenteditable="true"
+                  @keypress="saveSprintTitle($event,column.id)"
+                  @blur="saveSprintTitle($event,column.id )" >
                      {{ column.title }}
                   </h2>
                   <div class="flex items-center gap-3">
-                     <span class="text-gray-500 text-sm">
+                     <span class="text-gray-500 text-sm" @click="toggleSprint(column)">
                         {{ column.collapsed ? '▶' : '▼' }}
                      </span>
                   </div>
@@ -38,12 +41,14 @@
                               'border-rose-400': sublist.color === 'red',
                               'border-green-400': sublist.color === 'green',
                            }">
-                              <h3 class="font-medium text-gray-700 truncate">
-                                 {{ sublist.title }}
-                                 <span class="text-xs bg-gray-200 rounded-full px-2 py-0.5 ml-1">
-                                    {{ filteredTasks(sublist, sublist.id).length }}
-                                 </span>
-                              </h3>
+                           <div class="flex justify-between">
+                                 <h2 class="font-semibold truncate" contenteditable="true" :aria-label="sublist.title" 
+                                 @keypress="saveSublistTitle($event,sublist.id)"
+                                 @blur="saveSublistTitle($event,sublist.id )">{{ sublist.title }}</h2>
+                                 
+                                 <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
+                                 aria-label="Total de tareas">{{ filteredTasks(sublist, sublist.id).length }}</span>
+                              </div>
                            </div>
 
                            <!-- Lista de tareas -->
@@ -231,8 +236,9 @@
       </div>
       <task-details v-if="taskDetailsOpen" :id="taskDetailsId" view="board" :isPopup="td_pop"
             @closeModal="closeDetails()" />
-        <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
+      <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
             @openTask="(id) => taskDetailsPopup(id)" />
+      <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
    </div>
 
 </template>
@@ -252,11 +258,14 @@ import Dropdown from '@/Shared/Dropdown'
 import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import mapValues from "lodash/mapValues";
+import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 
 export default {
    name: "KanbanBoard",
-   components: { Head, Link, BoardFilter, BoardViewMenu, draggable, Icon, LoadingButton, TaskDetails, RightMenu,
-      Dropdown
+   components: { Head, Link, BoardFilter, BoardViewMenu, draggable, Icon, LoadingButton, TaskDetails,
+      RightMenu,
+      Dropdown,
+      ChangeWorkspace
     },
    layout: Layout,
    remember: 'form',
@@ -302,6 +311,10 @@ export default {
          td_pop: false,
          show_right_menu: false,
          open_filter: false,
+         visible: {
+                changeWorkspace: false,
+            },
+         taskId: 0,
       };
    },
    watch: {
@@ -442,6 +455,8 @@ export default {
             }
             return newOrder;
         },
+
+      
         afterDrop(e) {
             const new_list = this.newSortedItems(e, 'to');
             let previous_list = [];
@@ -463,6 +478,57 @@ export default {
                 this.saveOrder(list_items)
             }
             //this.draggingChild = false;
+        },
+
+        saveSublistTitle(e, board_id) {
+            if (e.keyCode === 13 || e.type === 'blur') {
+                e.preventDefault();
+                e.target.blur();
+                if (e.target.innerText) {
+                    const title = e.target.innerText.replace(/[^a-zA-Z0-9 _-]/g, "");
+                    if (title.length > 0) {
+                        this.updateSublistInfo(board_id, {title:title}, false);
+                    } 
+                }
+            }
+        },
+        updateSublistInfo(id, request, reloadSublist = true) {
+            axios.put(this.route('sublist.update.row', id), request).then((response) => {
+                if (!response?.data?.error && reloadSublist) {
+                   // this.getBoardLists();
+                }
+
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
+
+        saveSprintTitle(e, board_id){
+            if (e.keyCode === 13 || e.type === 'blur'){
+                e.preventDefault();
+                e.target.blur();
+                if (e.target.innerText){
+                    const title = e.target.innerText.replace(/[^a-zA-Z0-9 _-]/g, "");
+                    this.changeBoardTitle(board_id, title);
+                }
+            }
+        },
+        changeBoardTitle(id, title){
+            axios.post(this.route('board.update', id),{ title }).then((response) => {
+                //console.log(response)
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
+        changeWorkspace( element) {
+            this.taskId = element.id;
+            this.visible.changeWorkspace = true;
+        },
+        onCloseChangeWorkSpace(success = false) {
+            this.visible.changeWorkspace = false;
+            if (success) {
+                this.$inertia.reload({ preserveState: false });
+            }
         },
    },
 };

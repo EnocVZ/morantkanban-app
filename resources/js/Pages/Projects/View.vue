@@ -415,7 +415,6 @@
         <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
             @openTask="(id) => taskDetailsPopup(id)" />
         <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
-<
     </div>
 </template>
 
