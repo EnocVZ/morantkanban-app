@@ -292,7 +292,7 @@
                               <span
                                  class="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700"
                               >
-                                 {{ parentTask.list.title }}
+                                 {{ parentTask?.list?.title }}
                               </span>
                               </div>
                            </div>
@@ -912,7 +912,7 @@
                            </h2>
                            <div class="relative" modal="true">
                               <div class="px-2 py-1 text-sm">
-                                 {{ task.list.title }}
+                                 {{ task?.list?.title }}
                               </div>
                            </div>
                            <h2 class="px-2 text-sm font-medium">

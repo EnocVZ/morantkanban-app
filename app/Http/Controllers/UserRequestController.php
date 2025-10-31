@@ -37,5 +37,30 @@ class UserRequestController extends Controller
         }
     }
 
+    public function getRequestsByProject($projectId){
+        try{
+            $items = Task::where('project_id', $projectId)
+              ->where('is_request', 1)
+              ->where('sublist_id', 0)
+              ->with([
+                    'taskLabels.label',
+                    'timer',
+                    'cover',
+                    'assignees',
+                ])
+                ->withCount([
+                    'checklistDone',
+                    'comments',
+                    'checklists',
+                    'attachments',
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return MethodHelper::successResponse($items);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
     
 }

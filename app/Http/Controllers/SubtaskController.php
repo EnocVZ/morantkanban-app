@@ -10,6 +10,7 @@ use App\Models\Task;
 use App\Models\BoardSublist;
 use App\Models\BoardList;
 use App\Models\SubTask;
+use App\Models\Project;
 
 use App\Helpers\MethodHelper;
 
@@ -19,10 +20,13 @@ class SubtaskController extends Controller
     public function create(Request $request){
         try {
             $body = $request->all();
+            $project = Project::where('id', $body['project_id'])->first();
             $boardList = BoardList::where('project_id', $body['project_id'])
             ->where('is_archive', 0)
             ->orderBy('order')
             ->first();
+            
+            $sublist = BoardSublist::where('list_id', $boardList->id)->first();
             $requestTask = [
                 'title' => $body['title'],
                 'list_id' => $boardList->id,
@@ -30,6 +34,9 @@ class SubtaskController extends Controller
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ];
+            if($project->project_type == 2){
+                $requestTask['sublist_id'] = $sublist->id;
+            }
             
             $task = Task::create($requestTask);
             //return response()->json($task);
