@@ -163,7 +163,7 @@ class ProjectsController extends Controller {
         $requests = $request->all();
         $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
-        
+        $renderOption = $project->project_type == 1 ? 'Projects/View' : 'Projects/KanbanBoard';
 
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
@@ -176,7 +176,7 @@ class ProjectsController extends Controller {
             $requests['private_task'] = $auth_id;
         }
 
-        $renderOption = $project->project_type == 1 ? 'Projects/View' : 'Projects/KanbanBoard';
+        
         
         return Inertia::render($renderOption, [
             'title' => 'Proyecto | '.$project->title,
@@ -222,12 +222,13 @@ class ProjectsController extends Controller {
 
     private function boardListWithDetails($project){
         $projectId = $project->id;
+        $projecttype = $project->project_type;
         $board_lists = BoardList::where('project_id', $projectId)
                         ->with([
                             'sublist' => function ($query) {
                                 $query->where('archived', 0);
                             },
-                            'sublist.tasklist' => function ($query) use ($projectId) {
+                            'sublist.tasklist' => function ($query) use ($projectId,  $projecttype) {
                                 $query->isOpen()
                                     ->byProject($projectId)
                                     ->with([
@@ -242,8 +243,10 @@ class ProjectsController extends Controller {
                                         'checklists',
                                         'attachments',
                                     ])
-                                    ->where('is_request', 0)
                                     ->orderByOrder();
+                                    if($projecttype == 1){
+                                        $query->where('is_request', 0);
+                                    }
                             },
                             'tasksWithoutSubcategory' => function ($query) use ($projectId) {
                                 $query->isOpen()
