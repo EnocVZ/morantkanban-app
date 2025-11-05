@@ -286,6 +286,7 @@ import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import mapValues from "lodash/mapValues";
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
+import moment from 'moment'
 
 export default {
    name: "KanbanBoard",
@@ -356,7 +357,7 @@ export default {
 
    },
    created() {
-      //this.moment = moment
+      this.moment = moment
       let currentUrl = this.$page.url.substr(1)
       const currentUrlArray = currentUrl.split('/');
 
@@ -569,6 +570,10 @@ export default {
             }).catch((error) => {
                console.log(error)
             })
+      },
+
+      getDue(element) {
+         return element.is_done ? 'text-green-600' : moment().isAfter(element.due_date) ? 'over_due' : moment(element.due_date).isBetween(moment(), moment().add(1, 'day')) ? 'due_soon' : '';
       },
    },
 };
