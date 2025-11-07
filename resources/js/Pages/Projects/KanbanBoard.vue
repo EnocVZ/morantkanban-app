@@ -69,170 +69,181 @@
                <!-- Contenido del Sprint -->
                <transition name="fade">
                   <div v-show="!column.collapsed" class="p-4 bg-gray-50">
-                     <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
-                        <div v-for="(sublist, key) in column.sublist" :key="sublist.key"
-                           class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-w-[260px]">
-                           <!-- Encabezado -->
-                           <div class="flex justify-between items-center px-3 py-2 border-b" :class="{
-                              'border-indigo-400': sublist.color === 'blue',
-                              'border-yellow-400': sublist.color === 'yellow',
-                              'border-rose-400': sublist.color === 'red',
-                              'border-green-400': sublist.color === 'green',
-                           }">
-                              <div class="flex justify-between">
-                                 <h2 class="font-semibold truncate" contenteditable="true" :aria-label="sublist.title"
-                                    @keypress="saveSublistTitle($event, sublist.id)"
-                                    @blur="saveSublistTitle($event, sublist.id)">
-                                    {{ sublist.title }}</h2>
+                           <draggable :data-id="column.id" :data-colids="column.id" class="dragArea grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto"
+                                    :list="column.sublist" group="columnlist" item-key="id" @end="afterDropColumn($event)">
+                                    <template #item="{element:sublist, index:subcolumnIndex }">
+                                       <div :id="sublist.id" :data-id="sublist.id" class="li_column bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-w-[260px]">
+                                          <!-- Encabezado -->
+                                          <div class="flex justify-between items-center px-3 py-2 border-b" :class="{
+                                             'border-indigo-400': sublist.color === 'blue',
+                                             'border-yellow-400': sublist.color === 'yellow',
+                                             'border-rose-400': sublist.color === 'red',
+                                             'border-green-400': sublist.color === 'green',
+                                          }">
+                                             <div class="flex justify-between">
+                                                <h2 class="font-semibold truncate" contenteditable="true" :aria-label="sublist.title"
+                                                   @keypress="saveSublistTitle($event, sublist.id)"
+                                                   @blur="saveSublistTitle($event, sublist.id)">
+                                                   {{ sublist.title }}</h2>
 
-                                 <span
-                                    class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
-                                    aria-label="Total de tareas">{{ filteredTasks(sublist, sublist.id).length }}</span>
-                              </div>
-                           </div>
+                                                <span
+                                                   class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
+                                                   aria-label="Total de tareas">{{ filteredTasks(sublist, sublist.id).length }}</span>
+                                             </div>
+                                          </div>
 
-                           <!-- Lista de tareas -->
-                           <ul class="space-y-2 mt-2">
-                              <draggable :data-id="sublist.id" :data-colid="column.id" class="dragArea"
-                                 :list="sublist.tasklist" group="tasklist" item-key="id" @end="afterDrop($event)">
-                                 <template #item="{ element, indexTsk }">
-                                    <li :key="indexTsk" :id="element.id" :data-id="element.id" :data-column="column.id"
-                                       class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50  cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
-                                       <!-- Etiquetas -->
-                                       <div v-if="element.task_labels.length" class="mb-2 flex flex-wrap gap-1">
-                                          <button v-for="(la, l_index) in element.task_labels" :key="l_index"
-                                             class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
-                                             :style="{ backgroundColor: la.label.color }" :aria-label="la.label.name">
-                                             {{ la.label.name }}
+                                          <!-- Lista de tareas -->
+                                          <ul class="ml-2 mr-2 space-y-2">
+                                             <draggable :data-id="sublist.id" :data-colid="column.id" class="dragArea"
+                                                :list="sublist.tasklist" group="tasklist" item-key="id" @end="afterDrop($event)">
+                                                <template #item="{ element, indexTsk }">
+                                                   <li :key="indexTsk" :id="element.id" :data-id="element.id" :data-column="column.id"
+                                                      class="li_box bg-white p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50  cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded">
+                                                      <!-- Etiquetas -->
+                                                      <div v-if="element.task_labels.length" class="mb-2 flex flex-wrap gap-1">
+                                                         <button v-for="(la, l_index) in element.task_labels" :key="l_index"
+                                                            class="text-xs text-white rounded-full px-6 py-1 font-medium"
+                                                            :style="{ backgroundColor: la.label.color }" :aria-label="la.label.name">
+                                                            
+                                                         </button>
+                                                      </div>
+
+                                                      <!-- Título -->
+                                                      <div class="flex justify-between items-center handle cursor-move">
+                                                         <span class="flex text-sm text-gray-800 mb-2 cursor-pointer"
+                                                            @click="taskDetailsPopup(element.id)">{{ element.title }}</span>
+                                                         <div class="flex items-center gap-2">
+
+                                                            <dropdown className="rounded" placement="bottom-end">
+                                                               <template #default>
+                                                                  <div class="flex items-center cursor-pointer group">
+                                                                     <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400"
+                                                                        name="more" />
+                                                                  </div>
+                                                               </template>
+                                                               <template #dropdown>
+                                                                  <div class="shadow-xl bg-white rounded text-sm ">
+                                                                     <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
+                                                                        @click="changeWorkspace(element)">
+                                                                        <icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Cambiarde espacio de trabajo') }}
+                                                                     </a>
+                                                                  </div>
+                                                               </template>
+                                                            </dropdown>
+                                                         </div>
+
+                                                      </div>
+
+                                                      <!-- Footer -->
+                                                      
+                                                      <div class="flex items-center text-gray-500 text-xs gap-3">
+                                                         <div v-if="element.created_at_for_humans"
+                                                            :class="['flex items-center gap-1 hover:text-gray-700', getDue(element)]">
+                                                            <icon name="time" class="w-4 h-4" />
+                                                            <span>Creado {{ element.created_at_for_humans }}</span>
+                                                         </div>
+                                                         <!-- Fecha de entrega -->
+                                                         <div v-if="element.due_date" title="Fecha de entrega"
+                                                            :class="['flex items-center gap-1 hover:text-gray-700', getDue(element)]">
+                                                            <icon name="time" class="w-4 h-4" />
+                                                            <span>{{ moment(element.due_date).format('MMM D') }}</span>
+                                                         </div>
+
+                                                         <!-- Adjuntos -->
+                                                         <div v-if="element.attachments_count" class="flex items-center gap-1">
+                                                            <icon name="attachment" class="w-4 h-4" />
+                                                            <span>{{ element.attachments_count }}</span>
+                                                         </div>
+
+                                                         <!-- Checklist -->
+                                                         <div v-if="element.checklists_count" class="flex items-center gap-1"
+                                                            :class="{ 'text-green-600': element.checklist_done_count === element.checklists_count }">
+                                                            <icon name="checklist" class="w-4 h-4" />
+                                                            <span>
+                                                               {{ element.checklist_done_count + '/' +
+                                                                  element.checklists_count }}
+                                                            </span>
+                                                         </div>
+
+                                                         <div class="flex items-center gap-1">
+                                                            <!-- Asignados -->
+                                                            <span v-for="assignee in element.assignees" :key="assignee?.user?.id"
+                                                               class="block w-6 h-6 rounded-full ring-2 ring-white overflow-hidden"
+                                                               :aria-label="assignee?.user?.name">
+                                                               <img v-if="assignee?.user?.photo_path" :src="assignee?.user?.photo_path"
+                                                                  :alt="assignee?.user?.name" class="w-full h-full object-cover" />
+                                                               <img v-else src="/images/svg/profile.svg"
+                                                                  class="w-full h-full object-cover" :alt="assignee?.user?.name" />
+                                                            </span>
+                                                         </div>
+                                                      </div>
+
+
+                                                   </li>
+                                                </template>
+                                                <template #footer>
+                                                   <div class="pt-2">
+                                                      <div v-if="!sublist.new_task_open"
+                                                         class="flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 cursor-pointer"
+                                                         @click="sublist.new_task_open = true">
+                                                         <icon name="add" class="w-4 h-4 text-indigo-500" />
+                                                         <span>Agregar tarea</span>
+                                                      </div>
+
+                                                      <div v-show="sublist.new_task_open" class="mt-2">
+                                                         <input autofocus :id="'new_task_input_id_' + sublist.id"
+                                                            :ref="'new_task_input_' + sublist.id" v-model="new_task.title" type="text"
+                                                            class="w-full px-3 py-2 text-sm border rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                            placeholder="Título de la nueva tarea" />
+
+                                                         <div class="flex gap-2 mt-2">
+                                                            <loading-button :loading="sublist.loader"
+                                                               class="inline-flex items-center px-3 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                                                               @click="newTaskInSublist(sublist)">
+                                                               Agregar tarea
+                                                            </loading-button>
+
+                                                            <button @click="sublist.new_task_open = false"
+                                                               class="inline-flex items-center px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100">
+                                                               <icon name="close" class="w-4 h-4" />
+                                                            </button>
+                                                         </div>
+                                                      </div>
+                                                   </div>
+                                                </template>
+                                             </draggable>
+                                          </ul>
+                                       </div>
+                                    </template>
+                                    <template #footer>
+                                       <div>
+                                          <button @click.stop="addSubColumn(column)"
+                                             class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                                             v-show="!column.showformcolumn">
+                                             + Agregar columna
                                           </button>
-                                       </div>
+                                          <div class="mt-2" v-if="column.showformcolumn">
+                                             <input autofocus type="text" v-model="formColumn.title"
+                                                class="w-full px-3 py-2 text-sm border rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                placeholder="Título de la nueva columna" />
 
-                                       <!-- Título -->
-                                       <div class="flex justify-between items-center handle cursor-move">
-                                          <span class="flex text-sm text-gray-800 mb-2 cursor-pointer"
-                                             @click="taskDetailsPopup(element.id)">{{ element.title }}</span>
-                                          <div class="flex items-center gap-2">
+                                             <div class="flex gap-2 mt-2">
+                                                <loading-button :loading="column.loadercolumn"
+                                                   class="inline-flex items-center px-3 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                                                   @click="createNewSubColumn(column)">
+                                                   Agregar
+                                                </loading-button>
 
-                                             <dropdown className="rounded" placement="bottom-end">
-                                                <template #default>
-                                                   <div class="flex items-center cursor-pointer group">
-                                                      <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400"
-                                                         name="more" />
-                                                   </div>
-                                                </template>
-                                                <template #dropdown>
-                                                   <div class="shadow-xl bg-white rounded text-sm ">
-                                                      <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
-                                                         @click="changeWorkspace(element)">
-                                                         <icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Cambiarde espacio de trabajo') }}
-                                                      </a>
-                                                   </div>
-                                                </template>
-                                             </dropdown>
-                                          </div>
-
-                                       </div>
-
-                                       <!-- Footer -->
-                                       <div class="flex flex-wrap items-center text-gray-500 text-xs gap-3">
-                                          <!-- Fecha de entrega -->
-                                          <div v-if="element.due_date"
-                                             :class="['flex items-center gap-1', getDue(element)]">
-                                             <icon name="time" class="w-4 h-4" />
-                                             <span>{{ moment(element.due_date).format('MMM D') }}</span>
-                                          </div>
-
-                                          <!-- Adjuntos -->
-                                          <div v-if="element.attachments_count" class="flex items-center gap-1">
-                                             <icon name="attachment" class="w-4 h-4" />
-                                             <span>{{ element.attachments_count }}</span>
-                                          </div>
-
-                                          <!-- Checklist -->
-                                          <div v-if="element.checklists_count" class="flex items-center gap-1"
-                                             :class="{ 'text-green-600': element.checklist_done_count === element.checklists_count }">
-                                             <icon name="checklist" class="w-4 h-4" />
-                                             <span>
-                                                {{ element.checklist_done_count + '/' +
-                                                   element.checklists_count }}
-                                             </span>
-                                          </div>
-
-                                          <div class="flex items-center gap-1">
-                                             <!-- Asignados -->
-                                             <span v-for="assignee in element.assignees" :key="assignee?.user?.id"
-                                                class="block w-6 h-6 rounded-full ring-2 ring-white overflow-hidden"
-                                                :aria-label="assignee?.user?.name">
-                                                <img v-if="assignee?.user?.photo_path" :src="assignee?.user?.photo_path"
-                                                   :alt="assignee?.user?.name" class="w-full h-full object-cover" />
-                                                <img v-else src="/images/svg/profile.svg"
-                                                   class="w-full h-full object-cover" :alt="assignee?.user?.name" />
-                                             </span>
+                                                <button @click="column.showformcolumn = false"
+                                                   class="inline-flex items-center px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100">
+                                                   <icon name="close" class="w-4 h-4" />
+                                                </button>
+                                             </div>
                                           </div>
                                        </div>
-
-
-                                    </li>
-                                 </template>
-                                 <template #footer>
-                                    <div class="pt-2">
-                                       <div v-if="!sublist.new_task_open"
-                                          class="flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 cursor-pointer"
-                                          @click="sublist.new_task_open = true">
-                                          <icon name="add" class="w-4 h-4 text-indigo-500" />
-                                          <span>Agregar tarea</span>
-                                       </div>
-
-                                       <div v-show="sublist.new_task_open" class="mt-2">
-                                          <input autofocus :id="'new_task_input_id_' + sublist.id"
-                                             :ref="'new_task_input_' + sublist.id" v-model="new_task.title" type="text"
-                                             class="w-full px-3 py-2 text-sm border rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                                             placeholder="Título de la nueva tarea" />
-
-                                          <div class="flex gap-2 mt-2">
-                                             <loading-button :loading="sublist.loader"
-                                                class="inline-flex items-center px-3 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
-                                                @click="newTaskInSublist(sublist)">
-                                                Agregar tarea
-                                             </loading-button>
-
-                                             <button @click="sublist.new_task_open = false"
-                                                class="inline-flex items-center px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100">
-                                                <icon name="close" class="w-4 h-4" />
-                                             </button>
-                                          </div>
-                                       </div>
-                                    </div>
-                                 </template>
-                              </draggable>
-                           </ul>
-                        </div>
-                        <div>
-                           <button @click.stop="addSubColumn(column)"
-                              class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                              v-show="!column.showformcolumn">
-                              + Agregar columna
-                           </button>
-                           <div class="mt-2" v-if="column.showformcolumn">
-                              <input autofocus type="text" v-model="formColumn.title"
-                                 class="w-full px-3 py-2 text-sm border rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                                 placeholder="Título de la nueva columna" />
-
-                              <div class="flex gap-2 mt-2">
-                                 <loading-button :loading="column.loadercolumn"
-                                    class="inline-flex items-center px-3 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
-                                    @click="createNewSubColumn(column)">
-                                    Agregar
-                                 </loading-button>
-
-                                 <button @click="column.showformcolumn = false"
-                                    class="inline-flex items-center px-3 py-1.5 text-xs bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100">
-                                    <icon name="close" class="w-4 h-4" />
-                                 </button>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
+                                    </template>
+                           </draggable>
+                        
                   </div>
                </transition>
             </div>
@@ -393,9 +404,11 @@ export default {
       },
       createNewSubColumn(column) {
          const colors = ["blue", "yellow", "red", "green"];
-         const color = colors[column.sublist.length % colors.length];
+         const size = column.sublist.length;
+         const color = colors[size % colors.length];
          column.loadercolumn = true;
-         const request = { ...this.formColumn, color };
+         
+         const request = { ...this.formColumn, color: color, order: (size + 1)  };
          axios.post(this.route('sublist.new'), request).then((response) => {
             if (!response?.data?.error) {
                const data = response.data.data
@@ -574,6 +587,17 @@ export default {
 
       getDue(element) {
          return element.is_done ? 'text-green-600' : moment().isAfter(element.due_date) ? 'over_due' : moment(element.due_date).isBetween(moment(), moment().add(1, 'day')) ? 'due_soon' : '';
+      },
+
+      afterDropColumn(e) {
+         const new_list = this.newSortedItems(e, 'to', 'li_column');
+         const list_items = new_list;
+         this.saveOrderColumn(list_items)
+      },
+       saveOrderColumn(list_items) {
+         axios.put(this.route('sublist.update.order'), list_items).catch((error) => {
+            console.log(error)
+         })
       },
    },
 };

@@ -26,7 +26,9 @@ class SubtaskController extends Controller
             ->orderBy('order')
             ->first();
             
-            $sublist = BoardSublist::where('list_id', $boardList->id)->first();
+            $sublist = BoardSublist::where('list_id', $boardList->id)
+            ->orderBy('order')
+            ->first();
             $requestTask = [
                 'title' => $body['title'],
                 'list_id' => $boardList->id,

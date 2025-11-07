@@ -231,7 +231,7 @@ class TasksController extends Controller
 
     public function taskOtherData($task_id, $project_id){
         $project = Project::where('id', $project_id)->first();
-        $labels = Label::get();
+        $labels = Label::where('workspace_id', $project->workspace_id)->get();
         $lists = BoardList::withCount('tasks')->get();
         $projects = Project::get();
         $teamMembers = TeamMember::withOrderedUsers($project->workspace_id)->with('user')->get();

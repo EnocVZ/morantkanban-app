@@ -1344,7 +1344,8 @@ export default {
          this.label = {};
       },
       saveLabel(labelObject) {
-         axios.post(this.route('labels.save'), labelObject).then((response) => {
+         const request = {...labelObject, workspace_id:this.task.project.workspace_id};
+         axios.post(this.route('labels.save'), request).then((response) => {
             if (response.data && !labelObject.id) {
                this.labels.push(response.data);
             } else if (labelObject.id) {
