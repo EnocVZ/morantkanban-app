@@ -220,13 +220,14 @@ class ProjectsController extends Controller {
         return $existingBasicStatus;
     }
 
-    private function boardListWithDetails($project){
+    private function boardListWithDetails($project, $order = false){
         $projectId = $project->id;
         $projecttype = $project->project_type;
         $board_lists = BoardList::where('project_id', $projectId)
                         ->with([
-                            'sublist' => function ($query) {
+                            'sublist' => function ($query) use($order) {
                                 $query->where('archived', 0);
+                                $query->orderBy('order', 'asc');
                             },
                             'sublist.tasklist' => function ($query) use ($projectId,  $projecttype) {
                                 $query->isOpen()
@@ -681,7 +682,7 @@ class ProjectsController extends Controller {
 
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
-        $board_lists = $this->boardListWithDetails($project);
+        $board_lists = $this->boardListWithDetails($project, true);
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
         $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
