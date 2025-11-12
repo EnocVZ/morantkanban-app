@@ -42,7 +42,7 @@
                     {{ !!role.create_project }}
                 </Link>
             </td>
-          <td class="border-t w-px" @click="showModalRole = true">
+          <td class="border-t w-px" @click="openModal(role.id)" style="cursor: pointer;">
           <span class="font-semibold hover:text-blue-600 rounded text-blue-700">Permisos</span>
         </td>
           <td class="border-t w-px">
@@ -62,9 +62,9 @@
     <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 relative">
       <!-- Header -->
       <div class="flex justify-between items-center border-b p-4">
-        <h2 class="text-lg font-semibold">{{ title }}</h2>
+        <h2 class="text-lg font-semibold">Permisos para el rol</h2>
         <button
-          @click="$emit('close')"
+          @click="showModalRole = false"
           class="text-gray-400 hover:text-white text-xl leading-none"
         >
           ✕
@@ -73,23 +73,20 @@
 
       <!-- Contenido -->
       <div class="p-4 overflow-y-auto max-h-[70vh]">
-        <permission />
+        <permission :roleId="roleId" @onSelectPermission="onSelectPermission"/>
       </div>
 
       <!-- Footer -->
       <div class="flex justify-end border-t p-4">
         <button
-          @click="$emit('close')"
+          @click="showModalRole = false"
           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
         >
           Cerrar
         </button>
-        <button
-          @click="$emit('save')"
-          class="ml-2 px-4 py-2 text-white bg-indigo-600 rounded hover:bg-indigo-700"
-        >
-          Guardar cambios
-        </button>
+        <loading-button :loading="loadingSavePermission" @click="saveSelection"
+          class="ml-2 px-4 py-2 text-white bg-indigo-600 rounded hover:bg-indigo-700">Guardar cambios</loading-button>
+        
       </div>
     </div>
   </div>
@@ -105,6 +102,8 @@ import mapValues from 'lodash/mapValues'
 import Pagination from '@/Shared/Pagination'
 import SearchInput from '@/Shared/SearchInput'
 import Permission from '@/Pages/Roles/Permission.vue'
+import LoadingButton from '@/Shared/LoadingButton'
+import axios from 'axios'
 
 export default {
   metaInfo: { title: 'Roles' },
@@ -114,7 +113,8 @@ export default {
     Head,
     Pagination,
     SearchInput,
-    Permission
+    Permission,
+    LoadingButton
   },
   layout: Layout,
   props: {
@@ -128,6 +128,9 @@ export default {
       form: {
         search: this.filters.search,
       },
+      roleId:0,
+      permissionSelected: [],
+      loadingSavePermission: false
     }
   },
   watch: {
@@ -139,9 +142,26 @@ export default {
     },
   },
   methods: {
+    openModal(roleId){
+        this.roleId = roleId;
+        this.showModalRole = true;
+    },
+    onSelectPermission(data){
+      this.permissionSelected = data;
+    },
     reset() {
       this.form = mapValues(this.form, () => null)
     },
+    saveSelection(){
+      this.loadingSavePermission = true;
+      const request = {data: this.permissionSelected};
+      axios.post(this.route('permission.assign'), request).then(response =>{
+   
+      }).finally(()=>{
+          this.loadingSavePermission = false;
+          this.showModalRole = false;
+      });
+    }
   },
 }
 </script>
