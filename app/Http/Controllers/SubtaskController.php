@@ -19,6 +19,7 @@ class SubtaskController extends Controller
 
     public function create(Request $request){
         try {
+            $user_id = auth()->id();
             $body = $request->all();
             $project = Project::where('id', $body['project_id'])->first();
             $boardList = BoardList::where('project_id', $body['project_id'])
@@ -33,6 +34,7 @@ class SubtaskController extends Controller
                 'title' => $body['title'],
                 'list_id' => $boardList->id,
                 'project_id' => $body['project_id'],
+                'user_id' => $user_id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ];

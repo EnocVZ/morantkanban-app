@@ -18,7 +18,7 @@
                             <input id="filter__user__no" class="w-4 h-4 mr-1" type="checkbox" :checked="filterOptions('user', 'null')" @change="doFilter($event.target.checked, 'user', 'null')">
                             <icon class="w-4 h-4 mr-1" name="user" />
                             <span class="flex" type="button">
-                             {{ __('No members') }}
+                             {{ __('Sin asignación') }}
                         </span>
                         </label>
                     </li>
@@ -28,7 +28,7 @@
                             <img v-if="$page.props.auth.user.photo" class="w-4 h-4 mr-1" :alt="$page.props.auth.user.first_name" :src="$page.props.auth.user.photo" />
                             <img v-else src="/images/svg/profile.svg" class="w-4 h-4 mr-1" alt="user profile" />
                             <span class="flex">
-                            {{ __('Tasks assigned to me') }}
+                            {{ __('Mis asignaciones') }}
                         </span>
                         </label>
                     </li>
@@ -42,7 +42,7 @@
                     </li>
                 </ul>
             </div>
-            <div v-if="enable_options.includes('due')">
+            <!--div v-if="enable_options.includes('due')">
                 <div class="name my-2">{{ __('Due Date') }}</div>
                 <ul class="flex flex-col gap-3">
                     <li>
@@ -70,7 +70,7 @@
                         </label>
                     </li>
                 </ul>
-            </div>
+            </div-->
             <div v-if="enable_options.includes('label')">
                 <div class="name my-2">{{ __('Labels') }}</div>
                 <ul class="flex flex-col gap-3 max-h-40 overflow-y-auto">
