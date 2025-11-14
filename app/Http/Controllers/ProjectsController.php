@@ -82,10 +82,11 @@ class ProjectsController extends Controller {
     }
 
     public function jsonFilterData($project_id){
+        $project = Project::where('id', $project_id)->first();
         $assignees = Assignee::whereHas('task', function ($q) use ($project_id) {
             $q->where('project_id', $project_id);
         })->where('user_id', '!=', auth()->id())->groupBy('user_id')->with('user:id,first_name,last_name,photo_path')->get();
-        $labels = Label::orderBy('name')->get();
+        $labels = Label::where('workspace_id', $project->workspace_id)-> orderBy('name')->get();
         return response()->json(['assignees' => $assignees, 'labels' => $labels]);
     }
 
@@ -161,13 +162,14 @@ class ProjectsController extends Controller {
     public function view($uid, Request $request){
         $auth_id = auth()->id();
         $requests = $request->all();
+        
         $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
         $project = Project::bySlugOrId($uid)->whereIn('workspace_id', $workspaceIds)->with('workspace.member')->with('star')->with('background')->first();
         $renderOption = $project->project_type == 1 ? 'Projects/View' : 'Projects/KanbanBoard';
 
         RecentProject::updateOrCreate(['user_id' => $auth_id, 'project_id' => $project->id], ['opened' => Carbon::now()]);
         $list_index = [];
-        $board_lists = $this->boardListWithDetails($project);
+        $board_lists = $this->boardListWithDetails($project,false, $requests);
         $loopIndex = 0;
         $notification = TaskNotification::where('toUser', $auth_id)->get()->toArray();
         $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
@@ -220,7 +222,7 @@ class ProjectsController extends Controller {
         return $existingBasicStatus;
     }
 
-    private function boardListWithDetails($project, $order = false){
+    private function boardListWithDetails($project, $order = false, $requestData = []){
         $projectId = $project->id;
         $projecttype = $project->project_type;
         $board_lists = BoardList::where('project_id', $projectId)
@@ -229,7 +231,7 @@ class ProjectsController extends Controller {
                                 $query->where('archived', 0);
                                 $query->orderBy('order', 'asc');
                             },
-                            'sublist.tasklist' => function ($query) use ($projectId,  $projecttype) {
+                            'sublist.tasklist' => function ($query) use ($projectId,  $projecttype, $requestData) {
                                 $query->isOpen()
                                     ->byProject($projectId)
                                     ->with([
@@ -248,6 +250,7 @@ class ProjectsController extends Controller {
                                     if($projecttype == 1){
                                         $query->where('is_request', 0);
                                     }
+                                    $query->filter($requestData);
                             },
                             'tasksWithoutSubcategory' => function ($query) use ($projectId) {
                                 $query->isOpen()

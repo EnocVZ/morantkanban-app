@@ -88,7 +88,7 @@
 
                                                 <span
                                                    class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
-                                                   aria-label="Total de tareas">{{ filteredTasks(sublist, sublist.id).length }}</span>
+                                                   aria-label="Total de tareas">{{ sublist?.tasklist?.length }}</span>
                                              </div>
                                           </div>
 
