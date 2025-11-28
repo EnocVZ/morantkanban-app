@@ -23,10 +23,10 @@
                 </Link>
             </div>
             <div class="flex items-center flex-start gap-1 ml-auto view__menus">
-                <!--button v-if="['board', 'table', 'time_logs'].includes(view)" class="flex pl-4 pr-2 items-center __filter cursor-pointer capitalize rounded hover:bg-[#a6c5e229]" @click="$emit('filterToggle')" :class="{'active': findFilters()}"> <icon name="filter" class="w-4 fill-[#ffffff] h-4 mr-[5px]" />
+                <button v-if="['board', 'table', 'time_logs'].includes(view)" class="flex pl-4 pr-2 items-center __filter cursor-pointer capitalize rounded hover:bg-[#a6c5e229]" @click="$emit('filterToggle')" :class="{'active': findFilters()}"> <icon name="filter" class="w-4 fill-[#ffffff] h-4 mr-[5px]" />
                     <span>{{ __('Filter') }} </span>
-                    <span class="filter_clear" @click="clearFilter($event)">{{ __('Clear All') }} <icon name="close" class="w-4 h-4" /></span>
-                </button-->
+                    <span class="filter_clear" @click="clearFilter($event)">{{ __('Limpiar') }} <icon name="close" class="w-4 h-4" /></span>
+                </button>
                 <button v-if="['board', 'table'].includes(view)" @click="$emit('menuToggle', true)"
                     class="flex px-2 h-8 items-center cursor-pointer capitalize rounded hover:bg-[#a6c5e229]">
                     <icon name="more-h" class="w-6 fill-[#ffffff] h-6" />

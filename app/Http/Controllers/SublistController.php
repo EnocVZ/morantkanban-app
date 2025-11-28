@@ -11,6 +11,7 @@ use App\Models\BoardSublist;
 
 
 use App\Helpers\MethodHelper;
+use Mavinoo\Batch\Batch;
 
 class SublistController extends Controller
 {
@@ -59,6 +60,16 @@ class SublistController extends Controller
             $sublist->save();
             return MethodHelper::successResponse($sublist);
         } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
+
+    public function updateorder(Request $request){
+        try{
+            $requestData = $request->all();
+            $result = \Batch::update(new BoardSublist, $requestData, 'id');
+            return MethodHelper::successResponse($result);
+        }catch(\Exception $e){
             return MethodHelper::errorResponse($e->getMessage());
         }
     }

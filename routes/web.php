@@ -407,6 +407,7 @@ Route::post('sublist/new', [SublistController::class, 'create'])->name('sublist.
 Route::post('sublist/update/{id}', [SublistController::class, 'update'])->name('sublist.update')->middleware('auth');
 Route::get('sublist/list/{listid}', [SublistController::class, 'itemListByListId'])->name('sublist.getbylistid')->middleware('auth');
 Route::put('sublist/update/row/{id}', [SublistController::class, 'updateRow'])->name('sublist.update.row')->middleware('auth');
+Route::put('sublist/order', [SublistController::class, 'updateorder'])->name('sublist.update.order')->middleware('auth');
 
 Route::post('project/generate/basicstatus/{project_id}', [ProjectsController::class, 'generateBasicStatus'])->name('project.generate.basicstatus')->middleware('auth');
 Route::get('project/boardlists/{project_id}', [ProjectsController::class, 'getBoarListData'])->name('project.boardlists.data')->middleware('auth');
