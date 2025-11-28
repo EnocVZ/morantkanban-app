@@ -247,12 +247,14 @@ class ProjectsController extends Controller {
                                         'attachments',
                                     ])
                                     ->orderByOrder();
+                                    $query->filter($requestData);
                                     if($projecttype == 1){
                                         $query->where('is_request', 0);
                                     }
-                                    $query->filter($requestData);
+                                    
+                                    
                             },
-                            'tasksWithoutSubcategory' => function ($query) use ($projectId) {
+                            'tasksWithoutSubcategory' => function ($query) use ($projectId, $requestData) {
                                 $query->isOpen()
                                     ->byProject($projectId)
                                     ->with([
@@ -269,6 +271,7 @@ class ProjectsController extends Controller {
                                     ])
                                     ->where('is_request', 0)
                                     ->orderByOrder();
+                                    $query->filter($requestData);
                             }
                         ])
                         ->isOpen()
@@ -281,6 +284,7 @@ class ProjectsController extends Controller {
                             return $boardList;
                         })
                         ->toArray();
+
         return $board_lists;
     }
 
