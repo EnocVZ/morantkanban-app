@@ -51,8 +51,11 @@
 
          <!-- Listado de Sprints -->
          <div class="space-y-5">
-            <div v-for="(column, index) in board_lists" :key="column.id"
-               class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+            <draggable class="space-y-5"
+            :list="board_lists" group="carrillist" item-key="id" @end="afterDropParent($event)">
+            <template #item="{ element:column, index:columnIndex }">
+               <div class="list_parent bg-white rounded-xl shadow border border-gray-200 overflow-hidden"
+               :id="column.id" :data-id="column.id">
                <!-- Header del Sprint -->
                <div class="flex justify-between items-center px-4 py-3 bg-gray-100 cursor-pointer">
                   <h2 class="font-semibold text-gray-800 flex items-center gap-2" contenteditable="true"
@@ -247,6 +250,10 @@
                   </div>
                </transition>
             </div>
+
+            </template>
+            </draggable>
+            
          </div>
          <!-- Título -->
          <div class="pt-2">
@@ -596,6 +603,17 @@ export default {
       },
        saveOrderColumn(list_items) {
          axios.put(this.route('sublist.update.order'), list_items).catch((error) => {
+            console.log(error)
+         })
+      },
+
+      afterDropParent(e) {
+         const new_list = this.newSortedItems(e, 'to', 'list_parent');
+         const list_items = new_list;
+         this.saveOrderParent(list_items)
+      },
+       saveOrderParent(list_items) {
+         axios.post(this.route('json.list.order'), list_items).catch((error) => {
             console.log(error)
          })
       },
