@@ -369,7 +369,7 @@ export default {
       form: {
          deep: true,
          handler: throttle(function () {
-            this.$inertia.get(this.route('projects.view.board', this.project.slug || this.project.id), pickBy(this.form), { preserveState: true })
+          //  this.$inertia.get(this.route('projects.view.board', this.project.slug || this.project.id), pickBy(this.form), { preserveState: true })
          }, 150),
       },
 
