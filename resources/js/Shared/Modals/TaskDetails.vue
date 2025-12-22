@@ -1764,7 +1764,7 @@ export default {
             if (self.isPopup) {
                self.$emit('closeModal', true)
             } else {
-               self.goToLink(self.route(self.view === 'table' ? 'projects.view.table' : 'projects.view.board', task.project.slug || task.project.id))
+               //self.goToLink(self.route(self.view === 'table' ? 'projects.view.table' : 'projects.view.board', task.project.slug || task.project.id))
             }
          }
       });
