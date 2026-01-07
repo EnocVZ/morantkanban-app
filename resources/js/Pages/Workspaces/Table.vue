@@ -180,8 +180,8 @@
                                                 :key="index"
                                                 class="hover:bg-gray-50 transition"
                                             >
-                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.title }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task.description }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.title }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.description }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.list?.title }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-700">{{ item.task?.sublist?.title }}</td>
                                                 <td class="px-6 py-4 text-right">
