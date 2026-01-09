@@ -181,8 +181,10 @@ class WorkSpacesController extends Controller
             $listItem['tasks'] = [];
             $loopIndex+= 1;
         }
-        $taksList = Task::filter($requests)->whereHas('project', function ($q) use ($workspace) {
+        $taksList = Task::filter($requests)->whereHas('project', function ($q) use ($workspace, $requests) {
                 $q->where('workspace_id', $workspace->id);
+                if(!empty($requests['project_id'])) $q->where('project_id', $requests['project_id']);
+                if(!empty($requests['list_id'])) $q->where('list_id', $requests['list_id']);
             })->with(['list','taskLabels.label', 'project.background', 'assignees','timer',
             'subtaskList.task' => function ($q) {
                 $q->with(['list', 'sublist']);

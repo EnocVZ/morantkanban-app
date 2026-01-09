@@ -11,6 +11,27 @@
             </div>
         </div>
     </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 flex gap-4 items-end">
+        <div class="flex flex-col">
+            <label class="text-sm text-slate-500 mb-1">Proyecto</label>
+            
+            <select-input v-model="projectId" class="rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                <option v-for="(project, ti) in projectList" :key="ti" :value="project.id">
+                    {{ project.title }}
+                </option>
+            </select-input>
+        </div>
+        <div class="flex flex-col">
+            <label class="text-sm text-slate-500 mb-1">Proyecto</label>
+            
+            <select-input v-model="boardListId" class="rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                <option v-for="(board, ti) in boardList" :key="ti" :value="board.id">
+                        {{ board.title }}
+                    </option>
+            </select-input>
+        </div>
+
+    </div>
       
       <div class="flex flex-col flex-grow-1 flex-shrink-1 h-full">
           <div class="flex flex-col task__table overflow-y-auto h-full">
@@ -268,11 +289,12 @@ import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import axios from 'axios'
 import SearchInput from '@/Shared/SearchInput'
+import SelectInput from '@/Shared/SelectInput'
 
 
 export default {
   metaInfo: { title: 'Dashboard' },
-    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput },
+    components: { Head, Icon, Link, draggable, Datepicker, BoardViewMenu, SearchInput, SelectInput   },
   layout: Layout,
     props: {
         auth: Object,
@@ -316,28 +338,13 @@ export default {
             search: '',
             filteredTasks: [],
             headers: ["Tarea", "Descripción", "Lista", "Sublista", "Acciones"],
-      rows: [
-        {
-          name: "Analizar requerimientos",
-          email: "Se recomienda revisar los requisitos del proyecto.",
-          phone: "En proceso",
-          status: "Sprint 1"
-        },
-        {
-          name: "Analizar diseño de la interfaz y experiencia de usuario",
-          email: "Revisar el diseño de la interfaz y la experiencia de usuario.",
-          phone: "En proceso",
-          status: "Sprint 1"
-        },
-        {
-          name: "Crear prototipo",
-          email: "crear un prototipo funcional.",
-          phone: "Tareas por hacer",
-          status: "Sprint 2"
-        }
-      ],
-      openIndexes: new Set(),
-      singleOpen: false
+      
+            openIndexes: new Set(),
+            singleOpen: false,
+            projectList: [],
+            boardList: [],
+            projectId: 0,
+            boardListId: 0,
         }
     },
     watch: {
@@ -347,6 +354,14 @@ export default {
                 this.$inertia.get(this.route('workspace.tables', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
             }, 150),
         },
+        projectId(newValue) {
+            this.form['project_id'] = newValue
+            this.getBoardListByProject(newValue);
+        },
+
+        boardListId(newValue){
+            this.form['list_id'] = newValue
+        }
     },
     computed: {
         isModalVisible() {
@@ -379,13 +394,13 @@ export default {
         // return urls.filter(url => currentUrl.startsWith(url)).length
         this.checkTaskUri();
         this.getOtherData();
+        this.getProjectsByWorkspace(this.workspace.id);
     },
     methods: {
         isOpen(index) {
       return this.openIndexes.has(index)
     },
     toggle(index, item) {
-        console.log(item);
         
       if (this.singleOpen) {
         this.openIndexes = this.isOpen(index) ? new Set() : new Set([index])
@@ -450,7 +465,6 @@ export default {
         getCurrentPosition(e){
             this.selected.left = (e.clientX - 200) + 'px';
             this.selected.top = (e.clientY > 450? 410 : e.clientY - 30) + 'px';
-            console.log(this.selected)
         },
         searchLabel(input){
             return this.labels.filter(lab => lab.name.toLowerCase().indexOf(input) > -1);
@@ -476,7 +490,6 @@ export default {
         },
         changeBoardTitle(id, title){
             axios.post(this.route('board.update', id),{ title }).then((response) => {
-                console.log(response)
             }).catch((error) => {
                 console.log(error)
             })
@@ -553,7 +566,23 @@ export default {
         },
         setDefaultImage(event) {
             event.target.src = "/images/svg/profile.svg";
-        }
+        },
+
+        getProjectsByWorkspace(workspaceId) {
+            
+            axios.get(this.route('json.projects.all', workspaceId)).then((response) => {
+                this.projectList = response.data;
+            }).finally(()=>{
+            });
+        },
+        getBoardListByProject(projectId) {
+           
+            axios.get(this.route('boardlist.all', projectId)).then((response) => {
+                this.boardList = response.data.data;
+            }).finally(() => {
+                this.boardListId = 0;
+            });
+        },
     },
 }
 </script>

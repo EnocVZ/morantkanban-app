@@ -1703,6 +1703,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .w-60 {
   width: 15rem;
 }
+.w-64 {
+  width: 16rem;
+}
 .w-7 {
   width: 1.75rem;
 }
@@ -1888,6 +1891,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .grid-rows-2 {
   grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+.flex-row {
+  flex-direction: row;
 }
 .flex-col {
   flex-direction: column;
