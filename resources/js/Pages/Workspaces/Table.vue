@@ -11,24 +11,32 @@
             </div>
         </div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm p-4 flex gap-4 items-end">
+    <div class="bg-white rounded-xl shadow-sm p-4 flex gap-4 items-center">
         <div class="flex flex-col">
-            <label class="text-sm text-slate-500 mb-1">Proyecto</label>
-            
-            <select-input v-model="projectId" class="rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                <option v-for="(project, ti) in projectList" :key="ti" :value="project.id">
-                    {{ project.title }}
-                </option>
-            </select-input>
+            <div class="rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                <label class="form-label">Proyecto</label>
+                <select v-model="projectId" class="form-select">
+                    <option v-for="(project, ti) in projectList" :key="ti" :value="project.id">
+                            {{ project.title }}
+                        </option>
+                </select>
+            </div>
         </div>
         <div class="flex flex-col">
-            <label class="text-sm text-slate-500 mb-1">Proyecto</label>
+            <label class="text-sm text-slate-500 mb-1">Lista</label>
             
             <select-input v-model="boardListId" class="rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                 <option v-for="(board, ti) in boardList" :key="ti" :value="board.id">
                         {{ board.title }}
                     </option>
             </select-input>
+        </div>
+        <div class="flex flex-col pt-5">
+            <button
+                class="border border-gray-300 hover:bg-gray-100 px-2 py-2 rounded-md text-gray-700"
+                @click="clearFilter" v-show="projectId > 0">
+                Limpiar
+            </button>
         </div>
 
     </div>
@@ -351,12 +359,16 @@ export default {
         form: {
             deep: true,
             handler: throttle(function() {
-                this.$inertia.get(this.route('workspace.tables', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true })
+                this.$inertia.get(this.route('workspace.tables', this.workspace.slug || this.workspace.id), pickBy(this.form), { preserveState: true, replace: true });
             }, 150),
         },
         projectId(newValue) {
             this.form['project_id'] = newValue
-            this.getBoardListByProject(newValue);
+            this.boardListId = 0
+            if(newValue > 0){
+                delete this.form['list_id']
+                this.getBoardListByProject(newValue);
+            }
         },
 
         boardListId(newValue){
@@ -583,6 +595,12 @@ export default {
                 this.boardListId = 0;
             });
         },
+        clearFilter(){
+            this.projectId = 0 ;
+            delete this.form.projectId
+            delete this.form.list_id
+            this.boardListId = 0;
+        }
     },
 }
 </script>
