@@ -180,8 +180,10 @@ class TasksController extends Controller
     }
 
     public function getJsonTask($taskUid){
-        $task = Task::where('id', $taskUid)
-        ->orWhere('slug', $taskUid)
+      $task = Task::where(function ($q) use ($taskUid) {
+            $q->where('id', $taskUid)
+            ->orWhere('slug', $taskUid);
+        })
         ->with([
             'project',
             'timer',
@@ -196,9 +198,18 @@ class TasksController extends Controller
             'userUpdateList',
             'taskLabels.label',
             'sublist',
-            'subtaskList.task' => function ($q) {
-                $q->with(['list', 'sublist', 'assignees']);
+
+            'subtaskList' => function ($q) {
+                $q->whereHas('task', function ($q) {
+                    $q->where('is_archive', 0);
+                })
+                ->with([
+                    'task' => function ($q) {
+                        $q->with(['list', 'sublist', 'assignees']);
+                    }
+                ]);
             },
+
             'subtask'
         ])
         ->withCount('checklistDone')

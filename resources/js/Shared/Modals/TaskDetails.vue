@@ -434,22 +434,22 @@
                                  class="flex justify-between items-center py-2 border-b last:border-0 text-sm"
                                  >
                                  <div class="flex items-center gap-2">
-                                    <span class="text-blue-500 font-semibold">{{ subtask.task.id }}</span>
-                                    <span class="text-gray-700" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask.task.id)"
-                                    @blur="(e)=>saveTitle(e, subtask.task.id)">{{ subtask.task.title }}</span>
+                                    <span class="text-blue-500 font-semibold">{{ subtask?.task?.id }}</span>
+                                    <span class="text-gray-700" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask?.task?.id)"
+                                    @blur="(e)=>saveTitle(e, subtask?.task?.id)">{{ subtask?.task?.title }}</span>
                                  </div>
                                  <div class="flex items-center gap-3">
                                     <SelectMultiple
-                                       :modelValue="mapAssignData(subtask.task.assignees)"
+                                       :modelValue="mapAssignData(subtask?.task?.assignees)"
                                        :users="this.team_members"
                                        keyName="user_id"
                                        label="name"
                                        title="Asignar usuarios"
-                                       @update:modelValue="onAssignUsers(subtask.task.assignees, $event, subtask.task.id)"
+                                       @update:modelValue="onAssignUsers(subtask?.task.assignees, $event, subtask?.task.id)"
                                     >
                                     <template #title>
                                        <div class="flex flex-wrap gap-1 px-2 mb-1 pt-2">
-                                       <span v-for="assignee in subtask.task.assignees" :aria-label="assignee?.user?.name" data-a=""
+                                       <span v-for="assignee in subtask?.task.assignees" :aria-label="assignee?.user?.name" data-a=""
                                              class="block rounded-full h-8 w-8 border-2 border-white">
                                              <img class="h-full w-full rounded-full" :src="assignee?.user?.photo_path"
                                              :alt="assignee?.user?.name">
@@ -1740,7 +1740,7 @@ export default {
          })
       },
       mapAssignData(data){
-         return data.map(item=> item.user.id)
+         return data?.map(item=> item.user.id) || [];
       },
       onAssignUsers(listItem, event, taskId){
          const findUserInTeam = this.team_members.find(tm => tm.user.id === event.id)

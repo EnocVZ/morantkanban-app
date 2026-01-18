@@ -197,6 +197,7 @@
                                                          <input autofocus :id="'new_task_input_id_' + sublist.id"
                                                             :ref="'new_task_input_' + sublist.id" v-model="new_task.title" type="text"
                                                             class="w-full px-3 py-2 text-sm border rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                            required
                                                             placeholder="Título de la nueva tarea" />
 
                                                          <div class="flex gap-2 mt-2">
@@ -462,6 +463,11 @@ export default {
          request.project_id = this.project.id;
          request.list_id = sublist.list_id;
          sublist.loader = true;
+         //validation
+         if (!request.title || request.title.trim() === '') {
+            sublist.loader = false;
+            return;
+         }
 
          axios.post(this.route('task.new'), request).then((response) => {
             if (response && response.data) {
