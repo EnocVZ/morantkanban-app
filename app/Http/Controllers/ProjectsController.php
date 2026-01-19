@@ -711,4 +711,23 @@ class ProjectsController extends Controller {
 
         ]);
     }
+
+    public function viewStatistics($uid)
+    {
+        $auth_id = auth()->id();
+        $workspaceIds = Workspace::where('user_id', $auth_id)->orWhereHas('member')->pluck('id');
+
+        $project = Project::bySlugOrId($uid)
+            ->whereIn('workspace_id', $workspaceIds)
+            ->with('workspace.member')
+            ->with('star')
+            ->with('background')
+            ->first();
+
+        return Inertia::render('Projects/Statistics', [
+            'title' => 'Estadísticas | ' . $project->title,
+            'project' => $project,
+        ]);
+    }
+
 }

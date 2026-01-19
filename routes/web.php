@@ -421,3 +421,8 @@ Route::get('userrequest/list/{project_id}', [UserRequestController::class, 'getR
 Route::get('permission/roles/{roleId}', [PermissionController::class, 'getAllRoleWithPermission'])->name('permission.roles')->middleware('auth');
 Route::post('permission/assign', [PermissionController::class, 'savePermissionToRole'])->name('permission.assign')->middleware('auth');
 Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');
+
+// Estadisticas 
+Route::get('p/statistics/{uid}', [ProjectsController::class, 'viewStatistics'])
+    ->name('projects.view.statistics')
+    ->middleware('auth');

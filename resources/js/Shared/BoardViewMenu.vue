@@ -53,7 +53,7 @@ export default {
     components: { BoardFilter, Icon, Link },
     data() {
         return {
-            icons: ['board', 'calendar'],//,'table', 'dashboard',  'time'
+            icons: ['board', 'table', 'calendar', 'comments', 'dashboard'],
             options: [
               //  { name: 'Backlog', slug: 'backlog' },
                 { name: 'Board', slug: 'board' },
@@ -62,6 +62,7 @@ export default {
                 { name: 'Calendar', slug: 'calendar' },
                 //{name: 'Time Logs', slug: 'time_logs'}
                 { name: 'Notas', slug: 'notes' },
+                { name: 'Estadísticas', slug: 'statistics' },
             ],
             position: { top: 0, left: 0, right: 'inherit' },
             requestNoRead: 0
