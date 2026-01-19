@@ -1688,6 +1688,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .w-4 {
   width: 1rem;
 }
+.w-40 {
+  width: 10rem;
+}
 .w-48 {
   width: 12rem;
 }
@@ -3239,6 +3242,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .focus\:ring-offset-2:focus {
   --tw-ring-offset-width: 2px;
 }
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
+}
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
 }
@@ -3391,6 +3397,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   .lg\:w-3\/5 {
     width: 60%;
   }
+  .lg\:w-64 {
+    width: 16rem;
+  }
   .lg\:w-full {
     width: 100%;
   }
@@ -3402,6 +3411,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   }
   .lg\:flex-row {
     flex-direction: row;
+  }
+  .lg\:items-end {
+    align-items: flex-end;
   }
   .lg\:justify-between {
     justify-content: space-between;

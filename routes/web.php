@@ -426,3 +426,11 @@ Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard']
 Route::get('p/statistics/{uid}', [ProjectsController::class, 'viewStatistics'])
     ->name('projects.view.statistics')
     ->middleware('auth');
+
+Route::get('api/charts/individual/hours-by-day', [ProjectsController::class, 'chartHoursByDay'])
+    ->name('charts.individual.hoursByDay')
+    ->middleware('auth');
+
+Route::get('api/charts/individual/task-hours', [ProjectsController::class, 'chartTaskHours'])
+    ->name('charts.individual.taskHours')
+    ->middleware('auth');

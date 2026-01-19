@@ -23,10 +23,12 @@ use App\Models\UserRequest;
 
 
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use App\Helpers\MethodHelper;
 
@@ -730,4 +732,147 @@ class ProjectsController extends Controller {
         ]);
     }
 
+    public function chartHoursByDay(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        $userId = auth()->id();
+        $projectId = (int) $request->project_id;
+
+        $query = DB::table('timers as t')
+            ->selectRaw('DATE(t.started_at) as fecha, SUM(t.duration)/3600 as horas')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString()
+            ])
+            ->where('t.user_id', $userId);
+
+        // ✅ Filtro por proyecto (soporta 2 esquemas posibles)
+        if (Schema::hasColumn('timers', 'project_id')) {
+            $query->where('t.project_id', $projectId);
+        } else {
+            // Caso común: timers -> task_id -> tasks.project_id
+            $query->join('tasks as ta', 'ta.id', '=', 't.task_id')
+                ->where('ta.project_id', $projectId);
+        }
+
+        $rows = $query
+            ->groupBy(DB::raw('DATE(t.started_at)'))
+            ->orderBy('fecha')
+            ->get();
+
+        // Normaliza y rellena días faltantes con 0
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r->fecha] = (float) $r->horas;
+        }
+
+        $dates = [];
+        $hours = [];
+
+        $period = CarbonPeriod::create($start->toDateString(), $end->toDateString());
+
+        foreach ($period as $day) {
+            $key = $day->toDateString();
+            $hasData = array_key_exists($key, $map);
+
+            // ✅ Si es sábado/domingo y NO hay datos, se omite (no se grafica ni cuenta)
+            if ($day->isWeekend() && !$hasData) {
+                continue;
+            }
+
+            $dates[] = $key;
+            $hours[] = $hasData ? (float) $map[$key] : 0.0;
+        }
+
+        // ✅ Promedio SOLO sobre los días incluidos (ya excluye fines de semana sin data)
+        $avg = count($hours) ? array_sum($hours) / count($hours) : 0.0;
+
+        return response()->json([
+            'start_date'   => $start->toDateString(),
+            'end_date'     => $end->toDateString(),
+            'avg_hours'    => (float) $avg,
+            'target_hours' => 8,
+            'data' => [
+                'dates' => $dates,
+                'hours' => $hours,
+            ],
+        ]);
+
+    }
+
+    public function chartTaskHours(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        $userId = auth()->id();
+        $projectId = (int) $request->project_id;
+
+        // Subquery: horas por task (SUM(duration)/3600)
+        $sub = DB::table('timers as t')
+            ->selectRaw('t.task_id, SUM(t.duration) / 3600 as hours')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString()
+            ])
+            ->where('t.user_id', $userId)
+            ->groupBy('t.task_id');
+
+        // Join con tasks + filtro por project
+        $q = DB::table('tasks as ta')
+            ->joinSub($sub, 't2', function ($join) {
+                $join->on('ta.id', '=', 't2.task_id');
+            })
+            ->where('ta.project_id', $projectId)
+            ->select([
+                'ta.id',
+                'ta.title',
+                DB::raw('t2.hours as hours'),
+            ])
+            ->orderByDesc('hours');
+
+        $rows = $q->get()->map(function ($r) {
+            return [
+                'id' => (int) $r->id,
+                'title' => $r->title,
+                'hours' => (float) $r->hours,
+            ];
+        });
+
+        return response()->json([
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'project_id' => $projectId,
+            'user_id' => $userId,
+            'rows' => $rows,
+        ]);
+    }
 }
