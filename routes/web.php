@@ -434,3 +434,15 @@ Route::get('api/charts/individual/hours-by-day', [ProjectsController::class, 'ch
 Route::get('api/charts/individual/task-hours', [ProjectsController::class, 'chartTaskHours'])
     ->name('charts.individual.taskHours')
     ->middleware('auth');
+
+Route::get('api/charts/project/tasks-by-user', [ProjectsController::class, 'chartTasksByUser'])
+    ->name('charts.project.tasksByUser')
+    ->middleware('auth');
+
+Route::get('api/charts/project/hours-by-user', [ProjectsController::class, 'chartHoursByUser'])
+    ->name('charts.project.hoursByUser')
+    ->middleware('auth');
+
+Route::get('api/charts/project/users-with-activity', [ProjectsController::class, 'chartUsersWithActivity'])
+    ->name('charts.project.usersWithActivity')
+    ->middleware('auth');

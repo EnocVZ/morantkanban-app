@@ -3400,6 +3400,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   .lg\:w-64 {
     width: 16rem;
   }
+  .lg\:w-96 {
+    width: 24rem;
+  }
   .lg\:w-full {
     width: 100%;
   }

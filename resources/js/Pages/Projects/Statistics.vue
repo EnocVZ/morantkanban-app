@@ -57,6 +57,56 @@
         </p>
       </div>
 
+      <!-- Gráfica: Por persona (tareas) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">
+            {{ __('Total de tareas trabajadas por persona') }}
+          </h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+        <div ref="tasksByUserChart" class="w-full" style="min-height: 420px;"></div>
+      </div>
+
+      <!-- Gráfica: Por persona (horas) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">
+            {{ __('Total de horas trabajadas por persona') }}
+          </h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+        <div ref="hoursByUserChart" class="w-full" style="min-height: 420px;"></div>
+      </div>
+
+      <!-- Filtro por usuario (para ir a lo particular) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex flex-col lg:flex-row gap-4 lg:items-end">
+          <div class="w-full lg:w-96">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Usuario') }}</p>
+
+            <select
+              v-model="selectedUserId"
+              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+              @change="onUserChange"
+            >
+              <option :value="null" disabled>{{ __('Selecciona un usuario') }}</option>
+              <option v-for="u in usersOptions" :key="u.id" :value="u.id">
+                {{ u.usuario }}
+              </option>
+            </select>
+          </div>
+
+          <div class="text-xs text-gray-500">
+            {{ __('Seleccione un usuario para ver métricas individuales.') }}
+          </div>
+        </div>
+      </div>
+
       <!-- Gráfica -->
       <div class="bg-white rounded-lg shadow-lg p-4">
         <div class="flex items-center justify-between mb-3">
@@ -147,6 +197,7 @@ import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import axios from 'axios'
 import moment from 'moment'
+import { nextTick } from 'vue'
 
 export default {
   components: { Head, BoardViewMenu, Datepicker },
@@ -167,7 +218,20 @@ export default {
       kpiReady: false,
       avgHours: 0,
       targetHours: 8,
+
+      // Filter by user
+      usersOptions: [],
+      selectedUserId: null,
+
+      // Fill Chart Tasks
+      peopleRows: [],
+      // Fill Chart Hours
+      peopleHoursRows: [],
+
+      // Fill table Tasks
       taskRows: [],
+
+      // Fill Chart by UserId
       chartData: {
         dates: [],
         hours: [],
@@ -209,30 +273,39 @@ export default {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
-        const res = await axios.get(this.route('charts.individual.hoursByDay'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id, },
+
+        // 1️⃣ Gráfica: tareas por persona
+        const peopleRes = await axios.get(this.route('charts.project.tasksByUser'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
         })
+        this.peopleRows = peopleRes.data?.data || []
+        this.renderTasksByUser()
 
-        const payload = res.data
-
-        this.avgHours = Number(payload.avg_hours || 0)
-        this.targetHours = Number(payload.target_hours || 8)
-
-        this.chartData.dates = payload.data?.dates || []
-        this.chartData.hours = payload.data?.hours || []
-
-        this.kpiReady = true
-        this.renderHoursByDay()
-
-        const tableRes = await axios.get(this.route('charts.individual.taskHours'), {
-          params: {
-            start_date: start,
-            end_date: end,
-            project_id: this.project.id,
-          },
+        // 2️⃣ Gráfica: horas por persona
+        const hoursRes = await axios.get(this.route('charts.project.hoursByUser'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
         })
+        this.peopleHoursRows = hoursRes.data?.data || []
+        this.renderHoursByUser()
 
-        this.taskRows = tableRes.data?.rows || []
+        // 3️⃣ Usuarios para selector
+        const usersRes = await axios.get(this.route('charts.project.usersWithActivity'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
+        })
+        this.usersOptions = usersRes.data?.data || []
+
+        // 4️⃣ Usuario seleccionado por default
+        const meId = this.auth?.user?.id
+        const hasMe = this.usersOptions.some(u => u.id === meId)
+        this.selectedUserId = hasMe
+          ? meId
+          : (this.usersOptions[0]?.id ?? null)
+
+        // 👇 asegura que el select y el contenedor del chart ya estén renderizados
+        await nextTick()
+
+        // 5️⃣ Carga inicial de gráfica + tabla individual
+        await this.loadIndividual()
 
       } catch (e) {
         this.error =
@@ -320,9 +393,129 @@ export default {
       this.plotly.react(this.$refs.hoursByDayChart, [trace], layout, config)
     },
 
+    renderTasksByUser() {
+      if (!this.plotly || !this.$refs.tasksByUserChart) return
+
+      const y = (this.peopleRows || []).map(r => r.usuario)
+      const x = (this.peopleRows || []).map(r => Number(r.total || 0))
+
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        x,
+        y,
+        text: x,
+        textposition: 'auto',
+        hovertemplate: 'Usuario: %{y}<br>Tareas: %{x}<extra></extra>',
+        name: 'Tareas',
+      }
+
+      const baseHeight = 120
+      const rowHeight = 34
+      const h = Math.max(420, baseHeight + (y.length * rowHeight))
+
+      const layout = {
+        title: `Tareas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
+        height: h,
+        margin: { l: 180, r: 20, t: 60, b: 40 },
+        xaxis: { title: '', rangemode: 'tozero' },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.tasksByUserChart, [trace], layout, config)
+    },
+
+    renderHoursByUser() {
+      if (!this.plotly || !this.$refs.hoursByUserChart) return
+
+      // Asegura orden mayor a menor 
+      const sorted = [...(this.peopleHoursRows || [])].sort(
+        (a, b) => Number(b.total_hours || 0) - Number(a.total_hours || 0)
+      )
+
+      const y = sorted.map(r => r.usuario)
+      const x = sorted.map(r => Number(r.total_hours || 0))
+
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        x,
+        y,
+        text: x.map(v => `${v.toFixed(1)}h`),
+        textposition: 'auto',
+        hovertemplate: 'Usuario: %{y}<br>Horas: %{x:.2f}<extra></extra>',
+        name: 'Horas',
+      }
+
+      const baseHeight = 120
+      const rowHeight = 34
+      const h = Math.max(420, baseHeight + (y.length * rowHeight))
+
+      const layout = {
+        title: `Horas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
+        height: h,
+        margin: { l: 180, r: 20, t: 60, b: 40 },
+        xaxis: { title: '', rangemode: 'tozero' },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.hoursByUserChart, [trace], layout, config)
+    },
+
     onEditTimes(row) {
       // Placeholder (en el futuro abre modal / pantalla de edición)
       alert(`Editar tiempos (pendiente). Tarea #${row.id}: ${row.title}`)
+    },
+
+    async onUserChange() {
+      await this.loadIndividual()
+    },
+
+    async loadIndividual() {
+      if (!this.selectedUserId) return
+
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      // Gráfica: horas por día (por usuario seleccionado)
+      const res = await axios.get(this.route('charts.individual.hoursByDay'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          user_id: this.selectedUserId,
+        },
+      })
+
+      const payload = res.data
+      this.avgHours = Number(payload.avg_hours || 0)
+      this.targetHours = Number(payload.target_hours || 8)
+
+      this.chartData.dates = payload.data?.dates || []
+      this.chartData.hours = payload.data?.hours || []
+
+      this.kpiReady = true
+      this.renderHoursByDay()
+
+      // Tabla: horas por tarea (por usuario seleccionado)
+      const tableRes = await axios.get(this.route('charts.individual.taskHours'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          user_id: this.selectedUserId,
+        },
+      })
+
+      this.taskRows = tableRes.data?.rows || []
     },
   },
 }
