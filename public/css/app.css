@@ -1691,6 +1691,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .w-40 {
   width: 10rem;
 }
+.w-44 {
+  width: 11rem;
+}
 .w-48 {
   width: 12rem;
 }

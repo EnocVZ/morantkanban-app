@@ -446,3 +446,11 @@ Route::get('api/charts/project/hours-by-user', [ProjectsController::class, 'char
 Route::get('api/charts/project/users-with-activity', [ProjectsController::class, 'chartUsersWithActivity'])
     ->name('charts.project.usersWithActivity')
     ->middleware('auth');
+
+Route::get('api/charts/project/requests-table', [ProjectsController::class, 'chartProjectRequestsTable'])
+    ->name('charts.project.requestsTable')
+    ->middleware('auth');
+
+Route::get('api/charts/project/labels-with-activity', [ProjectsController::class, 'chartLabelsWithActivity'])
+    ->name('charts.project.labelsWithActivity')
+    ->middleware('auth');

@@ -45,12 +45,36 @@
               {{ loading ? __('Generando...') : __('Generar') }}
             </button>
 
-            <div v-if="kpiReady" class="text-sm text-gray-700">
+            <!-- <div v-if="kpiReady" class="text-sm text-gray-700">
               <span class="font-semibold">{{ __('Promedio:') }}</span>
               <span class="ml-1">{{ avgHours.toFixed(1) }}h</span>
-            </div>
+            </div> -->
           </div>
+
         </div>
+
+        <!-- Filtro Etiqueta (debajo del rango de fechas) -->
+        <div class="mt-4">
+          <div class="w-full lg:w-96">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+
+            <select
+              v-model="selectedLabelId"
+              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+              @change="onLabelChange"
+            >
+              <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
+              <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
+                {{ l.label }}
+              </option>
+            </select>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1">
+            {{ __('Cambiar etiqueta actualiza la gráfica de tareas por persona.') }}
+          </p>
+        </div>
+
 
         <p v-if="error" class="mt-3 text-sm text-red-600">
           {{ error }}
@@ -185,6 +209,67 @@
 
 
       </div>
+
+      <!-- Apartado 3: Solicitudes del proyecto -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">
+              {{ __('Solicitudes del proyecto') }}
+            </h3>
+            <p class="text-xs text-gray-600">
+              {{ __('Listado de solicitudes asociadas a tareas del proyecto actual.') }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="px-3 py-2 rounded-md border text-sm hover:bg-gray-50"
+            :disabled="loadingRequests"
+            @click="loadProjectRequestsTable"
+          >
+            {{ loadingRequests ? __('Cargando...') : __('Recargar') }}
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Solicitante') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-44">{{ __('Fecha') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Tipo') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Tarea') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Asignado') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Lista') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Sublista') }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-if="!loadingRequests && projectRequestsRows.length === 0">
+                <td colspan="7" class="px-4 py-6 text-sm text-gray-500">
+                  {{ __('No hay solicitudes registradas para este proyecto.') }}
+                </td>
+              </tr>
+
+              <tr v-for="r in projectRequestsRows" :key="r.requestId" class="border-t hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-900">{{ r.userRequest }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">
+                  {{ formatDateTime(r.dateRequest) }}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.requestType }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">{{ r.taskTitle }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.userAssigned || '-' }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.listTitle }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.sublistTitle || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
     </div>
   </div>
 </template>
@@ -236,6 +321,14 @@ export default {
         dates: [],
         hours: [],
       },
+
+      // Fill table users requests 
+      projectRequestsRows: [],
+      loadingRequests: false,
+
+      // Fill tags selector
+      labelsOptions: [],
+      selectedLabelId: null,
     }
   },
 
@@ -264,6 +357,12 @@ export default {
       return d ? moment(d).format('YYYY-MM-DD') : 'YYYY-MM-DD'
     },
 
+    formatDateTime(value) {
+      if (!value) return '-'
+      return moment(value).format('YYYY-MM-DD HH:mm')
+    },
+
+
     async generate() {
       this.error = null
       this.loading = true
@@ -273,20 +372,28 @@ export default {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
+        // Tags selector
+        const labelsRes = await axios.get(this.route('charts.project.labelsWithActivity'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
+        })
+
+        const newLabels = labelsRes.data?.data || []
+        this.labelsOptions = newLabels
+
+        // Mantener selección si sigue existiendo, si no, reset a null
+        if (this.selectedLabelId) {
+          const stillExists = newLabels.some(l => l.id === this.selectedLabelId)
+          if (!stillExists) this.selectedLabelId = null
+        }
+
 
         // 1️⃣ Gráfica: tareas por persona
-        const peopleRes = await axios.get(this.route('charts.project.tasksByUser'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id },
-        })
-        this.peopleRows = peopleRes.data?.data || []
-        this.renderTasksByUser()
+        await this.loadTasksByUser()
+
 
         // 2️⃣ Gráfica: horas por persona
-        const hoursRes = await axios.get(this.route('charts.project.hoursByUser'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id },
-        })
-        this.peopleHoursRows = hoursRes.data?.data || []
-        this.renderHoursByUser()
+        await this.loadHoursByUser()
+
 
         // 3️⃣ Usuarios para selector
         const usersRes = await axios.get(this.route('charts.project.usersWithActivity'), {
@@ -306,6 +413,8 @@ export default {
 
         // 5️⃣ Carga inicial de gráfica + tabla individual
         await this.loadIndividual()
+
+        await this.loadProjectRequestsTable()
 
       } catch (e) {
         this.error =
@@ -517,6 +626,70 @@ export default {
 
       this.taskRows = tableRes.data?.rows || []
     },
+
+    async loadProjectRequestsTable() {
+      this.loadingRequests = true
+      try {
+        const res = await axios.get(this.route('charts.project.requestsTable'), {
+          params: { project_id: this.project.id },
+        })
+        this.projectRequestsRows = res.data?.rows || []
+      } finally {
+        this.loadingRequests = false
+      }
+    },
+
+    async loadTasksByUser() {
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const peopleRes = await axios.get(this.route('charts.project.tasksByUser'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          label_id: this.selectedLabelId || null,
+        },
+      })
+
+      this.peopleRows = peopleRes.data?.data || []
+      this.renderTasksByUser()
+    },
+
+    async loadHoursByUser() {
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const hoursRes = await axios.get(this.route('charts.project.hoursByUser'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          label_id: this.selectedLabelId || null,
+        },
+      })
+
+      this.peopleHoursRows = hoursRes.data?.data || []
+      this.renderHoursByUser()
+    },
+
+
+    async onLabelChange() {
+      // No recalcular si aun está generando por fechas
+      if (this.loading) return
+
+      // ✅ aquí solo refrescamos lo que depende de etiqueta (por ahora, tareas por persona)
+      try {
+        await this.loadTasksByUser()
+        await this.loadHoursByUser()
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'Ocurrió un error al aplicar el filtro de etiqueta.'
+      }
+    },
+
   },
 }
 </script>

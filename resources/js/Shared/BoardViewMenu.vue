@@ -13,11 +13,11 @@
                     <icon v-else name="star" class="w-5 h-5 text-white hover:text-yellow-500 hover:scale-125" />
                 </div>
 
-                <Link v-for="(option, option_index) in options"
+                <Link v-for="(option, option_index) in menuOptions"
                     class="flex py-2 px-3 items-center cursor-pointer capitalize rounded"
                     :class="{ 'active': view === option.slug }"
                     :href="route('projects.view.' + option.slug, project.slug || project.id)">
-                <icon :name="icons[option_index]" class="w-4 fill-[#ffffff] h-4 mr-[5px]" />
+                <icon :name="menuIcons[option_index]" class="w-4 fill-[#ffffff] h-4 mr-[5px]" />
                 {{ __(option.name) }}<span class="bg-blue-50 bg-opacity-30 cursor-default font-semibold inline-flex items-center justify-center ml-1 mr-1 px-3 py-1 rounded-full text-xs"
                 v-if="requestNoRead > 0 && option.slug == 'table'">{{ requestNoRead }}</span>
                 </Link>
@@ -51,6 +51,25 @@ export default {
         },
     },
     components: { BoardFilter, Icon, Link },
+    computed: {
+        roleSlug() {
+            return this.$page?.props?.auth?.user?.role?.slug || null
+        },
+        canSeeStatistics() {
+            return ['admin', 'CLT'].includes(this.roleSlug)
+        },
+        menuOptions() {
+            // Filtra la opción "statistics" si no tiene permiso
+            if (this.canSeeStatistics) return this.options
+            return this.options.filter(o => o.slug !== 'statistics')
+        },
+        menuIcons() {
+            // Mantén alineación icons/options
+            if (this.canSeeStatistics) return this.icons
+            // "statistics" es el último en tu lista -> quitamos el último icono
+            return this.icons.slice(0, 4)
+        },
+    },
     data() {
         return {
             icons: ['board', 'table', 'calendar', 'comments', 'dashboard'],
@@ -106,4 +125,6 @@ export default {
         }
     }
 }
+
+
 </script>
