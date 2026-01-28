@@ -134,7 +134,6 @@ export default {
     },
     submitForm() {
       // Emit the days limit to the parent component
-      console.log(this.sublist)
       this.loaderSave = true;
       axios.post(this.route('timelife.save'), {
         subcolumn_id: this.sublist.id,
