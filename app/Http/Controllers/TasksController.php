@@ -598,6 +598,7 @@ class TasksController extends Controller
             }
         }
 
+        
         public function changeRequestUserToList($taskId, $requestData, $isDoneList){
             try {
                 $isDoneAllTask = false;
@@ -627,6 +628,23 @@ class TasksController extends Controller
                     }
                 }
             }catch (\Exception $e) {
+                return MethodHelper::errorResponse($e->getMessage());
+            }
+        }
+
+        public function moveTaskToNewSublist($taskId, Request $request){
+            try {
+                $requestData = $request->all();
+                $task = Task::whereId($taskId)->first();
+                foreach ($requestData as $itemKey => $itemValue){
+                    $task->{$itemKey} = $itemValue;
+                }
+                $task->updatedlist_at = now();
+                $task->updatesublist_at = now();
+
+                $task->save();
+                return MethodHelper::successResponse($task);
+            } catch (\Exception $e) {
                 return MethodHelper::errorResponse($e->getMessage());
             }
         }

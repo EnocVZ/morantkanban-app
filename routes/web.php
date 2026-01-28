@@ -42,6 +42,7 @@ use App\Http\Controllers\SublistController;
 use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\UserRequestController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\TaskTimeLifeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,6 +158,7 @@ Route::get('task/tasktoexpire/{userid}', [TasksController::class, 'getTaskToExpi
 Route::post('task/changelist/{taskid}', [TasksController::class, 'changeList'])->name('task.list.change')->middleware('auth');
 Route::post('tasklink/new', [TasksController::class, 'taskFromLink'])->name('tasklink.new');
 Route::put('taskbacklog/update/{taskid}', [TasksController::class, 'updateTaskBacklog'])->name('taskbacklog.update')->middleware('auth');
+Route::post('task/updatecolumn/{taskUid}', [TasksController::class, 'moveTaskToNewSublist'])->name('task.updatecolumn')->middleware('auth');
 
 Route::post('board/update/{id}', [ListsController::class, 'update'])->name('board.update')->middleware('auth');
 Route::get('board_list/all', [ListsController::class, 'all'])->name('board_lists.all')->middleware('auth');
@@ -420,4 +422,8 @@ Route::get('userrequest/list/{project_id}', [UserRequestController::class, 'getR
 
 Route::get('permission/roles/{roleId}', [PermissionController::class, 'getAllRoleWithPermission'])->name('permission.roles')->middleware('auth');
 Route::post('permission/assign', [PermissionController::class, 'savePermissionToRole'])->name('permission.assign')->middleware('auth');
-Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');
+Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');
+
+Route::get('task/timelife/{subcolumn_id}', [TaskTimeLifeController::class, 'getTimeLifeBySubcolumn'])->name('timelife.by.subcolumn')->middleware('auth');
+Route::post('task/timelife/save', [TaskTimeLifeController::class, 'storeOrUpdateTimeLife'])->name('timelife.save')->middleware('auth');
+Route::delete('task/timelife/delete/{subcolumn_id}', [TaskTimeLifeController::class, 'deleteTimeLife'])->name('timelife.delete')->middleware('auth');

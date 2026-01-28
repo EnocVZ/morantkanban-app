@@ -24,7 +24,7 @@
 
                <!-- Contenido colapsable -->
                <transition name="collapse">
-                  <draggable data-id="null" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-gray-50"
+                  <draggable data-id="null" class="grid grid-cols-3 gap-4 p-6 bg-gray-50 max-w-[600px] overflow-y-auto custom-scrollbar"
                      :list="userRequestList" group="tasklist" item-key="id" @end="afterDrop($event)">
                      <template #item="{ element, index }">
                         <div :key="index" :id="element.id" :data-id="element.id" @click="taskDetailsPopup(element.id)"
@@ -83,15 +83,39 @@
                                              'border-rose-400': sublist.color === 'red',
                                              'border-green-400': sublist.color === 'green',
                                           }">
-                                             <div class="flex justify-between">
-                                                <h2 class="font-semibold truncate" contenteditable="true" :aria-label="sublist.title"
-                                                   @keypress="saveSublistTitle($event, sublist.id)"
-                                                   @blur="saveSublistTitle($event, sublist.id)">
-                                                   {{ sublist.title }}</h2>
+                                             <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center min-w-0 mr-2">
+                                                   <h2 class="font-semibold truncate" contenteditable="true" 
+                                                         :aria-label="sublist.title"
+                                                         @keypress="saveSublistTitle($event, sublist.id)"
+                                                         @blur="saveSublistTitle($event, sublist.id)">
+                                                         {{ sublist.title }}
+                                                   </h2>
 
-                                                <span
-                                                   class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
-                                                   aria-label="Total de tareas">{{ sublist?.tasklist?.length }}</span>
+                                                   <span class="inline-flex items-center justify-center px-3 py-1 ml-2 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30 flex-shrink-0"
+                                                         aria-label="Total de tareas">
+                                                         {{ sublist?.tasklist?.length }}
+                                                   </span>
+                                                </div>
+
+                                                <div class="cursor-pointer text-gray-400 hover:text-gray-600 flex-shrink-0">
+                                                   <dropdown className="rounded" placement="bottom-end">
+                                                      <template #default>
+                                                         <div class="flex items-center cursor-pointer group">
+                                                            <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400"
+                                                               name="gear" />
+                                                         </div>
+                                                      </template>
+                                                      <template #dropdown>
+                                                         <div class="shadow-xl bg-white rounded text-sm ">
+                                                            <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
+                                                               @click="addDaysLimit(sublist)">
+                                                               <icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Automatizar tiempo') }}
+                                                            </a>
+                                                         </div>
+                                                      </template>
+                                                   </dropdown>
+                                                </div>
                                              </div>
                                           </div>
 
@@ -128,7 +152,7 @@
                                                                   <div class="shadow-xl bg-white rounded text-sm ">
                                                                      <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
                                                                         @click="changeWorkspace(element)">
-                                                                        <icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Cambiarde espacio de trabajo') }}
+                                                                        <icon class="w-4 h-4 mr-2" name="user_edit" /> {{ __('Cambiar de espacio de trabajo') }}
                                                                      </a>
                                                                   </div>
                                                                </template>
@@ -285,6 +309,8 @@
       <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
          @openTask="(id) => taskDetailsPopup(id)" />
       <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
+      <add-days-limit :showModal="showAddDaysLimitModal" @close="onCloseModalAddDaysLimit" 
+      :sublist="sublistSelected"/>
    </div>
 
 </template>
@@ -306,6 +332,7 @@ import pickBy from "lodash/pickBy";
 import mapValues from "lodash/mapValues";
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 import moment from 'moment'
+import AddDaysLimit from '@/Pages/Projects/AddDaysLimit';
 
 export default {
    name: "KanbanBoard",
@@ -313,7 +340,8 @@ export default {
       Head, Link, BoardFilter, BoardViewMenu, draggable, Icon, LoadingButton, TaskDetails,
       RightMenu,
       Dropdown,
-      ChangeWorkspace
+      ChangeWorkspace,
+      AddDaysLimit
    },
    layout: Layout,
    remember: 'form',
@@ -364,6 +392,8 @@ export default {
          },
          taskId: 0,
          userRequestList: [],
+         showAddDaysLimitModal: false,
+         sublistSelected: {}
       };
    },
    watch: {
@@ -494,7 +524,7 @@ export default {
       },
 
       updateTask(id, taskObject) {
-         axios.post(this.route('task.update', id), taskObject).catch((error) => {
+         axios.post(this.route('task.updatecolumn', id), taskObject).catch((error) => {
             console.log(error)
          })
       },
@@ -515,10 +545,10 @@ export default {
 
 
       afterDrop(e) {
+      
          const new_list = this.newSortedItems(e, 'to');
          let previous_list = [];
          const resquest = {
-            updatedlist_at: new Date(),
             sublist_id: e.to.dataset.id,
             userupdate_list: this.auth.user.id,
             list_id: e.to.dataset.colid
@@ -623,6 +653,15 @@ export default {
             console.log(error)
          })
       },
+      addDaysLimit(sublist) {
+         this.sublistSelected = sublist;
+         this.showAddDaysLimitModal = true;
+      },
+      onCloseModalAddDaysLimit() {
+         this.showAddDaysLimitModal = false;
+         this.sublistSelected = {};
+      }
+
    },
 };
 </script>
