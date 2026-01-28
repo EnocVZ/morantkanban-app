@@ -2,7 +2,10 @@ import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import VueApexCharts from "vue3-apexcharts"
 
-
+import ToastPlugin from 'vue-toast-notification';
+// Import one of the available themes
+//import 'vue-toast-notification/dist/theme-default.css';
+import 'vue-toast-notification/dist/theme-bootstrap.css';
 const clickOutside = {
     beforeMount: (el, binding) => {
         el.clickOutsideEvent = event => {
@@ -32,6 +35,7 @@ createInertiaApp({
             .mixin(require('./base'))
             .use(plugin)
             .use(VueApexCharts)
+            .use(ToastPlugin)
             .directive("click-outside", clickOutside)
             .mount(el)
     },

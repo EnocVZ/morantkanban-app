@@ -863,6 +863,14 @@
                                  <icon class="mr-2 h-4 w-4" name="undo" />
                                  Adjuntar desde un link
                               </button>
+                               <!--button
+                                 @click="openLogTime = true"
+                                class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
+                              >
+                                 Registro de tiempo
+                              </button-->
+
+                              
                               <button v-if="!this.task.is_archive"
                                  @click="saveTask({ is_archive: 1 }); this.task.is_archive = true"
                                  class="flex td__btn w-full items-center rounded bg-gray-200 hover:bg-gray-300 px-3 py-2 text-xs font-medium focus:outline-none focus:ring-0">
@@ -935,6 +943,9 @@
 
                      </aside>
                   </div>
+                  <TimeTrackingModal :open="openLogTime" @close="openLogTime = false">
+                                 <TimeTracking />
+                              </TimeTrackingModal>
                </div>
             </div>
          </div>
@@ -960,6 +971,8 @@ import Toast from '@/Shared/Toast';
 import draggable from 'vuedraggable'
 import FolderSelection from '@/Shared/Modals/FolderSelection'
 import SelectMultiple from '@/Shared/SelectMultiple.vue';
+import TimeTracking from './TimeTracking.vue';
+import TimeTrackingModal from './TimeTrackingModal.vue';
 
 export default {
    props: {
@@ -1040,11 +1053,13 @@ export default {
          titleSubTask: '',
          boardList: [],
          parentTask:{},
-         selectedUsers: []
+         selectedUsers: [],
+         openLogTime: false,
       }
    },
    components: {
-      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection, SelectMultiple
+      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection, SelectMultiple,
+      TimeTracking, TimeTrackingModal
    },
    computed: {
       sortedTasks: () => {
