@@ -863,12 +863,12 @@
                                  <icon class="mr-2 h-4 w-4" name="undo" />
                                  Adjuntar desde un link
                               </button>
-                               <!--button
+                               <button
                                  @click="openLogTime = true"
                                 class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
                               >
                                  Registro de tiempo
-                              </button-->
+                              </button>
 
                               
                               <button v-if="!this.task.is_archive"

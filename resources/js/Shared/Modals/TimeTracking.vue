@@ -57,10 +57,9 @@
     </div>
 
     <!-- Work description -->
-    <div>
+    <!--div>
       <label class="text-xs text-slate-500">Descripción del trabajo</label>
 
-      <!-- Fake toolbar -->
       <div class="flex gap-2 text-slate-500 text-sm mt-1 mb-1">
         <span class="font-bold">A</span>
         <span class="italic">B</span>
@@ -76,7 +75,7 @@
                focus:ring-2 focus:ring-indigo-500 focus:outline-none"
         placeholder="Describe en lo que has trabajado..."
       />
-    </div>
+    </div-->
 
     <!-- Footer -->
     <div class="flex justify-end gap-3 pt-2">
