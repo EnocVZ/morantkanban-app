@@ -9,7 +9,7 @@
       <!-- Modal -->
       <transition name="scale">
         <div
-          class="w-full max-w-md bg-white rounded-xl shadow-xl p-6"
+          class="w-full max-w-xl bg-white rounded-xl shadow-xl p-6"
         >
           <!-- Header -->
           <div class="flex justify-between items-center mb-4">

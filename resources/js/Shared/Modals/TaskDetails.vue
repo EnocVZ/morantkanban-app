@@ -486,6 +486,42 @@
                               </ul>
                            </div>
                         
+                        
+
+                        <div class="flex space-x-2 border-b pb-1 py-8">
+                           <button :class="[
+                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                              optionSection === 1
+                                 ? 'bg-blue-600 text-white'
+                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                           ]" @click="optionSection = 1">
+                              Adjuntos({{ task.attachments.length }})
+                           </button>
+                           <button :class="[
+                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                              optionSection === 2
+                                 ? 'bg-blue-600 text-white'
+                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                           ]" @click="optionSection = 2">
+                              Comentarios({{ task.comments.length }})
+                           </button>
+                           <button :class="[
+                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                              optionSection === 3
+                                 ? 'bg-blue-600 text-white'
+                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                           ]" @click="optionSection = 3">
+                              Registro de tiempos
+                           </button>
+                           <button :class="[
+                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
+                              optionSection === 4
+                                 ? 'bg-blue-600 text-white'
+                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+                           ]" @click="optionSection = 4">
+                              Mis tiempos
+                           </button>
+                        </div>
                         <section class="mt-6" v-show="optionSection == 1">
                            <div class="pl-8 pt-4">
                               <div class="bg-white p-6 rounded w-full max-w-md mx-auto" v-show="showAttachFile">
@@ -555,33 +591,6 @@
                               </div>
                            </div>
                         </section>
-
-                        <div class="flex space-x-2 border-b pb-1 py-8">
-                           <button :class="[
-                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
-                              optionSection === 1
-                                 ? 'bg-blue-600 text-white'
-                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
-                           ]" @click="optionSection = 1">
-                              Adjuntos({{ task.attachments.length }})
-                           </button>
-                           <button :class="[
-                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
-                              optionSection === 2
-                                 ? 'bg-blue-600 text-white'
-                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
-                           ]" @click="optionSection = 2">
-                              Comentarios({{ task.comments.length }})
-                           </button>
-                           <button :class="[
-                              'flex items-center gap-1 px-4 py-1 text-sm font-medium rounded-md',
-                              optionSection === 3
-                                 ? 'bg-blue-600 text-white'
-                                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
-                           ]" @click="optionSection = 3">
-                              Registro de tiempos
-                           </button>
-                        </div>
 
                         <section v-show="optionSection == 2">
 
@@ -743,6 +752,27 @@
                                  </div>
                               </div>
                            </div>
+                        </section>
+                        <section v-show="optionSection == 4">
+
+                           <div class="pl-8 pt-4">
+                              <div class="space-y-4">
+                                 <div v-for="(log, log_i) in task.timer_list" :key="log_i + log" class="group relative flex py-1">
+                                    <div class="group flex-1 ltr:pl-4 rtl:pr-4">
+                                       <div class="flex items-center gap-2 text-sm text-gray-700">
+                                          <span class="font-medium text-gray-900">{{
+                                             formatDate(log.started_at) }}</span>
+                                          <span class="text-gray-500"> - </span>
+                                          <span class="font-medium text-gray-900">{{
+                                             formatDate(log.stopped_at) }}</span>
+                                          <span class="text-gray-500">Registró</span>
+                                          <span class="ml-auto text-gray-400 text-xs font-semibold">{{
+                                             moment.duration(log.duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div> 
                         </section>
                      </main>
 

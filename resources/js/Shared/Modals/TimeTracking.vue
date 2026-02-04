@@ -1,105 +1,143 @@
 <template>
-  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 space-y-4">
-    <!-- Header 
-    <div>
-      <h2 class="text-lg font-semibold text-slate-800">Time tracking</h2>
-      <p class="text-sm text-slate-500">
-        2d 2h logged · Original estimate for this issue was
-        <span class="text-indigo-600 font-medium">2d</span>
-      </p>
+  <div class="p-6 space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-semibold text-gray-800">
+        Logs de tiempos
+      </h1>
     </div>
-  -->
-    <!-- Progress
-    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-      <div class="h-full bg-indigo-500 w-[80%]"></div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-600">
+          <tr>
+            <th class="px-6 py-3 text-left">Subcolumna</th>
+            <th class="px-6 py-3 text-left">Límite (días)</th>
+            <th class="px-6 py-3 text-left">Última ejecución</th>
+            <th class="px-6 py-3 text-left">Estado</th>
+            <th class="px-6 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50">
+            <td class="px-6 py-4">{{ log.subcolumn }}</td>
+            <td class="px-6 py-4">{{ log.days_limit }}</td>
+            <td class="px-6 py-4 text-gray-500">{{ log.last_run }}</td>
+            <td class="px-6 py-4">
+              <span
+                class="px-2 py-1 rounded-full text-xs font-medium"
+                :class="log.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+              >
+                {{ log.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button
+                @click="openModal(log)"
+                class="text-blue-600 hover:underline text-sm"
+              >
+                Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
- -->
-    <!-- Time inputs -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs text-slate-500">Tiempo empleado en horas</label>
-        <input
-          v-model="form.spent"
-          class="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3
-                 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          placeholder=""
-        />
+
+    <!-- Modal -->
+    <transition name="fade">
+      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close"></div>
+
+        <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 z-10">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            Editar límite de tiempo
+          </h2>
+
+          <form @submit.prevent="save" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">
+                Límite en días
+              </label>
+              <input
+                type="number"
+                min="1"
+                v-model="selected.days_limit"
+                class="w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                @click="close"
+                class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              >
+                Guardar
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+    </transition>
 
-      <!--div>
-        <label class="text-xs text-slate-500">Time remaining</label>
-        <input
-          v-model="form.remaining"
-          class="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3
-                 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          placeholder="0m"
-        />
-      </div-->
-    </div>
-
-    <!-- Date -->
-    <div>
-      <label class="text-xs text-slate-500">Fecha de inicio</label>
-      <div class="flex gap-2 mt-1">
-        <input
-          type="date"
-          v-model="form.date"
-          class="h-10 w-full rounded-lg border border-slate-300 px-3
-                 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        />
-        <input
-          type="time"
-          v-model="form.time"
-          class="h-10 w-28 rounded-lg border border-slate-300 px-3
-                 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        />
-      </div>
-    </div>
-
-    <!-- Work description -->
-    <!--div>
-      <label class="text-xs text-slate-500">Descripción del trabajo</label>
-
-      <div class="flex gap-2 text-slate-500 text-sm mt-1 mb-1">
-        <span class="font-bold">A</span>
-        <span class="italic">B</span>
-        <span class="underline">U</span>
-        <span>•</span>
-        <span>≡</span>
-      </div>
-
-      <textarea
-        v-model="form.description"
-        rows="3"
-        class="w-full rounded-lg border border-slate-300 px-3 py-2
-               focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        placeholder="Describe en lo que has trabajado..."
-      />
-    </div-->
-
-    <!-- Footer -->
-    <div class="flex justify-end gap-3 pt-2">
-      <button
-        class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
-        Cancel
-      </button>
-
-      <button
-        class="px-4 py-2 rounded-lg bg-indigo-600 text-white
-               hover:bg-indigo-700 shadow-sm">
-        Save
-      </button>
-    </div>
   </div>
 </template>
 <script setup>
-import { reactive } from 'vue'
+import { ref } from 'vue'
 
-const form = reactive({
-  spent: '',
-  remaining: '',
-  date: '',
-  time: '',
-  description: '',
-})
+const logs = ref([
+  {
+    id: 1,
+    subcolumn: 'Pendientes',
+    days_limit: 7,
+    last_run: '2026-01-28 10:30',
+    active: true,
+  },
+  {
+    id: 2,
+    subcolumn: 'Archivados',
+    days_limit: 30,
+    last_run: '2026-01-27 23:00',
+    active: false,
+  },
+])
+
+const showModal = ref(false)
+const selected = ref({})
+
+const openModal = (log) => {
+  selected.value = { ...log }
+  showModal.value = true
+}
+
+const close = () => {
+  showModal.value = false
+}
+
+const save = () => {
+  const index = logs.value.findIndex(l => l.id === selected.value.id)
+  if (index !== -1) {
+    logs.value[index].days_limit = selected.value.days_limit
+  }
+  close()
+}
 </script>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

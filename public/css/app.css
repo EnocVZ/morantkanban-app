@@ -1679,9 +1679,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .w-24 {
   width: 6rem;
 }
-.w-28 {
-  width: 7rem;
-}
 .w-3 {
   width: 0.75rem;
 }
@@ -1759,9 +1756,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .w-\[70px\] {
   width: 70px;
-}
-.w-\[80\%\] {
-  width: 80%;
 }
 .w-\[calc\(32\%-70px\)\] {
   width: calc(32% - 70px);
@@ -1897,9 +1891,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2291,6 +2282,10 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .bg-gray-700 {
   --tw-bg-opacity: 1;
   background-color: rgb(51 65 85 / var(--tw-bg-opacity));
+}
+.bg-green-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(220 252 231 / var(--tw-bg-opacity));
 }
 .bg-green-300 {
   --tw-bg-opacity: 1;
