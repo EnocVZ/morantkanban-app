@@ -273,7 +273,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import { Head } from '@inertiajs/vue3'
 import Layout from '@/Shared/Layout'
@@ -284,49 +283,52 @@ import axios from 'axios'
 import moment from 'moment'
 import { nextTick } from 'vue'
 
+import Plotly from 'plotly.js-dist-min'
+
 export default {
   components: { Head, BoardViewMenu, Datepicker },
   layout: Layout,
-  props: { title: String, auth: Object, project: Object },
+
+  props: {
+    title: String,
+    auth: Object,
+    project: Object,
+  },
 
   data() {
-    const start = moment().startOf('week').add(1, 'day') // Lunes (ajuste común)
-    const end = moment().endOf('week').add(1, 'day')     // Domingo (ajuste común)
+    const start = moment().startOf('week').add(1, 'day')
+    const end = moment().endOf('week').add(1, 'day')
 
     return {
       startDate: start.toDate(),
       endDate: end.toDate(),
+
       loading: false,
       error: null,
 
-      plotly: null,
+      // Plotly ya cargado
+      plotly: Plotly,
+
       kpiReady: false,
       avgHours: 0,
       targetHours: 8,
 
-      // Filter by user
       usersOptions: [],
       selectedUserId: null,
 
-      // Fill Chart Tasks
       peopleRows: [],
-      // Fill Chart Hours
       peopleHoursRows: [],
 
-      // Fill table Tasks
       taskRows: [],
 
-      // Fill Chart by UserId
       chartData: {
         dates: [],
         hours: [],
       },
 
-      // Fill table users requests 
       projectRequestsRows: [],
       loadingRequests: false,
 
-      // Fill tags selector
       labelsOptions: [],
       selectedLabelId: null,
     }
@@ -340,16 +342,8 @@ export default {
     },
   },
 
-  mounted() {
-    // Cargar Plotly solo en cliente (evita problemas SSR)
-    import('plotly.js-dist-min')
-      .then((m) => {
-        this.plotly = m.default || m
-        this.generate() // carga inicial
-      })
-      .catch(() => {
-        this.error = 'No se pudo cargar Plotly.'
-      })
+  async mounted() {
+    await this.generate()
   },
 
   methods: {
@@ -358,10 +352,8 @@ export default {
     },
 
     formatDateTime(value) {
-      if (!value) return '-'
-      return moment(value).format('YYYY-MM-DD HH:mm')
+      return value ? moment(value).format('YYYY-MM-DD HH:mm') : '-'
     },
-
 
     async generate() {
       this.error = null
@@ -372,48 +364,36 @@ export default {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
-        // Tags selector
-        const labelsRes = await axios.get(this.route('charts.project.labelsWithActivity'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id },
-        })
+        const labelsRes = await axios.get(
+          this.route('charts.project.labelsWithActivity'),
+          { params: { start_date: start, end_date: end, project_id: this.project.id } }
+        )
 
         const newLabels = labelsRes.data?.data || []
         this.labelsOptions = newLabels
 
-        // Mantener selección si sigue existiendo, si no, reset a null
-        if (this.selectedLabelId) {
-          const stillExists = newLabels.some(l => l.id === this.selectedLabelId)
-          if (!stillExists) this.selectedLabelId = null
+        if (this.selectedLabelId && !newLabels.some(l => l.id === this.selectedLabelId)) {
+          this.selectedLabelId = null
         }
 
-
-        // 1️⃣ Gráfica: tareas por persona
         await this.loadTasksByUser()
-
-
-        // 2️⃣ Gráfica: horas por persona
         await this.loadHoursByUser()
 
+        const usersRes = await axios.get(
+          this.route('charts.project.usersWithActivity'),
+          { params: { start_date: start, end_date: end, project_id: this.project.id } }
+        )
 
-        // 3️⃣ Usuarios para selector
-        const usersRes = await axios.get(this.route('charts.project.usersWithActivity'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id },
-        })
         this.usersOptions = usersRes.data?.data || []
 
-        // 4️⃣ Usuario seleccionado por default
         const meId = this.auth?.user?.id
-        const hasMe = this.usersOptions.some(u => u.id === meId)
-        this.selectedUserId = hasMe
+        this.selectedUserId = this.usersOptions.some(u => u.id === meId)
           ? meId
           : (this.usersOptions[0]?.id ?? null)
 
-        // 👇 asegura que el select y el contenedor del chart ya estén renderizados
         await nextTick()
 
-        // 5️⃣ Carga inicial de gráfica + tabla individual
         await this.loadIndividual()
-
         await this.loadProjectRequestsTable()
 
       } catch (e) {

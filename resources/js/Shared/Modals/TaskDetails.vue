@@ -768,6 +768,8 @@
                                           <span class="text-gray-500">Registró</span>
                                           <span class="ml-auto text-gray-400 text-xs font-semibold">{{
                                              moment.duration(log.duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
+                                          <span><icon class="w-3 h-3 cursor-pointer" name="edit"
+                                                   @click="deleteComment(comment.id, comment_i, task.comments)" /></span>
                                        </div>
                                     </div>
                                  </div>
