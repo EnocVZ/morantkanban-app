@@ -30,13 +30,14 @@ class MethodHelper
      * @param mixed $errors
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function errorResponse($errors = null, $message = 'Error', $code = 400)
+    public static function errorResponse($errors = null, $message = 'Error', $code = 400, $data = [])
     {
         return response()->json([
             'status' => 'error',
             'message' => $message,
             'errors' => $errors,
-            'error' => true
+            'error' => true,
+            'data' => $data
         ], $code);
     }
 }

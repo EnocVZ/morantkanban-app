@@ -757,19 +757,17 @@
 
                            <div class="pl-8 pt-4">
                               <div class="space-y-4">
-                                 <div v-for="(log, log_i) in task.timer_list" :key="log_i + log" class="group relative flex py-1">
+                                 <div v-for="(log, log_i) in task.timers" :key="log_i + log" class="group relative flex py-1">
                                     <div class="group flex-1 ltr:pl-4 rtl:pr-4">
                                        <div class="flex items-center gap-2 text-sm text-gray-700">
                                           <span class="font-medium text-gray-900">{{
-                                             formatDate(log.started_at) }}</span>
-                                          <span class="text-gray-500"> - </span>
+                                             formatDate(log.started_at) }}</span>-
                                           <span class="font-medium text-gray-900">{{
                                              formatDate(log.stopped_at) }}</span>
-                                          <span class="text-gray-500">Registró</span>
                                           <span class="ml-auto text-gray-400 text-xs font-semibold">{{
                                              moment.duration(log.duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
                                           <span><icon class="w-3 h-3 cursor-pointer" name="edit"
-                                                   @click="deleteComment(comment.id, comment_i, task.comments)" /></span>
+                                                   @click="openEditLogTime(log)" /></span>
                                        </div>
                                     </div>
                                  </div>
@@ -896,9 +894,9 @@
                                  Adjuntar desde un link
                               </button>
                                <button
-                                 @click="openLogTime = true"
+                                 @click="saveNewTime"
                                 class="flex td__btn w-full items-center py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300 px-3 py-2">
-                              >
+                              
                                  Registro de tiempo
                               </button>
 
@@ -975,9 +973,9 @@
 
                      </aside>
                   </div>
-                  <TimeTrackingModal :open="openLogTime" @close="openLogTime = false">
-                                 <TimeTracking />
-                              </TimeTrackingModal>
+                  <TimeTrackingModal :open="openLogTime" @close="onCloseTimeTracking">
+                     <TimeTracking :timer="timerToUpdate" :taskId="task.id" @close="onCloseTimeTracking"/>
+                  </TimeTrackingModal>
                </div>
             </div>
          </div>
@@ -1087,6 +1085,7 @@ export default {
          parentTask:{},
          selectedUsers: [],
          openLogTime: false,
+         timerToUpdate:{}
       }
    },
    components: {
@@ -1797,6 +1796,20 @@ export default {
             listItem.splice(listItem.findIndex(i => i.user.id === event.id), 1);
          }
          this.assignUserToSubTask(taskId, event.id)
+      },
+
+      openEditLogTime(timer){
+         this.timerToUpdate = timer;
+         this.openLogTime = true;
+      },
+
+      onCloseTimeTracking(){
+         this.timerToUpdate = {};
+         this.openLogTime = false;
+      },
+
+      saveNewTime() {
+         this.openLogTime = true;
       }
    },
    created() {

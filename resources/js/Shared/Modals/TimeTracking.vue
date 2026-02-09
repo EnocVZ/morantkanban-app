@@ -1,143 +1,133 @@
 <template>
-  <div class="p-6 space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold text-gray-800">
-        Logs de tiempos
-      </h1>
-    </div>
-
-    <!-- Tabla -->
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 text-gray-600">
-          <tr>
-            <th class="px-6 py-3 text-left">Subcolumna</th>
-            <th class="px-6 py-3 text-left">Límite (días)</th>
-            <th class="px-6 py-3 text-left">Última ejecución</th>
-            <th class="px-6 py-3 text-left">Estado</th>
-            <th class="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y">
-          <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4">{{ log.subcolumn }}</td>
-            <td class="px-6 py-4">{{ log.days_limit }}</td>
-            <td class="px-6 py-4 text-gray-500">{{ log.last_run }}</td>
-            <td class="px-6 py-4">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-medium"
-                :class="log.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
-              >
-                {{ log.active ? 'Activo' : 'Inactivo' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button
-                @click="openModal(log)"
-                class="text-blue-600 hover:underline text-sm"
-              >
-                Editar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <transition name="fade">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close"></div>
-
-        <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 z-10">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">
-            Editar límite de tiempo
-          </h2>
-
-          <form @submit.prevent="save" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">
-                Límite en días
-              </label>
-              <input
-                type="number"
-                min="1"
-                v-model="selected.days_limit"
-                class="w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div class="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                @click="close"
-                class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-              >
-                Guardar
-              </button>
-            </div>
-          </form>
-        </div>
+  <form @submit.prevent="saveTimeTracking">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs text-slate-500">Tiempo empleado en horas</label>
+        <input type="number" v-model="form.spent" max="8" min="1" class="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3
+                 focus:ring-2 focus:ring-indigo-500 focus:outline-none" required placeholder="" />
       </div>
-    </transition>
+    </div>
 
-  </div>
+    <!-- Date -->
+    <div>
+      <label class="text-xs text-slate-500">Fecha de inicio</label>
+      <div class="flex gap-2 mt-1">
+        <input type="date" v-model="form.date" required class="h-10 w-full rounded-lg border border-slate-300 px-3
+                 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        <input type="time" step="60" v-model="form.time" required class="h-10 rounded-lg border border-slate-300 px-3
+                 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+      </div>
+    </div>
+
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 pt-6">
+      <button type="button" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100" @click="cancelModal">
+        Cancelar
+      </button>
+
+      <loading-button :loading="loaderSave"
+            class="px-4 py-2 btn-indigo" type="submit">{{ __('Save') }}</loading-button>
+    </div>
+  </form>
 </template>
-<script setup>
-import { ref } from 'vue'
+<script>
+import axios from 'axios'
+import moment from 'moment'
 
-const logs = ref([
-  {
-    id: 1,
-    subcolumn: 'Pendientes',
-    days_limit: 7,
-    last_run: '2026-01-28 10:30',
-    active: true,
+import LoadingButton from '@/Shared/LoadingButton'
+
+export default {
+  components: {
+    LoadingButton,
   },
-  {
-    id: 2,
-    subcolumn: 'Archivados',
-    days_limit: 30,
-    last_run: '2026-01-27 23:00',
-    active: false,
+  props: {
+    taskId: {
+      type: Number,
+      required: true
+    },
+    timer: {
+      type: Object,
+      required: true
+    }
   },
-])
+  data() {
+    return {
+      form: {
+        spent: '',
+        remaining: '',
+        date: '',
+        time: '',
+        description: '',
+      },
+      loaderSave: false,
+    }
+  },
+  watch: {
+    timer: {
+      handler(newTimer) {
+        if (newTimer) {
+          const dateTime = this.getDateTime(newTimer.start_time);
+          this.form.date = dateTime.date;
+          this.form.time = dateTime.time;
+          this.form.spent = this.convertSecondToHours(newTimer.duration);
+        }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    converSecondToHour(seconds) {
+      return moment.duration(seconds, 'seconds').format('h[h]')
+    },
+    convertSecondToHours(seconds) {
+      const duration = moment.duration(seconds, 'seconds');
+      const hours = Math.floor(duration.asHours());
+      const minutes = duration.minutes();
+      return hours;
+    },
+    cancelModal() {
+      this.$emit('close');
+    },
+    formatDateToSave(data) {
+      const datetime = moment(
+        `${data.date} ${data.time}`,
+        'YYYY-MM-DD HH:mm'
+      ).format('YYYY-MM-DD HH:mm:ss')
+      return datetime;
+    },
+    getDateTime(date) {
+      const result = {
+        date: moment(date).format('YYYY-MM-DD'),
+        time: moment(date).format('HH:mm'),
+      }
+      return result
+    },
+    saveTimeTracking() {
+      this.loaderSave = true;
+      const request = {
+        task_id: this.taskId,
+        duration: this.form.spent,
+        started_at: this.formatDateToSave(this.form)
+      }
 
-const showModal = ref(false)
-const selected = ref({})
-
-const openModal = (log) => {
-  selected.value = { ...log }
-  showModal.value = true
-}
-
-const close = () => {
-  showModal.value = false
-}
-
-const save = () => {
-  const index = logs.value.findIndex(l => l.id === selected.value.id)
-  if (index !== -1) {
-    logs.value[index].days_limit = selected.value.days_limit
+      axios.post(this.route('task.timer.save'), request).then((response) => {
+        this.$toast.success('Seguimiento de tiempo guardado correctamente');
+      }).catch((response) => {
+        const data = response.response.data;
+        if (data.error) {
+          if(data?.data?.code === "ERROR_OVERLAPPING_TIMES") {
+            this.$toast.error('No puedes guardar en ese rango de tiempo');
+          } else {
+            this.$toast.error('Error al guardar el seguimiento de tiempo');
+          }
+        }
+      }).finally(() => {
+        this.loaderSave = false;
+      })
+    }
   }
-  close()
+
+
 }
 </script>
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

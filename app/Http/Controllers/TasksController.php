@@ -187,6 +187,7 @@ class TasksController extends Controller
         ->with([
             'project',
             'timer',
+            'timers',
             'timerList.user',
             'cover',
             'list',

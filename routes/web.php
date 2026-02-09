@@ -173,6 +173,7 @@ Route::post('task/assignees/add', [AssigneesController::class, 'assignUserToTask
 Route::post('task/timer/stop', [TimersController::class, 'stopTimer'])->name('task.timer.stop')->middleware('auth');
 Route::post('task/timer/start', [TimersController::class, 'startTimer'])->name('task.timer.start')->middleware('auth');
 Route::get('task/timer/duration/{task_id}', [TimersController::class, 'getDuration'])->name('task.timer.duration')->middleware('auth');
+Route::post('task/timer/save', [TimersController::class, 'saveTimeTracking'])->name('task.timer.save')->middleware('auth');
 
 Route::post('checklist/update/{id}', [CheckListsController::class, 'update'])->name('check_list.update')->middleware('auth');
 Route::post('checklist/new', [CheckListsController::class, 'saveNew'])->name('check_list.new')->middleware('auth');
