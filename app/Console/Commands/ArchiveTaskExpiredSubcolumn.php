@@ -27,22 +27,21 @@ class ArchiveTaskExpiredSubcolumn extends Command
     /**
      * Execute the console command.
      */
-    //refactoriza la logica 
     public function handle()
     {
         TaskTimeLife::with('task')
-            ->get()
-            ->each(function ($taskTimeLife) {
-                $taskTimeLife->task->each(function ($task) use ($taskTimeLife) {
-                    if (!is_null($task->updatesublist_at)) {
-                        $date = Carbon::parse($task->updatesublist_at);
-                        $days = $date->diffInDays(Carbon::now());
+            ->chunk(100, function ($taskTimeLifes) {
+                foreach ($taskTimeLifes as $taskTimeLife) {
+                    $task = $taskTimeLife->task;
+                    
+                    if ($task && !is_null($task->updatesublist_at)) {
+                        $days = Carbon::parse($task->updatesublist_at)->diffInDays(now());
+                        
                         if ($days > $taskTimeLife->expire_at) {
                             $this->archiveTaskExpiredSubcolumn($task);
                         }
                     }
-                    
-                });
+                }
             });
     }
 
