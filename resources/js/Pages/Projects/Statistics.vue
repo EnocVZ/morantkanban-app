@@ -1,0 +1,675 @@
+<template>
+  <div class="h-full">
+    <Head :title="__(title)" />
+    <board-view-menu :project="project" view="statistics" />
+
+    <div class="px-4 py-4 h-[calc(100%-52px)] overflow-y-auto">
+      <!-- Filtro superior -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex flex-col lg:flex-row gap-4 lg:items-end">
+          <div class="w-full lg:w-64">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Fecha inicio') }}</p>
+            <Datepicker v-model="startDate" :enableTimePicker="false" autoApply>
+              <template #trigger>
+                <button
+                  type="button"
+                  class="w-full text-left px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                >
+                  {{ formatDate(startDate) }}
+                </button>
+              </template>
+            </Datepicker>
+          </div>
+
+          <div class="w-full lg:w-64">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Fecha fin') }}</p>
+            <Datepicker v-model="endDate" :enableTimePicker="false" autoApply>
+              <template #trigger>
+                <button
+                  type="button"
+                  class="w-full text-left px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                >
+                  {{ formatDate(endDate) }}
+                </button>
+              </template>
+            </Datepicker>
+          </div>
+
+          <div class="flex gap-3 items-center">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="loading"
+              @click="generate"
+            >
+              {{ loading ? __('Generando...') : __('Generar') }}
+            </button>
+
+            <!-- <div v-if="kpiReady" class="text-sm text-gray-700">
+              <span class="font-semibold">{{ __('Promedio:') }}</span>
+              <span class="ml-1">{{ avgHours.toFixed(1) }}h</span>
+            </div> -->
+          </div>
+
+        </div>
+
+        <!-- Filtro Etiqueta (debajo del rango de fechas) -->
+        <div class="mt-4">
+          <div class="w-full lg:w-96">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+
+            <select
+              v-model="selectedLabelId"
+              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+              @change="onLabelChange"
+            >
+              <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
+              <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
+                {{ l.label }}
+              </option>
+            </select>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1">
+            {{ __('Cambiar etiqueta actualiza la gráfica de tareas por persona.') }}
+          </p>
+        </div>
+
+
+        <p v-if="error" class="mt-3 text-sm text-red-600">
+          {{ error }}
+        </p>
+      </div>
+
+      <!-- Gráfica: Por persona (tareas) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">
+            {{ __('Total de tareas trabajadas por persona') }}
+          </h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+        <div ref="tasksByUserChart" class="w-full" style="min-height: 420px;"></div>
+      </div>
+
+      <!-- Gráfica: Por persona (horas) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">
+            {{ __('Total de horas trabajadas por persona') }}
+          </h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+        <div ref="hoursByUserChart" class="w-full" style="min-height: 420px;"></div>
+      </div>
+
+      <!-- Filtro por usuario (para ir a lo particular) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex flex-col lg:flex-row gap-4 lg:items-end">
+          <div class="w-full lg:w-96">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Usuario') }}</p>
+
+            <select
+              v-model="selectedUserId"
+              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+              @change="onUserChange"
+            >
+              <option :value="null" disabled>{{ __('Selecciona un usuario') }}</option>
+              <option v-for="u in usersOptions" :key="u.id" :value="u.id">
+                {{ u.usuario }}
+              </option>
+            </select>
+          </div>
+
+          <div class="text-xs text-gray-500">
+            {{ __('Seleccione un usuario para ver métricas individuales.') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfica -->
+      <div class="bg-white rounded-lg shadow-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">
+            {{ __('Comportamiento por día') }}
+          </h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+
+        <div ref="hoursByDayChart" class="w-full" style="min-height: 420px;"></div>
+
+        <!-- Tabla -->
+        <div class="mt-4">
+          <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="px-4 py-3 border-b">
+              <h4 class="text-sm font-bold text-gray-900">{{ __('Detalle por tarea') }}</h4>
+              <p class="text-xs text-gray-600" v-if="kpiReady">
+                {{ __('Muestra las tareas con tiempo registrado en el rango seleccionado.') }}
+              </p>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">
+                      {{ __('Tarea') }}
+                    </th>
+                    <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-40">
+                      {{ __('Tiempos') }}
+                    </th>
+                    <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-48">
+                      {{ __('Acciones') }}
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr v-if="!loading && taskRows.length === 0">
+                    <td colspan="3" class="px-4 py-6 text-sm text-gray-500">
+                      {{ __('No hay tareas con tiempos en este rango.') }}
+                    </td>
+                  </tr>
+
+                  <tr
+                    v-for="row in taskRows"
+                    :key="row.id"
+                    class="border-t hover:bg-gray-50"
+                  >
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      <div class="font-medium">{{ row.title }}</div>
+                      <div class="text-xs text-gray-500">#{{ row.id }}</div>
+                    </td>
+
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      {{ row.hours.toFixed(1) }} hrs
+                    </td>
+
+                    <td class="px-4 py-3">
+                      <button
+                        type="button"
+                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                        @click="onEditTimes(row)"
+                      >
+                        {{ __('Editar tiempos') }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Apartado 3: Solicitudes del proyecto -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">
+              {{ __('Solicitudes del proyecto') }}
+            </h3>
+            <p class="text-xs text-gray-600">
+              {{ __('Listado de solicitudes asociadas a tareas del proyecto actual.') }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="px-3 py-2 rounded-md border text-sm hover:bg-gray-50"
+            :disabled="loadingRequests"
+            @click="loadProjectRequestsTable"
+          >
+            {{ loadingRequests ? __('Cargando...') : __('Recargar') }}
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Solicitante') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-44">{{ __('Fecha') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Tipo') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Tarea') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Asignado') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Lista') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">{{ __('Sublista') }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-if="!loadingRequests && projectRequestsRows.length === 0">
+                <td colspan="7" class="px-4 py-6 text-sm text-gray-500">
+                  {{ __('No hay solicitudes registradas para este proyecto.') }}
+                </td>
+              </tr>
+
+              <tr v-for="r in projectRequestsRows" :key="r.requestId" class="border-t hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-900">{{ r.userRequest }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">
+                  {{ formatDateTime(r.dateRequest) }}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.requestType }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">{{ r.taskTitle }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.userAssigned || '-' }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.listTitle }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ r.sublistTitle || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</template>
+<script>
+import { Head } from '@inertiajs/vue3'
+import Layout from '@/Shared/Layout'
+import BoardViewMenu from '@/Shared/BoardViewMenu'
+import Datepicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
+import axios from 'axios'
+import moment from 'moment'
+import { nextTick } from 'vue'
+
+import Plotly from 'plotly.js-dist-min'
+
+export default {
+  components: { Head, BoardViewMenu, Datepicker },
+  layout: Layout,
+
+  props: {
+    title: String,
+    auth: Object,
+    project: Object,
+  },
+
+  data() {
+    const start = moment().startOf('week').add(1, 'day')
+    const end = moment().endOf('week').add(1, 'day')
+
+    return {
+      startDate: start.toDate(),
+      endDate: end.toDate(),
+
+      loading: false,
+      error: null,
+
+      // Plotly ya cargado
+      plotly: Plotly,
+
+      kpiReady: false,
+      avgHours: 0,
+      targetHours: 8,
+
+      usersOptions: [],
+      selectedUserId: null,
+
+      peopleRows: [],
+      peopleHoursRows: [],
+
+      taskRows: [],
+
+      chartData: {
+        dates: [],
+        hours: [],
+      },
+
+      projectRequestsRows: [],
+      loadingRequests: false,
+
+      labelsOptions: [],
+      selectedLabelId: null,
+    }
+  },
+
+  computed: {
+    rangeLabel() {
+      const s = moment(this.startDate).format('YYYY-MM-DD')
+      const e = moment(this.endDate).format('YYYY-MM-DD')
+      return `${s} → ${e}`
+    },
+  },
+
+  async mounted() {
+    await this.generate()
+  },
+
+  methods: {
+    formatDate(d) {
+      return d ? moment(d).format('YYYY-MM-DD') : 'YYYY-MM-DD'
+    },
+
+    formatDateTime(value) {
+      return value ? moment(value).format('YYYY-MM-DD HH:mm') : '-'
+    },
+
+    async generate() {
+      this.error = null
+      this.loading = true
+      this.kpiReady = false
+
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const labelsRes = await axios.get(
+          this.route('charts.project.labelsWithActivity'),
+          { params: { start_date: start, end_date: end, project_id: this.project.id } }
+        )
+
+        const newLabels = labelsRes.data?.data || []
+        this.labelsOptions = newLabels
+
+        if (this.selectedLabelId && !newLabels.some(l => l.id === this.selectedLabelId)) {
+          this.selectedLabelId = null
+        }
+
+        await this.loadTasksByUser()
+        await this.loadHoursByUser()
+
+        const usersRes = await axios.get(
+          this.route('charts.project.usersWithActivity'),
+          { params: { start_date: start, end_date: end, project_id: this.project.id } }
+        )
+
+        this.usersOptions = usersRes.data?.data || []
+
+        const meId = this.auth?.user?.id
+        this.selectedUserId = this.usersOptions.some(u => u.id === meId)
+          ? meId
+          : (this.usersOptions[0]?.id ?? null)
+
+        await nextTick()
+
+        await this.loadIndividual()
+        await this.loadProjectRequestsTable()
+
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'Ocurrió un error al generar las estadísticas.'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    renderHoursByDay() {
+      if (!this.plotly || !this.$refs.hoursByDayChart) return
+
+      const dates = this.chartData.dates
+      const hours = this.chartData.hours
+
+      const trace = {
+        x: dates,
+        y: hours,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Horas',
+        hovertemplate: 'Fecha: %{x}<br>Horas: %{y:.2f}<extra></extra>',
+      }
+
+      // Línea de meta
+      const shapes = [
+        {
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: 'y',
+          y0: this.targetHours,
+          y1: this.targetHours,
+          line: {
+            dash: 'dash',
+            width: 2,
+          },
+        },
+      ]
+
+      const layout = {
+        title: 'Comportamiento semanal',
+        height: 420,
+        margin: { l: 40, r: 20, t: 60, b: 40 },
+        xaxis: {
+          title: 'Día',
+          type: 'category',
+        },
+        yaxis: {
+          title: 'Horas',
+          rangemode: 'tozero',
+          dtick: 1,
+        },
+        shapes,
+        annotations: [
+          {
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.01,
+            y: 1.12,
+            text: `Meta ${this.targetHours}h`,
+            showarrow: false,
+            font: { size: 12 },
+          },
+          {
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.5,
+            y: 0.02,
+            text: `<b>${this.avgHours.toFixed(1)}</b>`,
+            showarrow: false,
+            font: { size: 18 },
+            opacity: 0.9,
+          },
+        ],
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.hoursByDayChart, [trace], layout, config)
+    },
+
+    renderTasksByUser() {
+      if (!this.plotly || !this.$refs.tasksByUserChart) return
+
+      const y = (this.peopleRows || []).map(r => r.usuario)
+      const x = (this.peopleRows || []).map(r => Number(r.total || 0))
+
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        x,
+        y,
+        text: x,
+        textposition: 'auto',
+        hovertemplate: 'Usuario: %{y}<br>Tareas: %{x}<extra></extra>',
+        name: 'Tareas',
+      }
+
+      const baseHeight = 120
+      const rowHeight = 34
+      const h = Math.max(420, baseHeight + (y.length * rowHeight))
+
+      const layout = {
+        title: `Tareas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
+        height: h,
+        margin: { l: 180, r: 20, t: 60, b: 40 },
+        xaxis: { title: '', rangemode: 'tozero' },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.tasksByUserChart, [trace], layout, config)
+    },
+
+    renderHoursByUser() {
+      if (!this.plotly || !this.$refs.hoursByUserChart) return
+
+      // Asegura orden mayor a menor 
+      const sorted = [...(this.peopleHoursRows || [])].sort(
+        (a, b) => Number(b.total_hours || 0) - Number(a.total_hours || 0)
+      )
+
+      const y = sorted.map(r => r.usuario)
+      const x = sorted.map(r => Number(r.total_hours || 0))
+
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        x,
+        y,
+        text: x.map(v => `${v.toFixed(1)}h`),
+        textposition: 'auto',
+        hovertemplate: 'Usuario: %{y}<br>Horas: %{x:.2f}<extra></extra>',
+        name: 'Horas',
+      }
+
+      const baseHeight = 120
+      const rowHeight = 34
+      const h = Math.max(420, baseHeight + (y.length * rowHeight))
+
+      const layout = {
+        title: `Horas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
+        height: h,
+        margin: { l: 180, r: 20, t: 60, b: 40 },
+        xaxis: { title: '', rangemode: 'tozero' },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.hoursByUserChart, [trace], layout, config)
+    },
+
+    onEditTimes(row) {
+      // Placeholder (en el futuro abre modal / pantalla de edición)
+      alert(`Editar tiempos (pendiente). Tarea #${row.id}: ${row.title}`)
+    },
+
+    async onUserChange() {
+      await this.loadIndividual()
+    },
+
+    async loadIndividual() {
+      if (!this.selectedUserId) return
+
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      // Gráfica: horas por día (por usuario seleccionado)
+      const res = await axios.get(this.route('charts.individual.hoursByDay'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          user_id: this.selectedUserId,
+        },
+      })
+
+      const payload = res.data
+      this.avgHours = Number(payload.avg_hours || 0)
+      this.targetHours = Number(payload.target_hours || 8)
+
+      this.chartData.dates = payload.data?.dates || []
+      this.chartData.hours = payload.data?.hours || []
+
+      this.kpiReady = true
+      this.renderHoursByDay()
+
+      // Tabla: horas por tarea (por usuario seleccionado)
+      const tableRes = await axios.get(this.route('charts.individual.taskHours'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          user_id: this.selectedUserId,
+        },
+      })
+
+      this.taskRows = tableRes.data?.rows || []
+    },
+
+    async loadProjectRequestsTable() {
+      this.loadingRequests = true
+      try {
+        const res = await axios.get(this.route('charts.project.requestsTable'), {
+          params: { project_id: this.project.id },
+        })
+        this.projectRequestsRows = res.data?.rows || []
+      } finally {
+        this.loadingRequests = false
+      }
+    },
+
+    async loadTasksByUser() {
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const peopleRes = await axios.get(this.route('charts.project.tasksByUser'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          label_id: this.selectedLabelId || null,
+        },
+      })
+
+      this.peopleRows = peopleRes.data?.data || []
+      this.renderTasksByUser()
+    },
+
+    async loadHoursByUser() {
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const hoursRes = await axios.get(this.route('charts.project.hoursByUser'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          label_id: this.selectedLabelId || null,
+        },
+      })
+
+      this.peopleHoursRows = hoursRes.data?.data || []
+      this.renderHoursByUser()
+    },
+
+
+    async onLabelChange() {
+      // No recalcular si aun está generando por fechas
+      if (this.loading) return
+
+      // ✅ aquí solo refrescamos lo que depende de etiqueta (por ahora, tareas por persona)
+      try {
+        await this.loadTasksByUser()
+        await this.loadHoursByUser()
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'Ocurrió un error al aplicar el filtro de etiqueta.'
+      }
+    },
+
+  },
+}
+</script>

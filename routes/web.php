@@ -173,6 +173,7 @@ Route::post('task/assignees/add', [AssigneesController::class, 'assignUserToTask
 Route::post('task/timer/stop', [TimersController::class, 'stopTimer'])->name('task.timer.stop')->middleware('auth');
 Route::post('task/timer/start', [TimersController::class, 'startTimer'])->name('task.timer.start')->middleware('auth');
 Route::get('task/timer/duration/{task_id}', [TimersController::class, 'getDuration'])->name('task.timer.duration')->middleware('auth');
+Route::post('task/timer/save', [TimersController::class, 'saveTimeTracking'])->name('task.timer.save')->middleware('auth');
 
 Route::post('checklist/update/{id}', [CheckListsController::class, 'update'])->name('check_list.update')->middleware('auth');
 Route::post('checklist/new', [CheckListsController::class, 'saveNew'])->name('check_list.new')->middleware('auth');
@@ -422,8 +423,42 @@ Route::get('userrequest/list/{project_id}', [UserRequestController::class, 'getR
 
 Route::get('permission/roles/{roleId}', [PermissionController::class, 'getAllRoleWithPermission'])->name('permission.roles')->middleware('auth');
 Route::post('permission/assign', [PermissionController::class, 'savePermissionToRole'])->name('permission.assign')->middleware('auth');
+
 Route::get('p/kanbanboard/{uid}', [ProjectsController::class, 'viewKanbanBoard'])->name('projects.view.kanbanboard')->middleware('auth');
 
 Route::get('task/timelife/{subcolumn_id}', [TaskTimeLifeController::class, 'getTimeLifeBySubcolumn'])->name('timelife.by.subcolumn')->middleware('auth');
 Route::post('task/timelife/save', [TaskTimeLifeController::class, 'storeOrUpdateTimeLife'])->name('timelife.save')->middleware('auth');
 Route::delete('task/timelife/delete/{subcolumn_id}', [TaskTimeLifeController::class, 'deleteTimeLife'])->name('timelife.delete')->middleware('auth');
+
+// Estadisticas 
+Route::get('p/statistics/{uid}', [ProjectsController::class, 'viewStatistics'])
+    ->name('projects.view.statistics')
+    ->middleware('auth');
+
+Route::get('api/charts/individual/hours-by-day', [ProjectsController::class, 'chartHoursByDay'])
+    ->name('charts.individual.hoursByDay')
+    ->middleware('auth');
+
+Route::get('api/charts/individual/task-hours', [ProjectsController::class, 'chartTaskHours'])
+    ->name('charts.individual.taskHours')
+    ->middleware('auth');
+
+Route::get('api/charts/project/tasks-by-user', [ProjectsController::class, 'chartTasksByUser'])
+    ->name('charts.project.tasksByUser')
+    ->middleware('auth');
+
+Route::get('api/charts/project/hours-by-user', [ProjectsController::class, 'chartHoursByUser'])
+    ->name('charts.project.hoursByUser')
+    ->middleware('auth');
+
+Route::get('api/charts/project/users-with-activity', [ProjectsController::class, 'chartUsersWithActivity'])
+    ->name('charts.project.usersWithActivity')
+    ->middleware('auth');
+
+Route::get('api/charts/project/requests-table', [ProjectsController::class, 'chartProjectRequestsTable'])
+    ->name('charts.project.requestsTable')
+    ->middleware('auth');
+
+Route::get('api/charts/project/labels-with-activity', [ProjectsController::class, 'chartLabelsWithActivity'])
+    ->name('charts.project.labelsWithActivity')
+    ->middleware('auth');

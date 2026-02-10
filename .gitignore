@@ -6,7 +6,7 @@
 /storage/*.key
 /vendor
 
-.env
+*.env
 .env.backup
 .env.production
 .phpunit.result.cache
@@ -18,3 +18,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+public/js/node_modules_plotly_js-dist-min_plotly_min_js.js
