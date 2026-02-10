@@ -54,6 +54,7 @@ export default {
   data() {
     return {
       form: {
+        timerId:0,
         spent: '',
         remaining: '',
         date: '',
@@ -67,10 +68,11 @@ export default {
     timer: {
       handler(newTimer) {
         if (newTimer) {
-          const dateTime = this.getDateTime(newTimer.start_time);
+          const dateTime = this.getDateTime(newTimer.started_at);
           this.form.date = dateTime.date;
           this.form.time = dateTime.time;
           this.form.spent = this.convertSecondToHours(newTimer.duration);
+          this.form.timerId = newTimer.id;
         }
       },
       immediate: true
@@ -104,6 +106,14 @@ export default {
       return result
     },
     saveTimeTracking() {
+      if(this.form.timerId > 0) {
+        this.updateData();
+      } else {
+        this.saveData();
+      }
+    },
+
+    saveData(){
       this.loaderSave = true;
       const request = {
         task_id: this.taskId,
@@ -112,6 +122,29 @@ export default {
       }
 
       axios.post(this.route('task.timer.save'), request).then((response) => {
+        this.$toast.success('Seguimiento de tiempo guardado correctamente');
+      }).catch((response) => {
+        const data = response.response.data;
+        if (data.error) {
+          if(data?.data?.code === "ERROR_OVERLAPPING_TIMES") {
+            this.$toast.error('No puedes guardar en ese rango de tiempo');
+          } else {
+            this.$toast.error('Error al guardar el seguimiento de tiempo');
+          }
+        }
+      }).finally(() => {
+        this.loaderSave = false;
+      })
+    },
+
+    updateData(){
+      this.loaderSave = true;
+      const request = {
+        duration: this.form.spent,
+        started_at: this.formatDateToSave(this.form)
+      }
+
+      axios.put(this.route('task.timer.update', this.form.timerId), request).then((response) => {
         this.$toast.success('Seguimiento de tiempo guardado correctamente');
       }).catch((response) => {
         const data = response.response.data;
