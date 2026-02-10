@@ -118,7 +118,6 @@ class TimersController extends Controller
                 ->firstOrFail();
 
             $timer->update([
-                'task_id'    => $requests['task_id'],
                 'started_at' => $startDateTime,
                 'stopped_at' => $endDateTime,
                 'duration'   => $duration * 3600,
