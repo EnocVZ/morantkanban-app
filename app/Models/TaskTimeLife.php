@@ -11,6 +11,6 @@ class TaskTimeLife extends Model
 
     public function task()
     {
-        return $this->belongsTo(Task::class, 'subcolumn_id', 'sublist_id')->where('is_archive', 0);
+        return $this->hasMany(Task::class, 'sublist_id','subcolumn_id')->where('is_archive', 0);
     }
 }
