@@ -29,8 +29,8 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('app:archive-task-expired-subcolumn')
-        //->daily()
-        ->hourly()
+        ->daily()
+        //->hourly()
         ->timezone('America/Mexico_City');
     }
 
