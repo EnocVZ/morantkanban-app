@@ -1171,4 +1171,17 @@ class ProjectsController extends Controller {
             ]),
         ]);
     }
+
+    public function getSublisWithDetail($projectId, Request $request){
+        try {
+            $requests = $request->all();
+            $project = Project::where('id', $projectId)->first();
+            $board_lists = $this->boardListWithDetails($project, true, $requests);
+            return MethodHelper::successResponse([
+                'items' => $board_lists,
+            ]);
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
+        }
+    }
 }
