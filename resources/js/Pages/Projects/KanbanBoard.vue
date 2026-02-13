@@ -351,8 +351,8 @@ export default {
       tasks: Object,
       project: Object,
       list_index: Object,
-      filters: Object,
-      board_lists: {
+     // filters: Object,
+      lists: {
          required: false
       },
       task: {
@@ -365,11 +365,8 @@ export default {
    },
    data() {
       return {
+         filters:{},
          form: {
-            user: this.filters.user,
-            due: this.filters.due,
-            label: this.filters.label,
-            task: this.filters.task ?? null,
          },
          formColumn: {
             title: '',
@@ -393,16 +390,15 @@ export default {
          taskId: 0,
          userRequestList: [],
          showAddDaysLimitModal: false,
-         sublistSelected: {}
+         sublistSelected: {},
+         board_lists: []
       };
    },
    watch: {
-      form: {
-         deep: true,
-         handler: throttle(function () {
-          //  this.$inertia.get(this.route('projects.view.board', this.project.slug || this.project.id), pickBy(this.form), { preserveState: true })
-         }, 150),
-      },
+      form(value){
+         this.filters = value
+         this.getSublistDetail(value)
+      }
 
    },
    created() {
@@ -417,6 +413,7 @@ export default {
       if (!!this.filters.task) {
          this.taskDetailsPopup(this.filters.task)
       }
+      this.board_lists = this.lists;
       this.getUserRequests();
 
    },
@@ -436,9 +433,23 @@ export default {
       },
       reset() {
          this.form = mapValues(this.form, () => null)
+         
       },
       doFilter(form) {
-         Object.assign(this.form, form);
+         this.form = {...form}   
+      },
+      getSublistDetail(form){
+         axios.get(this.route('project.sublistdetail', this.project.id),{params:form})
+            .then((response)=>{
+               const data = response?.data?.data;
+               if(data){
+                 this.board_lists = data.items
+               }
+            })
+            .catch((error) => {
+               console.log(error)
+            }).finally(() => {
+            });
       },
       createNewSubColumn(column) {
          const colors = ["blue", "yellow", "red", "green"];
