@@ -140,7 +140,7 @@ Route::get('p/table/{projectUid}/task/{taskUid}', [ProjectsController::class, 'v
 Route::get('project/all', [ProjectsController::class, 'all'])->name('project.all')->middleware('auth');
 Route::get('project/other/data/{project_id}', [ProjectsController::class, 'projectOtherData'])->name('project.other.data')->middleware('auth');
 Route::get('workspace/other/data/{workspace_id}', [ProjectsController::class, 'workspaceOtherData'])->name('workspace.other.data')->middleware('auth');
-
+Route::get('project/sublistdetail/{projectId}',[ProjectsController::class,'getSublisWithDetail'])->name('project.sublistdetail')->middleware('auth');
 
 
 Route::post('task/update/order', [TasksController::class, 'updateTaskOrder'])->name('task.update.order')->middleware('auth');
