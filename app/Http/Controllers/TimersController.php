@@ -55,7 +55,7 @@ class TimersController extends Controller
                 $requests = $request->all();
                 $duration = $requests['duration'];
                 $startDateTime = Carbon::parse($requests['started_at']);
-                $endDateTime = $startDateTime->copy()->addHours($requests['duration']);
+                $endDateTime = $startDateTime->copy()->addSeconds($requests['duration']);
                 $exists = Timer::where('user_id', auth()->id())
                         ->where(function ($q) use ($startDateTime, $endDateTime) {
                             $q->where('started_at', '<', $endDateTime)
@@ -65,9 +65,9 @@ class TimersController extends Controller
 
                 if ($exists) {
                     $data = [
-                        'code' => "ERROR_OVERLAPPING_TIMES",
+                        'code' => "ERROR_OVERLAPPING_TIMES" 
                     ];
-                    return MethodHelper::errorResponse($data,"ERROR_OVERLAPPING_TIMES", 422, $data);
+                    return MethodHelper::errorResponse(null,"ERROR_OVERLAPPING_TIMES", 422, $data);
                 }
 
                 $timer = Timer::create([
@@ -75,7 +75,7 @@ class TimersController extends Controller
                     'task_id' => $requests['task_id'],
                     'started_at' => $requests['started_at'],
                     'stopped_at' => $endDateTime,
-                    'duration' => $duration * 3600
+                    'duration' => $duration
                 ]);
                 return MethodHelper::successResponse($timer);
             } catch (\Exception $e) {
@@ -120,7 +120,7 @@ class TimersController extends Controller
             $timer->update([
                 'started_at' => $startDateTime,
                 'stopped_at' => $endDateTime,
-                'duration'   => $duration * 3600,
+                'duration'   => $duration,
             ]);
 
             return MethodHelper::successResponse($timer);
