@@ -432,7 +432,6 @@ class TasksController extends Controller
 
 
             try {
-
                 $driveFileUrl = null;
                 $validated = $request->validate([
                     'workspace_id' => 'required|integer|exists:workspaces,id',
@@ -442,8 +441,9 @@ class TasksController extends Controller
                     'tipo_solicitud' => 'required|exists:request_type,id',
                     'project_id' => 'nullable|integer|exists:projects,id',
                     'file' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,docx'
-                ]);
-
+                    ]);
+                    
+                $project = Project::findOrFail($validated['project_id']);
                 DB::beginTransaction();
 
                 //Buscar la lista backlog en ese proyecto
@@ -452,11 +452,14 @@ class TasksController extends Controller
                     ->where('order', 0)
                     ->where('is_basic', 1)
                     ->first();
-
-                 if (!$board_list) {
+                $boardlistId = 0;
+                 if (!$board_list && $project->project_type == 1) {
                     throw new \Exception("No se encontró una lista backlog válida para este proyecto.");
                 }
-
+                
+                if($project->project_type == 1){
+                    $boardlistId = $board_list->id;
+                }
                 
                 $slug = implode('-', explode(' ', $validated['title']));
                 // crear la tarea
@@ -468,7 +471,7 @@ class TasksController extends Controller
                     'is_request'  => 1,
                     'description' => $validated['description'] ?? null,
                     'cover'       => null,
-                    'list_id'     => $board_list->id,
+                    'list_id'     => $boardlistId,
                     'sublist_id'  => null,
                     'order'       => 0,
                     'user_id'     => auth()->id() ?? 0,
@@ -481,7 +484,7 @@ class TasksController extends Controller
                     $fileName = time() . '_' . $file->getClientOriginalName();
                     $google = new GoogleController();
                     // obtener carpeta del proyecto
-                    $project = Project::findOrFail($validated['project_id']);
+                    
                     // Si no hay folderkey, lo creamos en Drive
                     // if (!$project->folderkey) {
                         
@@ -522,7 +525,7 @@ class TasksController extends Controller
                     'user_id' => auth()->id() ?? null,
                 ]);
 
-                $this->LogTask($task->id, "new-taskinlist", 0,$board_list->id); 
+                $this->LogTask($task->id, "new-taskinlist", 0,$boardlistId); 
 
                 DB::commit();
 

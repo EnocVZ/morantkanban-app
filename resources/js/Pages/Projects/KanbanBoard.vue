@@ -71,7 +71,7 @@
 
                <!-- Contenido del Sprint -->
                <transition name="fade">
-                  <div v-show="!column.collapsed" class="p-4 bg-gray-50">
+                  <div v-show="column.collapsed" class="p-4 bg-gray-50">
                            <draggable :data-id="column.id" :data-colids="column.id" class="dragArea grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto"
                                     :list="column.sublist" group="columnlist" item-key="id" @end="afterDropColumn($event)">
                                     <template #item="{element:sublist, index:subcolumnIndex }">
