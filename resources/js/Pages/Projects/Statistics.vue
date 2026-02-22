@@ -53,27 +53,41 @@
 
         </div>
 
-        <!-- Filtro Etiqueta (debajo del rango de fechas) -->
+        <!-- Filtros secundarios -->
         <div class="mt-4">
-          <div class="w-full lg:w-96">
-            <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Etiqueta -->
+            <div class="w-full">
+              <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+              <select
+                v-model="selectedLabelId"
+                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                @change="onLabelChange"
+              >
+                <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
+                <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
+                  {{ l.label }}
+                </option>
+              </select>
+            </div>
 
-            <select
-              v-model="selectedLabelId"
-              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
-              @change="onLabelChange"
-            >
-              <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
-              <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
-                {{ l.label }}
-              </option>
-            </select>
+            <!-- Lista -->
+            <div class="w-full">
+              <p class="text-xs text-gray-600 mb-1">{{ __('Carril') }}</p>
+              <select
+                v-model="selectedListId"
+                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                @change="onListChange"
+              >
+                <option :value="null">{{ __('Seleccionar carril') }}</option>
+                <option v-for="b in listsOptions" :key="b.id" :value="b.id">
+                  {{ b.title }}
+                </option>
+              </select>
+            </div>
           </div>
-
-          <p class="text-xs text-gray-500 mt-1">
-            {{ __('Cambiar etiqueta actualiza la gráfica de tareas por persona.') }}
-          </p>
         </div>
+
 
 
         <p v-if="error" class="mt-3 text-sm text-red-600">
@@ -331,6 +345,9 @@ export default {
 
       labelsOptions: [],
       selectedLabelId: null,
+
+      listsOptions: [],
+      selectedListId: null,
     }
   },
 
@@ -368,12 +385,21 @@ export default {
           this.route('charts.project.labelsWithActivity'),
           { params: { start_date: start, end_date: end, project_id: this.project.id } }
         )
-
         const newLabels = labelsRes.data?.data || []
         this.labelsOptions = newLabels
-
         if (this.selectedLabelId && !newLabels.some(l => l.id === this.selectedLabelId)) {
           this.selectedLabelId = null
+        }
+
+        const listsRes = await axios.get(this.route('charts.project.listsWithActivity'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
+        })
+        const newLists = listsRes.data?.data || []
+        this.listsOptions = newLists
+        // Mantener selección si sigue existiendo, si no, reset a null
+        if (this.selectedListId) {
+          const stillExists = newLists.some(b => b.id === this.selectedListId)
+          if (!stillExists) this.selectedListId = null
         }
 
         await this.loadTasksByUser()
@@ -629,6 +655,7 @@ export default {
           end_date: end,
           project_id: this.project.id,
           label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -646,6 +673,7 @@ export default {
           end_date: end,
           project_id: this.project.id,
           label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -667,6 +695,20 @@ export default {
           e?.response?.data?.error ||
           e?.response?.data?.message ||
           'Ocurrió un error al aplicar el filtro de etiqueta.'
+      }
+    },
+
+    async onListChange() {
+      if (this.loading) return
+
+      try {
+        await this.loadTasksByUser()
+        await this.loadHoursByUser()
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'Ocurrió un error al aplicar el filtro de lista.'
       }
     },
 

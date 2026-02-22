@@ -893,6 +893,7 @@ class ProjectsController extends Controller {
             'end_date'   => ['required', 'date'],
             'project_id' => ['required', 'integer'],
             'label_id'   => ['nullable', 'integer'],
+            'list_id' => ['nullable', 'integer'],
         ]);
 
         $start = Carbon::parse($request->start_date)->startOfDay();
@@ -916,7 +917,12 @@ class ProjectsController extends Controller {
             ])
             ->where('ta.project_id', $projectId);
 
-        // ✅ Si hay etiqueta, filtra tareas por esa etiqueta SIN duplicar filas
+        $listId = $request->list_id ? (int) $request->list_id : null;
+        if ($listId) {
+            $base->where('ta.list_id', $listId);
+        }
+        
+            // ✅ Si hay etiqueta, filtra tareas por esa etiqueta SIN duplicar filas
         if ($labelId) {
             $base->whereExists(function ($q) use ($labelId) {
                 $q->select(DB::raw(1))
@@ -924,6 +930,11 @@ class ProjectsController extends Controller {
                 ->whereColumn('tl.task_id', 'ta.id')
                 ->where('tl.label_id', $labelId);
             });
+        }
+
+        $listId = $request->list_id ? (int) $request->list_id : null;
+        if ($listId) {
+            $base->where('ta.list_id', $listId);
         }
 
         $rows = DB::table('users as u')
@@ -955,6 +966,7 @@ class ProjectsController extends Controller {
             'end_date'   => ['required', 'date'],
             'project_id' => ['required', 'integer'],
             'label_id'   => ['nullable', 'integer'],
+            'list_id'    => ['nullable', 'integer'],
         ]);
 
         $start = Carbon::parse($request->start_date)->startOfDay();
@@ -978,6 +990,12 @@ class ProjectsController extends Controller {
             $end->toDateString(),
         ])
         ->where('ta.project_id', $projectId);
+
+        $listId = $request->list_id ? (int) $request->list_id : null;
+
+        if ($listId) {
+            $base->where('ta.list_id', $listId);
+        }
 
         if ($labelId) {
         $base->whereExists(function ($q) use ($labelId) {
@@ -1183,5 +1201,53 @@ class ProjectsController extends Controller {
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }
+    }
+
+    public function chartListsWithActivity(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'Rango inválido.'], 422);
+        }
+
+        $projectId = (int) $request->project_id;
+
+        // Subquery: listas que tuvieron timers cerrados en el rango (por proyecto)
+        $sub = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->where('ta.project_id', $projectId)
+            ->groupBy('ta.list_id')
+            ->selectRaw('ta.list_id');
+
+        $rows = DB::table('board_lists as bl')
+            ->join('projects as p', 'p.id', '=', 'bl.project_id')
+            ->joinSub($sub, 'x', fn($join) => $join->on('x.list_id', '=', 'bl.id'))
+            ->where('p.id', $projectId)
+            ->select('bl.id', 'bl.title')
+            ->orderBy('bl.title')
+            ->get();
+
+        return response()->json([
+            'project_id' => $projectId,
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'data' => $rows->map(fn($r) => [
+                'id' => (int) $r->id,
+                'title' => $r->title,
+            ]),
+        ]);
     }
 }
