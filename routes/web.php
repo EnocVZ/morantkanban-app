@@ -463,3 +463,7 @@ Route::get('api/charts/project/requests-table', [ProjectsController::class, 'cha
 Route::get('api/charts/project/labels-with-activity', [ProjectsController::class, 'chartLabelsWithActivity'])
     ->name('charts.project.labelsWithActivity')
     ->middleware('auth');
+
+Route::get('api/charts/project/lists-with-activity', [ProjectsController::class, 'chartListsWithActivity'])
+    ->name('charts.project.listsWithActivity')
+    ->middleware('auth');
