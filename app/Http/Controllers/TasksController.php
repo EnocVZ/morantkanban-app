@@ -472,7 +472,7 @@ class TasksController extends Controller
                     'description' => $validated['description'] ?? null,
                     'cover'       => null,
                     'list_id'     => $boardlistId,
-                    'sublist_id'  => null,
+                    'sublist_id'  => 0,
                     'order'       => 0,
                     'user_id'     => auth()->id() ?? 0,
                     'project_id'  => $validated['project_id'],
