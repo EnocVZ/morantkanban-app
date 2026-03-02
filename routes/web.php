@@ -493,3 +493,9 @@ Route::get('/workspaces/statistics/general/export/task-timers-detail', [Workspac
 
 Route::get('/workspace/charts/general/workspaces-time-pct', [WorkspaceStatisticsController::class, 'chartWorkspacesTimePct'])
     ->name('workspace.charts.general.workspacesTimePct');
+
+Route::get('/workspaces/statistics/general/chart/userDailyHoursHeatmap',[WorkspaceStatisticsController::class, 'chartUserDailyHoursHeatmap'])
+    ->name('workspace.charts.general.userDailyHoursHeatmap');
+
+Route::get('/workspace/charts/general/projectTasksByDay', [WorkspaceStatisticsController::class, 'chartProjectTasksByDay'])
+    ->name('workspace.charts.general.projectTasksByDay');

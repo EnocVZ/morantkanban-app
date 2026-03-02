@@ -168,10 +168,31 @@
         </div>
       </div>
 
-      <!-- ✅ Tabla matriz -->
+      <!-- ✅ Tabla matriz (TOP N + toggle) -->
       <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-        <div class="px-4 py-3 border-b">
-          <h3 class="text-sm font-bold text-gray-900">{{ __('Horas por usuario y proyecto') }}</h3>
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-gray-900">{{ __('Horas por usuario y proyecto') }}</h3>
+            <p class="text-xs text-gray-600 mt-1">
+              {{ __('Top ') }}{{ TOP_MATRIX_USERS }}{{ __(' usuarios por horas. ') }}
+              <span v-if="kpiReady">{{ rangeLabel }}</span>
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              v-if="tableRows.length > TOP_MATRIX_USERS"
+              type="button"
+              class="text-xs px-3 py-1.5 rounded-md border bg-white hover:bg-gray-50"
+              @click="showAllMatrix = !showAllMatrix"
+              :disabled="loading || !kpiReady"
+            >
+              {{ showAllMatrix ? __('Ver menos') : __('Ver todos') }}
+              <span class="text-gray-500">
+                ({{ showAllMatrix ? tableRows.length : Math.min(TOP_MATRIX_USERS, tableRows.length) }}/{{ tableRows.length }})
+              </span>
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -195,13 +216,13 @@
             </thead>
 
             <tbody>
-              <tr v-if="!loading && tableRows.length === 0">
+              <tr v-if="!loading && tableRowsToShow.length === 0">
                 <td :colspan="2 + tableProjects.length" class="px-4 py-6 text-sm text-gray-500">
                   {{ __('No hay datos para el rango seleccionado o no hay columnas seleccionadas.') }}
                 </td>
               </tr>
 
-              <tr v-for="r in tableRows" :key="r.usuario" class="border-t hover:bg-gray-50">
+              <tr v-for="r in tableRowsToShow" :key="r.usuario" class="border-t hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ r.usuario }}</td>
 
                 <td v-for="p in tableProjects" :key="p" class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
@@ -217,46 +238,30 @@
         </div>
       </div>
 
-      <!-- ✅ Gráfica horas (usuarios x proyectos) -->
-      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base font-bold text-gray-900">{{ __('Distribución de horas') }}</h3>
-          <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
-        </div>
-        <div ref="hoursByUserProjectChart" class="w-full" style="min-height: 520px;"></div>
-      </div>
-
-      <!-- ✅ DETALLE EN ACORDEÓN -->
+      <!-- ✅ Tabla DETALLE (TOP N + toggle) -->
       <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-        <!-- Header acordeón -->
         <div class="px-4 py-3 border-b flex items-center justify-between">
-          <button
-            type="button"
-            class="flex items-center gap-2 select-none"
-            @click="detailAccordionOpen = !detailAccordionOpen"
-          >
-            <svg
-              class="w-4 h-4 text-gray-600 transition-transform"
-              :class="detailAccordionOpen ? 'rotate-180' : ''"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          <div>
+            <h3 class="text-sm font-bold text-gray-900">{{ __('Detalle de tareas') }}</h3>
+            <p class="text-xs text-gray-600 mt-1">
+              {{ __('Top ') }}{{ TOP_DETAIL_ROWS }}{{ __(' registros (según proyectos seleccionados).') }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              v-if="detailRows.length > TOP_DETAIL_ROWS"
+              type="button"
+              class="text-xs px-3 py-1.5 rounded-md border bg-white hover:bg-gray-50"
+              @click="showAllDetail = !showAllDetail"
+              :disabled="loading || !kpiReady || loadingDetail"
             >
-              <path
-                fill-rule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                clip-rule="evenodd"
-              />
-            </svg>
+              {{ showAllDetail ? __('Ver menos') : __('Ver todos') }}
+              <span class="text-gray-500">
+                ({{ showAllDetail ? detailRows.length : Math.min(TOP_DETAIL_ROWS, detailRows.length) }}/{{ detailRows.length }})
+              </span>
+            </button>
 
-            <div class="text-left">
-              <h3 class="text-sm font-bold text-gray-900">{{ __('Detalle de tareas') }}</h3>
-              <p class="text-xs text-gray-500">
-                {{ loadingDetail ? __('Cargando...') : __('Registros:') + ' ' + detailRows.length }}
-              </p>
-            </div>
-          </button>
-
-          <div class="flex items-center gap-3">
             <button
               type="button"
               class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -269,60 +274,72 @@
           </div>
         </div>
 
-        <!-- Contenido acordeón -->
-        <div v-show="detailAccordionOpen">
-          <div class="overflow-x-auto">
-            <table class="min-w-full">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Espacio') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Proyecto') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Tarea') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Terminada') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Creación') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Realizada por') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Inicio') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Fin') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Horas') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Carril') }}</th>
-                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Estatus') }}</th>
-                </tr>
-              </thead>
+        <div class="px-4 py-2" v-if="loadingDetail">
+          <div class="text-xs text-gray-500">{{ __('Cargando detalle...') }}</div>
+        </div>
 
-              <tbody>
-                <tr v-if="!loadingDetail && detailRows.length === 0">
-                  <td colspan="11" class="px-4 py-6 text-sm text-gray-500">
-                    {{ __('No hay datos de detalle para el rango seleccionado o con los proyectos seleccionados.') }}
-                  </td>
-                </tr>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Espacio') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Proyecto') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Tarea') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Terminada') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Creación') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Realizada por') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Inicio') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Fin') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Horas') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Carril') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Estatus') }}</th>
+              </tr>
+            </thead>
 
-                <tr v-for="(r, idx) in detailRows" :key="idx" class="border-t hover:bg-gray-50">
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.espacio }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.proyecto }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{{ r.tarea }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
-                    <span
-                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
-                      :class="Number(r.terminada) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
-                    >
-                      {{ Number(r.terminada) ? __('Sí') : __('No') }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.creacion) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.realizada_por }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.inicio) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.fin) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 font-semibold whitespace-nowrap">{{ Number(r.horas || 0).toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.carril }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.estatus }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <tbody>
+              <tr v-if="!loadingDetail && detailRowsToShow.length === 0">
+                <td colspan="11" class="px-4 py-6 text-sm text-gray-500">
+                  {{ __('No hay datos de detalle para el rango seleccionado o con los proyectos seleccionados.') }}
+                </td>
+              </tr>
+
+              <tr v-for="(r, idx) in detailRowsToShow" :key="idx" class="border-t hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.espacio }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.proyecto }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{{ r.tarea }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                    :class="Number(r.terminada) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
+                  >
+                    {{ Number(r.terminada) ? __('Sí') : __('No') }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.creacion) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.realizada_por }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.inicio) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.fin) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900 font-semibold whitespace-nowrap">{{ Number(r.horas || 0).toFixed(2) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.carril }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.estatus }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- ✅ GRAFICA % POR WORKSPACE (AL FINAL) -->
+      <!-- ✅ GRÁFICAS AL FINAL -->
+
+      <!-- ✅ Gráfica horas (usuarios x proyectos) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">{{ __('Distribución de horas') }}</h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
+        </div>
+        <div ref="hoursByUserProjectChart" class="w-full" style="min-height: 520px;"></div>
+      </div>
+
+      <!-- ✅ GRAFICA % POR WORKSPACE -->
       <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
           <div>
@@ -339,6 +356,40 @@
         <div ref="workspaceTimePctChart" class="w-full" style="min-height: 420px;"></div>
       </div>
 
+      <!-- ✅ Heatmap: tiempo total trabajado -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">{{ __('Tiempo total trabajado') }}</h3>
+            <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
+          </div>
+          <p v-if="heatmapError" class="text-xs text-red-600">{{ heatmapError }}</p>
+        </div>
+
+        <div v-if="loadingHeatmap" class="text-xs text-gray-500 mb-2">
+          {{ __('Cargando heatmap...') }}
+        </div>
+
+        <div ref="userDailyHoursHeatmap" class="w-full" style="min-height: 520px;"></div>
+      </div>
+
+      <!-- ✅ Barras agrupadas: tareas por proyecto por día -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">{{ __('Tareas por proyecto (por día)') }}</h3>
+            <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
+          </div>
+          <p v-if="projectTasksError" class="text-xs text-red-600">{{ projectTasksError }}</p>
+        </div>
+
+        <div v-if="loadingProjectTasks" class="text-xs text-gray-500 mb-2">
+          {{ __('Cargando gráfica de tareas por proyecto...') }}
+        </div>
+
+        <div ref="projectTasksByDayChart" class="w-full" style="min-height: 520px;"></div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -350,6 +401,8 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import axios from 'axios'
 import moment from 'moment'
 import { nextTick } from 'vue'
+import 'moment/locale/es'
+moment.locale('es')
 
 export default {
   layout: Layout,
@@ -361,6 +414,14 @@ export default {
     const end = moment().endOf('week').add(1, 'day')
 
     return {
+      // ✅ top limits (puedes ajustar aquí)
+      TOP_MATRIX_USERS: 8,
+      TOP_DETAIL_ROWS: 8,
+
+      // toggles
+      showAllMatrix: false,
+      showAllDetail: false,
+
       startDate: start.toDate(),
       endDate: end.toDate(),
       loading: false,
@@ -376,21 +437,28 @@ export default {
       selectedProjects: [],
       rawRows: [],
 
-      // detalle
       detailRawRows: [],
 
-      // workspace pct
       workspacePctRows: [],
       workspacePctError: null,
 
       projectsDropdownOpen: false,
 
-      // acordeón
-      detailAccordionOpen: false,
+      loadingHeatmap: false,
+      heatmapError: null,
+      heatmapPayload: null,
+
+      loadingProjectTasks: false,
+      projectTasksError: null,
+      projectTasksPayload: null,
     }
   },
 
   computed: {
+    // exponer constantes a template sin "this."
+    TOP_MATRIX_USERS() { return this.$data.TOP_MATRIX_USERS },
+    TOP_DETAIL_ROWS() { return this.$data.TOP_DETAIL_ROWS },
+
     rangeLabel() {
       const s = moment(this.startDate).format('YYYY-MM-DD')
       const e = moment(this.endDate).format('YYYY-MM-DD')
@@ -421,11 +489,25 @@ export default {
         .sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
     },
 
-    // Filtrado en frontend por proyectos seleccionados
+    // ✅ TOP N + toggle (matriz)
+    tableRowsToShow() {
+      const rows = this.tableRows || []
+      if (this.showAllMatrix) return rows
+      return rows.slice(0, this.TOP_MATRIX_USERS)
+    },
+
+    // ✅ Filtrado en frontend por proyectos seleccionados (detalle)
     detailRows() {
       const cols = this.tableProjects
       if (!cols.length) return []
       return (this.detailRawRows || []).filter(r => cols.includes(r.proyecto))
+    },
+
+    // ✅ TOP N + toggle (detalle)
+    detailRowsToShow() {
+      const rows = this.detailRows || []
+      if (this.showAllDetail) return rows
+      return rows.slice(0, this.TOP_DETAIL_ROWS)
     },
   },
 
@@ -449,8 +531,11 @@ export default {
   watch: {
     selectedProjects: {
       handler() {
+        // el chart principal depende de tableRows
         this.renderChart()
-        // 👇 detalle se filtra en computed
+
+        // si al cambiar filtros quedas viendo "todos", lo mantenemos (no rompemos UX)
+        // si prefieres resetear toggles al cambiar proyectos, lo hacemos.
       },
       deep: true,
     },
@@ -498,8 +583,14 @@ export default {
     async generate() {
       this.error = null
       this.workspacePctError = null
+      this.heatmapError = null
+
       this.loading = true
       this.kpiReady = false
+
+      // ✅ reset toggles al regenerar
+      this.showAllMatrix = false
+      this.showAllDetail = false
 
       // limpia
       this.rawRows = []
@@ -507,6 +598,7 @@ export default {
       this.selectedProjects = []
       this.detailRawRows = []
       this.workspacePctRows = []
+      this.heatmapPayload = null
 
       try {
         const start = moment(this.startDate).format('YYYY-MM-DD')
@@ -536,6 +628,12 @@ export default {
 
         // 4) Cargar chart workspace pct
         await this.loadWorkspacePctChart()
+
+        // 5) Cargar heatmap
+        await this.loadUserDailyHeatmap()
+
+        // 6) Cargar chart tareas por proyecto por día
+        await this.loadProjectTasksByDay()
 
       } catch (e) {
         this.error =
@@ -762,6 +860,205 @@ export default {
           'No se pudo exportar el detalle a Excel.'
       }
     },
+
+    async loadUserDailyHeatmap() {
+      if (!this.plotly) return
+      this.loadingHeatmap = true
+      this.heatmapError = null
+      this.heatmapPayload = null
+
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(this.route('workspace.charts.general.userDailyHoursHeatmap'), {
+          params: {
+            start_date: start,
+            end_date: end,
+          },
+        })
+
+        this.heatmapPayload = res.data || null
+
+        await nextTick()
+        this.renderUserDailyHeatmap()
+      } catch (e) {
+        this.heatmapError =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo cargar el heatmap.'
+      } finally {
+        this.loadingHeatmap = false
+      }
+    },
+
+    renderUserDailyHeatmap() {
+      if (!this.plotly || !this.$refs.userDailyHoursHeatmap) return
+      const payload = this.heatmapPayload
+
+      const users = payload?.users || []
+      const dates = payload?.dates || []
+      const z = payload?.z || []
+
+      if (!users.length || !dates.length || !z.length) {
+        this.plotly.purge(this.$refs.userDailyHoursHeatmap)
+        return
+      }
+
+      const weekendIdx = new Set(
+        dates
+          .map((d, i) => ({ d, i }))
+          .filter(({ d }) => {
+            const day = moment(d, 'YYYY-MM-DD').day()
+            return day === 0 || day === 6
+          })
+          .map(({ i }) => i)
+      )
+
+      const zMasked = z.map(row =>
+        row.map((val, j) => (weekendIdx.has(j) ? null : Number(val)))
+      )
+
+      const textMasked = z.map(row =>
+        row.map((val, j) => {
+          if (weekendIdx.has(j)) return ''
+          const n = Number(val)
+          return n === 0 ? '' : n.toFixed(1)
+        })
+      )
+
+      const tickvals = dates
+      const ticktext = dates.map(d => moment(d, 'YYYY-MM-DD').format('DD MMM'))
+
+      const height = Math.max(520, 170 + users.length * 28)
+
+      const midScale = [
+        [0.0,  '#f2f4f7'],
+        [0.15, '#e3edf7'],
+        [0.35, '#c8def0'],
+        [0.55, '#9fc5e8'],
+        [0.75, '#6ea8dc'],
+        [1.0,  '#3b82f6'],
+      ]
+
+      const trace = {
+        type: 'heatmap',
+        x: dates,
+        y: users,
+        z: zMasked,
+
+        text: textMasked,
+        texttemplate: '%{text}',
+        textfont: { size: 11 },
+
+        hoverongaps: false,
+        hovertemplate: 'Usuario: %{y}<br>Fecha: %{x}<br>Horas: %{z:.2f}<extra></extra>',
+
+        colorscale: midScale,
+        zmin: 0,
+        colorbar: { title: 'Horas' },
+      }
+
+      const layout = {
+        height,
+        margin: { l: 240, r: 40, t: 10, b: 90 },
+
+        xaxis: {
+          title: 'Fecha',
+          tickmode: 'array',
+          tickvals,
+          ticktext,
+          tickangle: -45,
+          automargin: true,
+        },
+
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.userDailyHoursHeatmap, [trace], layout, config)
+    },
+
+    async loadProjectTasksByDay() {
+      if (!this.plotly) return
+      this.loadingProjectTasks = true
+      this.projectTasksError = null
+      this.projectTasksPayload = null
+
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(this.route('workspace.charts.general.projectTasksByDay'), {
+          params: { start_date: start, end_date: end },
+        })
+
+        this.projectTasksPayload = res.data || null
+
+        await nextTick()
+        this.renderProjectTasksByDayChart()
+      } catch (e) {
+        this.projectTasksError =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo cargar la gráfica de tareas por proyecto.'
+      } finally {
+        this.loadingProjectTasks = false
+      }
+    },
+
+    renderProjectTasksByDayChart() {
+      if (!this.plotly || !this.$refs.projectTasksByDayChart) return
+      const payload = this.projectTasksPayload
+
+      const dates = payload?.dates || []
+      const series = payload?.series || []
+
+      if (!dates.length || !series.length) {
+        this.plotly.purge(this.$refs.projectTasksByDayChart)
+        return
+      }
+
+      // Formato abajo: "06 ene", "07 ene" (como pediste)
+      const tickvals = dates
+      const ticktext = dates.map(d => moment(d, 'YYYY-MM-DD').format('DD MMM'))
+
+      const traces = series.map(s => ({
+        type: 'bar',
+        name: s.project,
+        x: dates,
+        y: (s.y || []).map(v => Number(v || 0)),
+        hovertemplate: 'Proyecto: %{fullData.name}<br>Fecha: %{x}<br>Tareas: %{y}<extra></extra>',
+      }))
+
+      const height = Math.max(520, 180 + (series.length * 10)) // leve ajuste
+
+      const layout = {
+        barmode: 'group',
+        height,
+        margin: { l: 60, r: 20, t: 10, b: 90 },
+        xaxis: {
+          title: 'Fecha',
+          tickmode: 'array',
+          tickvals,
+          ticktext,
+          tickangle: -45,
+          automargin: true,
+        },
+        yaxis: { title: 'Tareas', rangemode: 'tozero' },
+        legend: { orientation: 'h', y: 1.08, x: 0, xanchor: 'left' },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.projectTasksByDayChart, traces, layout, config)
+    },
+
   },
 }
 </script>

@@ -449,4 +449,167 @@ class WorkspaceStatisticsController extends Controller
             'rows'         => $mapped,
         ]);
     }
+
+    public function chartUserDailyHoursHeatmap(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            // opcional si luego quieres filtrar:
+            // 'workspace_id' => ['nullable','integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        // (Opcional) si después quieres filtrar por workspace:
+        // $workspaceId = $request->integer('workspace_id');
+
+        // 1) Query base: horas por usuario por día
+        $rows = DB::table('timers as t')
+            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
+            ->join('projects as p', 'ta.project_id', '=', 'p.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            // ->when($workspaceId, fn($q) => $q->where('p.workspace_id', $workspaceId))
+            ->groupBy('t.user_id', DB::raw('DATE(t.started_at)'), 'u.first_name', 'u.last_name')
+            ->selectRaw('t.user_id as user_id')
+            ->selectRaw('CONCAT(u.first_name, " ", u.last_name) as nombre')
+            ->selectRaw('DATE(t.started_at) as fecha')
+            ->selectRaw('SUM(t.duration)/3600 as horas')
+            ->get();
+
+        // 2) Fechas del rango (lista completa)
+        $dates = [];
+        $cursor = $start->copy()->startOfDay();
+        while ($cursor->lte($end)) {
+            $dates[] = $cursor->toDateString();
+            $cursor->addDay();
+        }
+
+        // 3) Usuarios únicos
+        $users = $rows->pluck('nombre')->unique()->values()->all();
+
+        // 4) Mapear horas: map[nombre][fecha] = horas
+        $map = [];
+        $totals = []; // total por usuario para ordenar
+
+        foreach ($rows as $r) {
+            $name = (string)$r->nombre;
+            $date = (string)$r->fecha;
+            $hrs  = round((float)$r->horas, 2);
+
+            if (!isset($map[$name])) $map[$name] = [];
+            $map[$name][$date] = ($map[$name][$date] ?? 0) + $hrs;
+
+            $totals[$name] = ($totals[$name] ?? 0) + $hrs;
+        }
+
+        // 5) Ordenar usuarios por total desc (para que se parezca a tu ejemplo)
+        usort($users, function($a, $b) use ($totals) {
+            return ($totals[$b] ?? 0) <=> ($totals[$a] ?? 0);
+        });
+
+        // 6) Construir matriz Z (usuarios x fechas)
+        $z = [];
+        foreach ($users as $name) {
+            $rowZ = [];
+            foreach ($dates as $d) {
+                $rowZ[] = round((float)($map[$name][$d] ?? 0), 2);
+            }
+            $z[] = $rowZ;
+        }
+
+        return response()->json([
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'dates'      => $dates,
+            'users'      => $users,
+            'z'          => $z,
+            'totals'     => array_map(fn($u) => round((float)($totals[$u] ?? 0), 2), $users),
+        ]);
+    }
+
+    public function chartProjectTasksByDay(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        // 1) Query base: tareas por proyecto por día (solo si hay timer cerrado)
+        $rows = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('projects as p', 'ta.project_id', '=', 'p.id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->groupBy('ta.project_id', 'p.title', DB::raw('DATE(t.started_at)'))
+            ->selectRaw('p.title as project, DATE(t.started_at) as date, COUNT(DISTINCT ta.id) as tasks')
+            ->orderBy('date')
+            ->orderBy('project')
+            ->get();
+
+        // 2) Armar lista de fechas (completa, incluyendo días sin registros)
+        $dates = [];
+        $cursor = $start->copy();
+        while ($cursor->lte($end)) {
+            $dates[] = $cursor->toDateString();
+            $cursor->addDay();
+        }
+
+        // 3) Lista de proyectos presentes
+        $projects = $rows->pluck('project')->unique()->values()->all();
+
+        // 4) Map: map[project][date] = tasks
+        $map = [];
+        foreach ($projects as $p) $map[$p] = [];
+
+        foreach ($rows as $r) {
+            $p = (string) $r->project;
+            $d = (string) $r->date;
+            $v = (int) $r->tasks;
+            $map[$p][$d] = $v;
+        }
+
+        // 5) Serie: para cada proyecto, un array alineado con dates
+        $series = [];
+        foreach ($projects as $p) {
+            $series[] = [
+                'project' => $p,
+                'y'       => array_map(fn($d) => (int)($map[$p][$d] ?? 0), $dates),
+            ];
+        }
+
+        return response()->json([
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'dates'      => $dates,
+            'projects'   => $projects,
+            'series'     => $series, // <- listo para Plotly grouped bar
+        ]);
+    }
+
+    
 }
