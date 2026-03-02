@@ -226,4 +226,171 @@ class WorkspaceStatisticsController extends Controller
         }
         return $s;
     }
+
+    public function tableTaskTimers(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $rows = DB::table('tasks as ta')
+            ->join('timers as ti', 'ta.id', '=', 'ti.task_id')
+            ->join('projects as p', 'ta.project_id', '=', 'p.id')
+            ->join('workspaces as w', 'p.workspace_id', '=', 'w.id')
+            ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->leftJoin('board_sublist as bs', 'ta.sublist_id', '=', 'bs.id')
+            ->join('users as u', 'ti.user_id', '=', 'u.id')
+            ->whereNotNull('ti.stopped_at')
+            ->whereBetween(DB::raw('DATE(ti.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->where('p.workspace_id', $workspaceId)
+            ->orderBy('w.name')
+            ->orderBy('p.title')
+            ->orderBy('ti.started_at')
+            ->selectRaw('
+                ta.title as tarea,
+                ta.is_done as terminada,
+                ta.created_at as creacion,
+                w.name as espacio,
+                p.title as proyecto,
+                CONCAT(u.first_name, " ", u.last_name) as realizada_por,
+                ti.started_at as inicio,
+                ti.stopped_at as fin,
+                (ti.duration / 3600) as horas,
+                bl.title as carril,
+                bs.title as estatus
+            ')
+            ->get();
+
+        return response()->json([
+            'workspace_id' => $workspaceId,
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'rows' => $rows,
+        ]);
+    }
+
+    public function exportTaskTimersDetail(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+            'projects'     => ['nullable', 'array'],   // opcional: filtrar por nombres de proyectos seleccionados
+            'projects.*'   => ['string'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        // Query detalle (similar a tu SQL)
+        $q = DB::table('tasks')
+            ->join('timers', 'tasks.id', '=', 'timers.task_id')
+            ->join('projects', 'tasks.project_id', '=', 'projects.id')
+            ->join('board_lists', 'tasks.list_id', '=', 'board_lists.id')
+            ->join('board_sublist', 'tasks.sublist_id', '=', 'board_sublist.id')
+            ->join('users', 'timers.user_id', '=', 'users.id')
+            ->join('workspaces', 'projects.workspace_id', '=', 'workspaces.id')
+            // ->where('projects.workspace_id', $workspaceId)
+            ->whereNotNull('timers.stopped_at')
+            ->whereBetween(DB::raw('DATE(timers.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('tasks.title as tarea')
+            ->selectRaw('tasks.is_done as terminada')
+            ->selectRaw('tasks.created_at as creacion')
+            ->selectRaw('workspaces.name as espacio')
+            ->selectRaw('projects.title as proyecto')
+            ->selectRaw('CONCAT(users.first_name, " ", users.last_name) as realizada_por')
+            ->selectRaw('timers.started_at as inicio')
+            ->selectRaw('timers.stopped_at as fin')
+            ->selectRaw('(timers.duration / 3600) as horas')
+            ->selectRaw('board_lists.title as carril')
+            ->selectRaw('board_sublist.title as estatus')
+            ->orderBy('espacio')
+            ->orderBy('proyecto')
+            ->orderBy('inicio');
+
+        // Opcional: si quieres que exporte SOLO proyectos seleccionados (mismo filtro del front)
+        $selectedProjects = $request->input('projects', null);
+        if (is_array($selectedProjects) && count($selectedProjects)) {
+            $q->whereIn('projects.title', $selectedProjects);
+        }
+
+        $rows = $q->get();
+
+        // Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Detalle');
+
+        $headers = [
+            'Tarea',
+            'Terminada',
+            'Creación',
+            'Espacio',
+            'Proyecto',
+            'Realizada por',
+            'Inicio',
+            'Fin',
+            'Horas',
+            'Carril',
+            'Estatus',
+        ];
+
+        // Header row
+        $col = 1;
+        foreach ($headers as $h) {
+            // ✅ método compatible (evita el error que tuviste)
+            $sheet->setCellValue([$col, 1], $h);
+            $col++;
+        }
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+
+        // Data rows
+        $r = 2;
+        foreach ($rows as $row) {
+            $sheet->setCellValue([1, $r], (string) $row->tarea);
+            $sheet->setCellValue([2, $r], ((int)$row->terminada) ? 'Sí' : 'No');
+            $sheet->setCellValue([3, $r], (string) $row->creacion);
+            $sheet->setCellValue([4, $r], (string) $row->espacio);
+            $sheet->setCellValue([5, $r], (string) $row->proyecto);
+            $sheet->setCellValue([6, $r], (string) $row->realizada_por);
+            $sheet->setCellValue([7, $r], (string) $row->inicio);
+            $sheet->setCellValue([8, $r], (string) $row->fin);
+            $sheet->setCellValue([9, $r], round((float) $row->horas, 2));
+            $sheet->setCellValue([10, $r], (string) $row->carril);
+            $sheet->setCellValue([11, $r], (string) $row->estatus);
+            $r++;
+        }
+
+        // Auto-size columns A..K
+        foreach (range('A', 'K') as $c) {
+            $sheet->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        $filename = 'detalle_tareas_' . $start->format('Ymd') . '_' . $end->format('Ymd') . '.xlsx';
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        $excelOutput = ob_get_clean();
+
+        return response($excelOutput, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
 }

@@ -82,9 +82,7 @@
                 @click.stop="toggleProjectsDropdown"
               >
                 <span class="font-semibold">{{ __('Proyectos') }}</span>
-                <span class="text-gray-500">
-                  ({{ selectedProjects.length }}/{{ allProjects.length }})
-                </span>
+                <span class="text-gray-500">({{ selectedProjects.length }}/{{ allProjects.length }})</span>
                 <svg class="w-4 h-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fill-rule="evenodd"
@@ -144,10 +142,7 @@
                 </div>
 
                 <div class="px-3 py-2 border-t flex items-center justify-between">
-                  <p class="text-xs text-gray-500">
-                    {{ __('Columnas visibles:') }} {{ selectedProjects.length }}
-                  </p>
-
+                  <p class="text-xs text-gray-500">{{ __('Columnas visibles:') }} {{ selectedProjects.length }}</p>
                   <button
                     type="button"
                     class="text-xs px-2 py-1 rounded border hover:bg-gray-50"
@@ -169,7 +164,6 @@
               {{ __('Exportar Excel') }}
             </button>
           </div>
-
         </div>
       </div>
 
@@ -223,13 +217,86 @@
       </div>
 
       <!-- ✅ Gráfica -->
-      <div class="bg-white rounded-lg shadow-lg p-4">
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-base font-bold text-gray-900">{{ __('Distribución de horas') }}</h3>
           <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
         </div>
         <div ref="hoursByUserProjectChart" class="w-full" style="min-height: 520px;"></div>
       </div>
+
+      <!-- ✅ Tabla DETALLE (filtrada en frontend por selectedProjects) -->
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-gray-900">{{ __('Detalle de tareas') }}</h3>
+            <p class="text-xs text-gray-600 mt-1">
+              {{ __('') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md font-semibold text-sm
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+            style="background:#059669;color:#ffffff;border:1px solid rgba(0,0,0,.08);"
+            :disabled="loading || !kpiReady"
+            @click="exportDetailExcel"
+          >
+            {{ __('Exportar detalle') }}
+          </button>
+          <div v-if="loadingDetail" class="text-xs text-gray-500">{{ __('Cargando detalle...') }}</div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Espacio') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Proyecto') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Tarea') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Terminada') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Creación') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Realizada por') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Inicio') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Fin') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Horas') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Carril') }}</th>
+                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Estatus') }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-if="!loadingDetail && detailRows.length === 0">
+                <td colspan="11" class="px-4 py-6 text-sm text-gray-500">
+                  {{ __('No hay datos de detalle para el rango seleccionado o con los proyectos seleccionados.') }}
+                </td>
+              </tr>
+
+              <tr v-for="(r, idx) in detailRows" :key="idx" class="border-t hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.espacio }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.proyecto }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{{ r.tarea }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                    :class="Number(r.terminada) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
+                  >
+                    {{ Number(r.terminada) ? __('Sí') : __('No') }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.creacion) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.realizada_por }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.inicio) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.fin) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900 font-semibold whitespace-nowrap">{{ Number(r.horas || 0).toFixed(2) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.carril }}</td>
+                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.estatus }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -255,6 +322,7 @@ export default {
       startDate: start.toDate(),
       endDate: end.toDate(),
       loading: false,
+      loadingDetail: false,
       error: null,
       kpiReady: false,
 
@@ -263,6 +331,9 @@ export default {
       allProjects: [],
       selectedProjects: [],
       rawRows: [],
+
+      // detalle
+      detailRawRows: [],
 
       projectsDropdownOpen: false,
     }
@@ -298,6 +369,13 @@ export default {
         })
         .sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
     },
+
+    // ✅ Filtrado en frontend por proyectos seleccionados
+    detailRows() {
+      const cols = this.tableProjects
+      if (!cols.length) return []
+      return (this.detailRawRows || []).filter(r => cols.includes(r.proyecto))
+    },
   },
 
   mounted() {
@@ -321,6 +399,7 @@ export default {
     selectedProjects: {
       handler() {
         this.renderChart()
+        // 👇 NO pegarle a backend aquí, el detalle se filtra por computed
       },
       deep: true,
     },
@@ -329,6 +408,11 @@ export default {
   methods: {
     formatDate(d) {
       return d ? moment(d).format('YYYY-MM-DD') : 'YYYY-MM-DD'
+    },
+
+    fmtDateTime(v) {
+      if (!v) return ''
+      return moment(v).format('YYYY-MM-DD HH:mm')
     },
 
     toggleProjectsDropdown() {
@@ -369,11 +453,13 @@ export default {
       this.rawRows = []
       this.allProjects = []
       this.selectedProjects = []
+      this.detailRawRows = []
 
       try {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
+        // 1) Tabla matriz + data para chart
         const res = await axios.get(this.route('workspace.charts.general.hoursByUserProject'), {
           params: {
             workspace_id: this.workspace.id,
@@ -390,8 +476,12 @@ export default {
 
         this.kpiReady = true
 
+        // 2) Render chart
         await nextTick()
         this.renderChart()
+
+        // 3) Cargar detalle (solo fechas, sin proyectos)
+        await this.loadDetailTable()
       } catch (e) {
         this.error =
           e?.response?.data?.error ||
@@ -399,6 +489,34 @@ export default {
           'Ocurrió un error al generar las estadísticas.'
       } finally {
         this.loading = false
+      }
+    },
+
+    async loadDetailTable() {
+      this.loadingDetail = true
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(
+          this.route('workspace.statistics.general.table.taskTimers', this.workspace.slug || this.workspace.id),
+          {
+            params: {
+              workspace_id: this.workspace.id,
+              start_date: start,
+              end_date: end,
+            },
+          }
+        )
+
+        this.detailRawRows = res.data?.rows || []
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo cargar la tabla de detalle.'
+      } finally {
+        this.loadingDetail = false
       }
     },
 
@@ -482,6 +600,48 @@ export default {
           'No se pudo exportar el Excel.'
       }
     },
+
+    async exportDetailExcel() {
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(
+          this.route('workspace.statistics.general.export.taskTimersDetail'),
+          {
+            params: {
+              workspace_id: this.workspace.id,
+              start_date: start,
+              end_date: end,
+              // opcional: si quieres exportar SOLO proyectos seleccionados
+              projects: this.selectedProjects,
+            },
+            responseType: 'blob',
+          }
+        )
+
+        const blob = new Blob([res.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+
+        const filename = `detalle_tareas_${start.replaceAll('-', '')}_${end.replaceAll('-', '')}.xlsx`
+        a.download = filename
+
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo exportar el detalle a Excel.'
+      }
+    }
   },
 }
 </script>

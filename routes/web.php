@@ -484,3 +484,9 @@ Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatistic
 Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
     ->name('workspace.statistics.general.export.hoursByUserProject')
     ->middleware('auth');
+
+Route::get('/workspaces/{workspace}/statistics/general/table-task-timers', [WorkspaceStatisticsController::class, 'tableTaskTimers'])
+    ->name('workspace.statistics.general.table.taskTimers');
+
+Route::get('/workspaces/statistics/general/export/task-timers-detail', [WorkspaceStatisticsController::class, 'exportTaskTimersDetail'])
+    ->name('workspace.statistics.general.export.taskTimersDetail');
