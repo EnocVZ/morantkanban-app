@@ -9,9 +9,7 @@
             — {{ workspace.name }}
           </span>
         </h1>
-        <p class="text-sm text-gray-600 mt-1">
-          {{ __('') }}
-        </p>
+        <p class="text-sm text-gray-600 mt-1"></p>
       </div>
 
       <!-- Filtro (Fechas + Botón) -->
@@ -64,7 +62,7 @@
         <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
       </div>
 
-      <!-- ✅ Dropdown de Proyectos (checkboxs) -->
+      <!-- ✅ Dropdown de Proyectos (checkboxs) + Export -->
       <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
           <div>
@@ -74,80 +72,108 @@
             </p>
           </div>
 
-          <div class="relative" ref="projectsDropdown">
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md border bg-white hover:bg-gray-50 text-sm flex items-center gap-2"
-              :disabled="loading || allProjects.length === 0"
-              @click="toggleProjectsDropdown"
-            >
-              <span class="font-semibold">{{ __('Proyectos') }}</span>
-              <span class="text-gray-500">
-                ({{ selectedProjects.length }}/{{ allProjects.length }})
-              </span>
-              <svg class="w-4 h-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd" />
-              </svg>
-            </button>
-
+          <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end w-full lg:w-auto">
             <!-- Dropdown -->
-            <div
-              v-if="projectsDropdownOpen"
-              class="absolute right-0 mt-2 w-[360px] bg-white border rounded-lg shadow-xl z-50 overflow-hidden"
-            >
-              <div class="px-3 py-2 border-b flex items-center justify-between">
-                <p class="text-xs font-semibold text-gray-700">{{ __('Seleccionar proyectos') }}</p>
-                <button
-                  type="button"
-                  class="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
-                  @click="projectsDropdownOpen = false"
-                >
-                  {{ __('Cerrar') }}
-                </button>
-              </div>
-
-              <div class="px-3 py-2 border-b flex gap-2">
-                <button
-                  type="button"
-                  class="px-2 py-1 rounded border text-xs hover:bg-gray-50"
-                  @click="selectAllProjects"
-                >
-                  {{ __('Seleccionar todo') }}
-                </button>
-                <button
-                  type="button"
-                  class="px-2 py-1 rounded border text-xs hover:bg-gray-50"
-                  @click="clearProjectsSelection"
-                >
-                  {{ __('Limpiar') }}
-                </button>
-              </div>
-
-              <div class="max-h-72 overflow-y-auto">
-                <label
-                  v-for="p in allProjects"
-                  :key="p"
-                  class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    class="rounded border-gray-300"
-                    :value="p"
-                    v-model="selectedProjects"
+            <div class="relative" ref="projectsDropdown">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-md border bg-white hover:bg-gray-50 text-sm flex items-center gap-2"
+                :disabled="loading || allProjects.length === 0"
+                @click.stop="toggleProjectsDropdown"
+              >
+                <span class="font-semibold">{{ __('Proyectos') }}</span>
+                <span class="text-gray-500">
+                  ({{ selectedProjects.length }}/{{ allProjects.length }})
+                </span>
+                <svg class="w-4 h-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                    clip-rule="evenodd"
                   />
-                  <span class="text-sm text-gray-800">{{ p }}</span>
-                </label>
+                </svg>
+              </button>
 
-                <div v-if="allProjects.length === 0" class="px-3 py-4 text-sm text-gray-500">
-                  {{ __('No hay proyectos con actividad en este rango.') }}
+              <!-- ✅ Dropdown real -->
+              <div
+                v-if="projectsDropdownOpen"
+                class="absolute right-0 mt-2 w-[380px] bg-white border rounded-lg shadow-xl z-50 overflow-hidden"
+                @click.stop
+              >
+                <div class="px-3 py-2 border-b flex items-center justify-between">
+                  <p class="text-sm font-semibold text-gray-900">{{ __('Proyectos') }}</p>
+
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+                      @click="selectAllProjects"
+                      :disabled="allProjects.length === 0"
+                    >
+                      {{ __('Seleccionar todo') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+                      @click="clearProjectsSelection"
+                      :disabled="allProjects.length === 0"
+                    >
+                      {{ __('Limpiar') }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="max-h-[280px] overflow-y-auto">
+                  <div v-if="allProjects.length === 0" class="px-3 py-4 text-sm text-gray-500">
+                    {{ __('No hay proyectos para mostrar. Genera primero.') }}
+                  </div>
+
+                  <label
+                    v-for="p in allProjects"
+                    :key="p"
+                    class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      class="rounded border-gray-300"
+                      :checked="selectedProjects.includes(p)"
+                      @change="toggleProject(p)"
+                    />
+                    <span class="text-sm text-gray-800">{{ p }}</span>
+                  </label>
+                </div>
+
+                <div class="px-3 py-2 border-t flex items-center justify-between">
+                  <p class="text-xs text-gray-500">
+                    {{ __('Columnas visibles:') }} {{ selectedProjects.length }}
+                  </p>
+
+                  <button
+                    type="button"
+                    class="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+                    @click="projectsDropdownOpen = false"
+                  >
+                    {{ __('Cerrar') }}
+                  </button>
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              :disabled="loading || !kpiReady || selectedProjects.length === 0"
+              @click="exportExcel"
+              class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md font-semibold text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:#059669;color:#ffffff;border:1px solid rgba(0,0,0,.08);"
+            >
+              {{ __('Exportar Excel') }}
+            </button>
           </div>
+
         </div>
       </div>
 
-      <!-- ✅ Tabla matriz (antes de la gráfica) -->
+      <!-- ✅ Tabla matriz -->
       <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
         <div class="px-4 py-3 border-b">
           <h3 class="text-sm font-bold text-gray-900">{{ __('Horas por usuario y proyecto') }}</h3>
@@ -176,18 +202,14 @@
             <tbody>
               <tr v-if="!loading && tableRows.length === 0">
                 <td :colspan="2 + tableProjects.length" class="px-4 py-6 text-sm text-gray-500">
-                  {{ __('No hay datos para el rango seleccionado.') }}
+                  {{ __('No hay datos para el rango seleccionado o no hay columnas seleccionadas.') }}
                 </td>
               </tr>
 
               <tr v-for="r in tableRows" :key="r.usuario" class="border-t hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ r.usuario }}</td>
 
-                <td
-                  v-for="p in tableProjects"
-                  :key="p"
-                  class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap"
-                >
+                <td v-for="p in tableProjects" :key="p" class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                   {{ Number(r.projects?.[p] || 0).toFixed(1) }}h
                 </td>
 
@@ -253,12 +275,10 @@ export default {
       return `${s} → ${e}`
     },
 
-    // Columnas visibles
     tableProjects() {
       return (this.selectedProjects || []).length ? this.selectedProjects : []
     },
 
-    // Filas recalculadas con base en los proyectos seleccionados
     tableRows() {
       const cols = this.tableProjects
       if (!cols.length) return []
@@ -321,6 +341,17 @@ export default {
       if (el && !el.contains(e.target)) this.projectsDropdownOpen = false
     },
 
+    toggleProject(projectName) {
+      const idx = this.selectedProjects.indexOf(projectName)
+      if (idx >= 0) {
+        const copy = [...this.selectedProjects]
+        copy.splice(idx, 1)
+        this.selectedProjects = copy
+      } else {
+        this.selectedProjects = [...this.selectedProjects, projectName]
+      }
+    },
+
     selectAllProjects() {
       this.selectedProjects = [...this.allProjects]
     },
@@ -334,7 +365,7 @@ export default {
       this.loading = true
       this.kpiReady = false
 
-      // limpia para evitar “datos anteriores”
+      // limpia
       this.rawRows = []
       this.allProjects = []
       this.selectedProjects = []
@@ -377,7 +408,6 @@ export default {
       const users = (this.tableRows || []).map(r => r.usuario)
       const cols = this.tableProjects || []
 
-      // si no hay columnas o filas, limpia gráfica
       if (!cols.length || !users.length) {
         this.plotly.purge(this.$refs.hoursByUserProjectChart)
         return
@@ -410,6 +440,47 @@ export default {
       const config = { responsive: true, displayModeBar: false }
 
       this.plotly.react(this.$refs.hoursByUserProjectChart, traces, layout, config)
+    },
+
+    async exportExcel() {
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(
+          this.route('workspace.statistics.general.export.hoursByUserProject', this.workspace.slug || this.workspace.id),
+          {
+            params: {
+              workspace_id: this.workspace.id,
+              start_date: start,
+              end_date: end,
+              projects: this.selectedProjects,
+            },
+            responseType: 'blob',
+          }
+        )
+
+        const blob = new Blob([res.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+
+        const filename = `horas_por_usuario_y_proyecto_${start.replaceAll('-', '')}_${end.replaceAll('-', '')}.xlsx`
+        a.download = filename
+
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo exportar el Excel.'
+      }
     },
   },
 }

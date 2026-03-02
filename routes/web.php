@@ -480,3 +480,7 @@ Route::get('w/{uid}/statistics', [WorkSpacesController::class, 'viewStatisticsGe
 Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatisticsController::class, 'hoursByUserProject'])
   ->name('workspace.charts.general.hoursByUserProject')
   ->middleware('auth');
+
+Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
+    ->name('workspace.statistics.general.export.hoursByUserProject')
+    ->middleware('auth');

@@ -1634,11 +1634,11 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .max-h-48 {
   max-height: 12rem;
 }
-.max-h-72 {
-  max-height: 18rem;
-}
 .max-h-\[200px\] {
   max-height: 200px;
+}
+.max-h-\[280px\] {
+  max-height: 280px;
 }
 .max-h-\[70vh\] {
   max-height: 70vh;
@@ -1763,8 +1763,8 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .w-\[300px\] {
   width: 300px;
 }
-.w-\[360px\] {
-  width: 360px;
+.w-\[380px\] {
+  width: 380px;
 }
 .w-\[50px\] {
   width: 50px;
@@ -3436,6 +3436,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   .lg\:w-96 {
     width: 24rem;
   }
+  .lg\:w-auto {
+    width: auto;
+  }
   .lg\:w-full {
     width: 100%;
   }
@@ -3456,6 +3459,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   }
   .lg\:items-center {
     align-items: center;
+  }
+  .lg\:justify-end {
+    justify-content: flex-end;
   }
   .lg\:justify-between {
     justify-content: space-between;
