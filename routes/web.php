@@ -43,7 +43,8 @@ use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\UserRequestController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\TaskTimeLifeController;
-
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\WorkspaceStatisticsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -467,3 +468,15 @@ Route::get('api/charts/project/labels-with-activity', [ProjectsController::class
 Route::get('api/charts/project/lists-with-activity', [ProjectsController::class, 'chartListsWithActivity'])
     ->name('charts.project.listsWithActivity')
     ->middleware('auth');
+
+Route::get('/statistics/general', [StatisticsController::class, 'general'])
+    ->name('statistics.general')
+    ->middleware('auth');
+
+Route::get('w/{uid}/statistics', [WorkSpacesController::class, 'viewStatisticsGeneral'])
+    ->name('workspace.statistics.general')
+    ->middleware('auth');
+
+Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatisticsController::class, 'hoursByUserProject'])
+  ->name('workspace.charts.general.hoursByUserProject')
+  ->middleware('auth');
