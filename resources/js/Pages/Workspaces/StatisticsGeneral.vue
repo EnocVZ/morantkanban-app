@@ -92,7 +92,7 @@
                 </svg>
               </button>
 
-              <!-- ✅ Dropdown real -->
+              <!-- Dropdown real -->
               <div
                 v-if="projectsDropdownOpen"
                 class="absolute right-0 mt-2 w-[380px] bg-white border rounded-lg shadow-xl z-50 overflow-hidden"
@@ -154,6 +154,7 @@
               </div>
             </div>
 
+            <!-- Export matriz -->
             <button
               type="button"
               :disabled="loading || !kpiReady || selectedProjects.length === 0"
@@ -216,7 +217,7 @@
         </div>
       </div>
 
-      <!-- ✅ Gráfica -->
+      <!-- ✅ Gráfica horas (usuarios x proyectos) -->
       <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-base font-bold text-gray-900">{{ __('Distribución de horas') }}</h3>
@@ -225,76 +226,117 @@
         <div ref="hoursByUserProjectChart" class="w-full" style="min-height: 520px;"></div>
       </div>
 
-      <!-- ✅ Tabla DETALLE (filtrada en frontend por selectedProjects) -->
+      <!-- ✅ DETALLE EN ACORDEÓN -->
       <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+        <!-- Header acordeón -->
         <div class="px-4 py-3 border-b flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-gray-900">{{ __('Detalle de tareas') }}</h3>
-            <p class="text-xs text-gray-600 mt-1">
-              {{ __('') }}
-            </p>
-          </div>
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md font-semibold text-sm
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-            style="background:#059669;color:#ffffff;border:1px solid rgba(0,0,0,.08);"
-            :disabled="loading || !kpiReady"
-            @click="exportDetailExcel"
+            class="flex items-center gap-2 select-none"
+            @click="detailAccordionOpen = !detailAccordionOpen"
           >
-            {{ __('Exportar detalle') }}
+            <svg
+              class="w-4 h-4 text-gray-600 transition-transform"
+              :class="detailAccordionOpen ? 'rotate-180' : ''"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                clip-rule="evenodd"
+              />
+            </svg>
+
+            <div class="text-left">
+              <h3 class="text-sm font-bold text-gray-900">{{ __('Detalle de tareas') }}</h3>
+              <p class="text-xs text-gray-500">
+                {{ loadingDetail ? __('Cargando...') : __('Registros:') + ' ' + detailRows.length }}
+              </p>
+            </div>
           </button>
-          <div v-if="loadingDetail" class="text-xs text-gray-500">{{ __('Cargando detalle...') }}</div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:#059669;color:#ffffff;border:1px solid rgba(0,0,0,.08);"
+              :disabled="loading || !kpiReady || loadingDetail"
+              @click="exportDetailExcel"
+            >
+              {{ __('Exportar detalle') }}
+            </button>
+          </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Espacio') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Proyecto') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Tarea') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Terminada') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Creación') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Realizada por') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Inicio') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Fin') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Horas') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Carril') }}</th>
-                <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Estatus') }}</th>
-              </tr>
-            </thead>
+        <!-- Contenido acordeón -->
+        <div v-show="detailAccordionOpen">
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Espacio') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Proyecto') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Tarea') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Terminada') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Creación') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Realizada por') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Inicio') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Fin') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Horas') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Carril') }}</th>
+                  <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 whitespace-nowrap">{{ __('Estatus') }}</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              <tr v-if="!loadingDetail && detailRows.length === 0">
-                <td colspan="11" class="px-4 py-6 text-sm text-gray-500">
-                  {{ __('No hay datos de detalle para el rango seleccionado o con los proyectos seleccionados.') }}
-                </td>
-              </tr>
+              <tbody>
+                <tr v-if="!loadingDetail && detailRows.length === 0">
+                  <td colspan="11" class="px-4 py-6 text-sm text-gray-500">
+                    {{ __('No hay datos de detalle para el rango seleccionado o con los proyectos seleccionados.') }}
+                  </td>
+                </tr>
 
-              <tr v-for="(r, idx) in detailRows" :key="idx" class="border-t hover:bg-gray-50">
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.espacio }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.proyecto }}</td>
-                <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{{ r.tarea }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
-                    :class="Number(r.terminada) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
-                  >
-                    {{ Number(r.terminada) ? __('Sí') : __('No') }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.creacion) }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.realizada_por }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.inicio) }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.fin) }}</td>
-                <td class="px-4 py-3 text-sm text-gray-900 font-semibold whitespace-nowrap">{{ Number(r.horas || 0).toFixed(2) }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.carril }}</td>
-                <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.estatus }}</td>
-              </tr>
-            </tbody>
-          </table>
+                <tr v-for="(r, idx) in detailRows" :key="idx" class="border-t hover:bg-gray-50">
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.espacio }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.proyecto }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{{ r.tarea }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                      :class="Number(r.terminada) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
+                    >
+                      {{ Number(r.terminada) ? __('Sí') : __('No') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.creacion) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.realizada_por }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.inicio) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ fmtDateTime(r.fin) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 font-semibold whitespace-nowrap">{{ Number(r.horas || 0).toFixed(2) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.carril }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">{{ r.estatus }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <!-- ✅ GRAFICA % POR WORKSPACE (AL FINAL) -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">{{ __('Porcentaje por espacio de trabajo') }}</h3>
+            <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
+          </div>
+          <p v-if="workspacePctError" class="text-xs text-red-600">{{ workspacePctError }}</p>
+        </div>
+
+        <div v-if="loadingWorkspacePct" class="text-xs text-gray-500 mb-2">
+          {{ __('Cargando gráfica por workspace...') }}
+        </div>
+
+        <div ref="workspaceTimePctChart" class="w-full" style="min-height: 420px;"></div>
       </div>
 
     </div>
@@ -323,6 +365,8 @@ export default {
       endDate: end.toDate(),
       loading: false,
       loadingDetail: false,
+      loadingWorkspacePct: false,
+
       error: null,
       kpiReady: false,
 
@@ -335,7 +379,14 @@ export default {
       // detalle
       detailRawRows: [],
 
+      // workspace pct
+      workspacePctRows: [],
+      workspacePctError: null,
+
       projectsDropdownOpen: false,
+
+      // acordeón
+      detailAccordionOpen: false,
     }
   },
 
@@ -370,7 +421,7 @@ export default {
         .sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
     },
 
-    // ✅ Filtrado en frontend por proyectos seleccionados
+    // Filtrado en frontend por proyectos seleccionados
     detailRows() {
       const cols = this.tableProjects
       if (!cols.length) return []
@@ -399,7 +450,7 @@ export default {
     selectedProjects: {
       handler() {
         this.renderChart()
-        // 👇 NO pegarle a backend aquí, el detalle se filtra por computed
+        // 👇 detalle se filtra en computed
       },
       deep: true,
     },
@@ -446,6 +497,7 @@ export default {
 
     async generate() {
       this.error = null
+      this.workspacePctError = null
       this.loading = true
       this.kpiReady = false
 
@@ -454,12 +506,13 @@ export default {
       this.allProjects = []
       this.selectedProjects = []
       this.detailRawRows = []
+      this.workspacePctRows = []
 
       try {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
-        // 1) Tabla matriz + data para chart
+        // 1) Tabla matriz + chart
         const res = await axios.get(this.route('workspace.charts.general.hoursByUserProject'), {
           params: {
             workspace_id: this.workspace.id,
@@ -470,18 +523,20 @@ export default {
 
         this.allProjects = res.data?.projects || []
         this.rawRows = res.data?.rows || []
-
-        // Default: selecciona todo
         this.selectedProjects = [...this.allProjects]
 
         this.kpiReady = true
 
-        // 2) Render chart
+        // 2) Render chart principal
         await nextTick()
         this.renderChart()
 
-        // 3) Cargar detalle (solo fechas, sin proyectos)
+        // 3) Cargar detalle (solo fechas)
         await this.loadDetailTable()
+
+        // 4) Cargar chart workspace pct
+        await this.loadWorkspacePctChart()
+
       } catch (e) {
         this.error =
           e?.response?.data?.error ||
@@ -517,6 +572,33 @@ export default {
           'No se pudo cargar la tabla de detalle.'
       } finally {
         this.loadingDetail = false
+      }
+    },
+
+    async loadWorkspacePctChart() {
+      if (!this.plotly) return
+      this.loadingWorkspacePct = true
+      this.workspacePctError = null
+
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        const res = await axios.get(this.route('workspace.charts.general.workspacesTimePct'), {
+          params: { start_date: start, end_date: end },
+        })
+
+        this.workspacePctRows = res.data?.rows || []
+
+        await nextTick()
+        this.renderWorkspacePctChart()
+      } catch (e) {
+        this.workspacePctError =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo cargar la gráfica por workspace.'
+      } finally {
+        this.loadingWorkspacePct = false
       }
     },
 
@@ -558,6 +640,45 @@ export default {
       const config = { responsive: true, displayModeBar: false }
 
       this.plotly.react(this.$refs.hoursByUserProjectChart, traces, layout, config)
+    },
+
+    renderWorkspacePctChart() {
+      if (!this.plotly || !this.$refs.workspaceTimePctChart) return
+
+      const rows = [...(this.workspacePctRows || [])].sort((a, b) => Number(b.pct) - Number(a.pct))
+
+      if (!rows.length) {
+        this.plotly.purge(this.$refs.workspaceTimePctChart)
+        return
+      }
+
+      const y = rows.map(r => r.workspace)
+      const x = rows.map(r => Number(r.pct || 0))
+
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        y,
+        x,
+        hovertemplate: '%{y}<br>%{x:.2f}%<extra></extra>',
+        text: x.map(v => `${Number(v).toFixed(2)}%`),
+        textposition: 'auto',
+      }
+
+      const height = Math.max(420, 140 + rows.length * 32)
+
+      const layout = {
+        height,
+        margin: { l: 220, r: 20, t: 10, b: 40 },
+        xaxis: { title: 'Porcentaje (%)', range: [0, 100], rangemode: 'tozero' },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+
+      this.plotly.react(this.$refs.workspaceTimePctChart, [trace], layout, config)
     },
 
     async exportExcel() {
@@ -613,7 +734,6 @@ export default {
               workspace_id: this.workspace.id,
               start_date: start,
               end_date: end,
-              // opcional: si quieres exportar SOLO proyectos seleccionados
               projects: this.selectedProjects,
             },
             responseType: 'blob',
@@ -641,7 +761,7 @@ export default {
           e?.response?.data?.message ||
           'No se pudo exportar el detalle a Excel.'
       }
-    }
+    },
   },
 }
 </script>

@@ -252,7 +252,7 @@ class WorkspaceStatisticsController extends Controller
             ->join('users as u', 'ti.user_id', '=', 'u.id')
             ->whereNotNull('ti.stopped_at')
             ->whereBetween(DB::raw('DATE(ti.started_at)'), [$start->toDateString(), $end->toDateString()])
-            ->where('p.workspace_id', $workspaceId)
+            // ->where('p.workspace_id', $workspaceId)
             ->orderBy('w.name')
             ->orderBy('p.title')
             ->orderBy('ti.started_at')
@@ -391,6 +391,62 @@ class WorkspaceStatisticsController extends Controller
         return response($excelOutput, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    public function chartWorkspacesTimePct(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        // 1) Traer horas por workspace
+        $rows = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('projects as p', 'ta.project_id', '=', 'p.id')
+            ->join('workspaces as w', 'p.workspace_id', '=', 'w.id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->groupBy('w.id', 'w.name')
+            ->selectRaw('w.id as workspace_id, w.name as workspace, SUM(t.duration)/3600 as hours')
+            ->orderByDesc(DB::raw('SUM(t.duration)'))
+            ->get();
+
+        // 2) Total
+        $totalHours = $rows->sum(fn($r) => (float) $r->hours);
+
+        // 3) Calcular porcentaje
+        $mapped = $rows->map(function ($r) use ($totalHours) {
+            $hours = (float) $r->hours;
+            $pct = $totalHours > 0 ? ($hours / $totalHours) * 100 : 0;
+
+            return [
+                'workspace_id' => (int) $r->workspace_id,
+                'workspace'    => (string) $r->workspace,
+                'hours'        => round($hours, 2),
+                'pct'          => round($pct, 2),
+            ];
+        })->values();
+
+        // 4) Responder
+        return response()->json([
+            'start_date'   => $start->toDateString(),
+            'end_date'     => $end->toDateString(),
+            'total_hours'  => round((float) $totalHours, 2),
+            'rows'         => $mapped,
         ]);
     }
 }

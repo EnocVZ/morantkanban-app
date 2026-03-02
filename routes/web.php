@@ -490,3 +490,6 @@ Route::get('/workspaces/{workspace}/statistics/general/table-task-timers', [Work
 
 Route::get('/workspaces/statistics/general/export/task-timers-detail', [WorkspaceStatisticsController::class, 'exportTaskTimersDetail'])
     ->name('workspace.statistics.general.export.taskTimersDetail');
+
+Route::get('/workspace/charts/general/workspaces-time-pct', [WorkspaceStatisticsController::class, 'chartWorkspacesTimePct'])
+    ->name('workspace.charts.general.workspacesTimePct');
