@@ -43,7 +43,8 @@ use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\UserRequestController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\TaskTimeLifeController;
-
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\WorkspaceStatisticsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -467,3 +468,34 @@ Route::get('api/charts/project/labels-with-activity', [ProjectsController::class
 Route::get('api/charts/project/lists-with-activity', [ProjectsController::class, 'chartListsWithActivity'])
     ->name('charts.project.listsWithActivity')
     ->middleware('auth');
+
+Route::get('/statistics/general', [StatisticsController::class, 'general'])
+    ->name('statistics.general')
+    ->middleware('auth');
+
+Route::get('w/{uid}/statistics', [WorkSpacesController::class, 'viewStatisticsGeneral'])
+    ->name('workspace.statistics.general')
+    ->middleware('auth');
+
+Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatisticsController::class, 'hoursByUserProject'])
+  ->name('workspace.charts.general.hoursByUserProject')
+  ->middleware('auth');
+
+Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
+    ->name('workspace.statistics.general.export.hoursByUserProject')
+    ->middleware('auth');
+
+Route::get('/workspaces/{workspace}/statistics/general/table-task-timers', [WorkspaceStatisticsController::class, 'tableTaskTimers'])
+    ->name('workspace.statistics.general.table.taskTimers');
+
+Route::get('/workspaces/statistics/general/export/task-timers-detail', [WorkspaceStatisticsController::class, 'exportTaskTimersDetail'])
+    ->name('workspace.statistics.general.export.taskTimersDetail');
+
+Route::get('/workspace/charts/general/workspaces-time-pct', [WorkspaceStatisticsController::class, 'chartWorkspacesTimePct'])
+    ->name('workspace.charts.general.workspacesTimePct');
+
+Route::get('/workspaces/statistics/general/chart/userDailyHoursHeatmap',[WorkspaceStatisticsController::class, 'chartUserDailyHoursHeatmap'])
+    ->name('workspace.charts.general.userDailyHoursHeatmap');
+
+Route::get('/workspace/charts/general/projectTasksByDay', [WorkspaceStatisticsController::class, 'chartProjectTasksByDay'])
+    ->name('workspace.charts.general.projectTasksByDay');
