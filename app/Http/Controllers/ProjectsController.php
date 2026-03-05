@@ -737,173 +737,11 @@ class ProjectsController extends Controller {
             'project' => $project,
         ]);
     }
-
-    public function chartHoursByDay(Request $request)
-    {
-        $request->validate([
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date'],
-            'project_id' => ['required', 'integer'],
-            'user_id'    => ['required', 'integer'],
-            'label_id'   => ['nullable', 'integer'],
-            'list_id'    => ['nullable', 'integer'],
-        ]);
-
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end   = Carbon::parse($request->end_date)->endOfDay();
-
-        if ($start->gt($end)) {
-            return response()->json([
-                'error' => 'El rango de fechas no es válido (inicio > fin).'
-            ], 422);
-        }
-
-        $userId    = (int) $request->user_id;
-        $projectId = (int) $request->project_id;
-        $labelId   = $request->label_id ? (int) $request->label_id : null;
-        $listId    = $request->list_id ? (int) $request->list_id : null;
-
-        $base = DB::table('timers as t')
-            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
-            ->whereNotNull('t.stopped_at')
-            ->whereBetween(DB::raw('DATE(t.started_at)'), [
-                $start->toDateString(),
-                $end->toDateString(),
-            ])
-            ->where('ta.project_id', $projectId)
-            ->where('t.user_id', $userId);
-
-        if ($listId) {
-            $base->where('ta.list_id', $listId);
-        }
-
-        if ($labelId) {
-            $base->whereExists(function ($q) use ($labelId) {
-                $q->select(DB::raw(1))
-                ->from('task_labels as tl')
-                ->whereColumn('tl.task_id', 'ta.id')
-                ->where('tl.label_id', $labelId);
-            });
-        }
-
-        $rows = $base
-            ->groupBy(DB::raw('DATE(t.started_at)'))
-            ->orderBy(DB::raw('DATE(t.started_at)'))
-            ->selectRaw('DATE(t.started_at) as fecha, SUM(t.duration) / 3600 as horas')
-            ->get();
-
-        // Normaliza y rellena días faltantes con 0
-        $map = [];
-        foreach ($rows as $r) {
-            $key = (string) $r->fecha;
-            $map[$key] = (float) $r->horas;
-        }
-
-        $dates = [];
-        $hours = [];
-
-        $period = CarbonPeriod::create($start->toDateString(), $end->toDateString());
-
-        foreach ($period as $day) {
-            $key = $day->toDateString();
-            $hasData = array_key_exists($key, $map);
-
-            // ✅ Si es sábado/domingo y NO hay datos, se omite
-            if ($day->isWeekend() && !$hasData) {
-                continue;
-            }
-
-            $dates[] = $key;
-            $hours[] = $hasData ? (float) $map[$key] : 0.0;
-        }
-
-        $avg = count($hours) ? array_sum($hours) / count($hours) : 0.0;
-
-        return response()->json([
-            'start_date'   => $start->toDateString(),
-            'end_date'     => $end->toDateString(),
-            'project_id'   => $projectId,
-            'user_id'      => $userId,
-            'label_id'     => $labelId,
-            'list_id'      => $listId,
-            'avg_hours'    => (float) $avg,
-            'target_hours' => 8,
-            'data' => [
-                'dates' => $dates,
-                'hours' => $hours,
-            ],
-        ]);
-    }
+    
+    
 
 
-    public function chartTaskHours(Request $request)
-    {
-        $request->validate([
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date'],
-            'project_id' => ['required', 'integer'],
-            'user_id'    => ['required', 'integer'],
-            'label_id'   => ['nullable', 'integer'],
-            'list_id'    => ['nullable', 'integer'],
-        ]);
-
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end   = Carbon::parse($request->end_date)->endOfDay();
-
-        if ($start->gt($end)) {
-            return response()->json([
-                'error' => 'El rango de fechas no es válido (inicio > fin).'
-            ], 422);
-        }
-
-        $userId    = (int) $request->user_id;
-        $projectId = (int) $request->project_id;
-        $labelId   = $request->label_id ? (int) $request->label_id : null;
-        $listId    = $request->list_id ? (int) $request->list_id : null;
-
-        $base = DB::table('timers as t')
-            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
-            ->whereNotNull('t.stopped_at')
-            ->whereBetween(DB::raw('DATE(t.started_at)'), [
-                $start->toDateString(),
-                $end->toDateString(),
-            ])
-            ->where('ta.project_id', $projectId)
-            ->where('t.user_id', $userId);
-
-        if ($listId) {
-            $base->where('ta.list_id', $listId);
-        }
-
-        if ($labelId) {
-            $base->whereExists(function ($q) use ($labelId) {
-                $q->select(DB::raw(1))
-                ->from('task_labels as tl')
-                ->whereColumn('tl.task_id', 'ta.id')
-                ->where('tl.label_id', $labelId);
-            });
-        }
-
-        $rows = $base
-            ->groupBy('ta.id', 'ta.title')
-            ->orderByDesc(DB::raw('SUM(t.duration)'))
-            ->selectRaw('ta.id, ta.title, SUM(t.duration)/3600 as hours')
-            ->get();
-
-        return response()->json([
-            'project_id' => $projectId,
-            'start_date' => $start->toDateString(),
-            'end_date'   => $end->toDateString(),
-            'user_id'    => $userId,
-            'label_id'   => $labelId,
-            'list_id'    => $listId,
-            'rows' => $rows->map(fn($r) => [
-                'id'    => (int) $r->id,
-                'title' => $r->title,
-                'hours' => (float) $r->hours,
-            ]),
-        ]);
-    }
+    
 
 
     public function chartTasksByUser(Request $request)
@@ -979,6 +817,7 @@ class ProjectsController extends Controller {
         ]);
     }
 
+    
     public function chartHoursByUser(Request $request)
     {
         $request->validate([
@@ -1008,8 +847,8 @@ class ProjectsController extends Controller {
         ->whereBetween(DB::raw('DATE(t.started_at)'), [
             $start->toDateString(),
             $end->toDateString(),
-        ])
-        ->where('ta.project_id', $projectId);
+        ]);
+        // ->where('ta.project_id', $projectId);
 
         $listId = $request->list_id ? (int) $request->list_id : null;
 
@@ -1114,69 +953,7 @@ class ProjectsController extends Controller {
         ]);
     }
 
-    public function chartProjectRequestsTable(Request $request)
-    {
-        $request->validate([
-            'project_id' => ['required', 'integer'],
-        ]);
-
-        $projectId = (int) $request->project_id;
-
-        $rows = DB::table('user_request as ur')
-            ->join('users as u1', 'ur.user_id', '=', 'u1.id')
-            ->join('request_type as rt', 'ur.request_type_id', '=', 'rt.id')
-            ->join('tasks as ta', 'ur.task_id', '=', 'ta.id')
-            ->join('projects as pr', 'ta.project_id', '=', 'pr.id')
-            ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
-            ->leftJoin('board_sublist as bsl', 'ta.sublist_id', '=', 'bsl.id')
-            ->leftJoin('assignees as asg', 'ta.id', '=', 'asg.task_id')
-            ->leftJoin('users as u2', 'asg.user_id', '=', 'u2.id')
-            ->where('ur.project_id', $projectId)
-            ->selectRaw('
-                ur.id as requestId,
-                CONCAT(u1.first_name, " ", u1.last_name) as userRequest,
-                ur.created_at as dateRequest,
-                rt.title as requestType,
-                ta.title as taskTitle,
-                pr.title as projectTitle,
-                bl.title as listTitle,
-                bsl.title as sublistTitle,
-
-                GROUP_CONCAT(
-                    DISTINCT CONCAT(u2.first_name, " ", u2.last_name)
-                    ORDER BY u2.first_name, u2.last_name
-                    SEPARATOR ", "
-                ) as userAssigned
-            ')
-            ->groupBy(
-                'ur.id',
-                'u1.first_name',
-                'u1.last_name',
-                'ur.created_at',
-                'rt.title',
-                'ta.title',
-                'pr.title',
-                'bl.title',
-                'bsl.title'
-            )
-            ->orderByDesc('ur.created_at')
-            ->get();
-
-        return response()->json([
-            'project_id' => $projectId,
-            'rows' => $rows->map(fn($r) => [
-                'requestId'    => (int) $r->requestId,
-                'userRequest'  => $r->userRequest,
-                'dateRequest'  => $r->dateRequest,
-                'requestType'  => $r->requestType,
-                'taskTitle'    => $r->taskTitle,
-                'userAssigned' => $r->userAssigned,     // string concatenado o null
-                'projectTitle' => $r->projectTitle,
-                'listTitle'    => $r->listTitle,
-                'sublistTitle' => $r->sublistTitle,     // puede ser null
-            ]),
-        ]);
-    }
+    
 
     public function chartLabelsWithActivity(Request $request)
     {
@@ -1288,6 +1065,649 @@ class ProjectsController extends Controller {
             'data' => $rows->map(fn($r) => [
                 'id' => (int) $r->id,
                 'title' => $r->title,
+            ]),
+        ]);
+    }
+
+    
+
+    //Comportamiento semanal
+    public function chartHoursByDay(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+            'label_id'   => ['nullable', 'integer'],
+            'list_id'    => ['nullable', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        $userId    = (int) $request->user_id;
+        $projectId = (int) $request->project_id;
+        $labelId   = $request->label_id ? (int) $request->label_id : null;
+        $listId    = $request->list_id ? (int) $request->list_id : null;
+
+        $base = DB::table('timers as t')
+            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            // ->where('ta.project_id', $projectId)
+            ->where('t.user_id', $userId);
+
+        if ($listId) {
+            $base->where('ta.list_id', $listId);
+        }
+
+        if ($labelId) {
+            $base->whereExists(function ($q) use ($labelId) {
+                $q->select(DB::raw(1))
+                ->from('task_labels as tl')
+                ->whereColumn('tl.task_id', 'ta.id')
+                ->where('tl.label_id', $labelId);
+            });
+        }
+
+        $rows = $base
+            ->groupBy(DB::raw('DATE(t.started_at)'))
+            ->orderBy(DB::raw('DATE(t.started_at)'))
+            ->selectRaw('DATE(t.started_at) as fecha, SUM(t.duration) / 3600 as horas')
+            ->get();
+
+        // Normaliza y rellena días faltantes con 0
+        $map = [];
+        foreach ($rows as $r) {
+            $key = (string) $r->fecha;
+            $map[$key] = (float) $r->horas;
+        }
+
+        $dates = [];
+        $hours = [];
+
+        $period = CarbonPeriod::create($start->toDateString(), $end->toDateString());
+
+        foreach ($period as $day) {
+            $key = $day->toDateString();
+            $hasData = array_key_exists($key, $map);
+
+            // ✅ Si es sábado/domingo y NO hay datos, se omite
+            if ($day->isWeekend() && !$hasData) {
+                continue;
+            }
+
+            $dates[] = $key;
+            $hours[] = $hasData ? (float) $map[$key] : 0.0;
+        }
+
+        $avg = count($hours) ? array_sum($hours) / count($hours) : 0.0;
+
+        return response()->json([
+            'start_date'   => $start->toDateString(),
+            'end_date'     => $end->toDateString(),
+            'project_id'   => $projectId,
+            'user_id'      => $userId,
+            'label_id'     => $labelId,
+            'list_id'      => $listId,
+            'avg_hours'    => (float) $avg,
+            'target_hours' => 8,
+            'data' => [
+                'dates' => $dates,
+                'hours' => $hours,
+            ],
+        ]);
+    }
+
+    //Porcentaje carril por dias
+    public function chartListsPercentByDay(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'Rango inválido.'], 422);
+        }
+
+        $projectId = (int) $request->project_id;
+        $userId    = (int) $request->user_id;
+
+        $targetHours = 8.0;
+        $deadLabel = 'Tiempo muerto';
+
+        $sub = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->where('t.user_id', $userId)
+            // ->where('ta.project_id', $projectId)
+            ->groupBy(DB::raw('DATE(t.started_at)'), 'ta.list_id')
+            ->selectRaw('DATE(t.started_at) as fecha, ta.list_id, SUM(t.duration)/3600 as horas');
+
+        // Join con board_lists para obtener title del carril
+        $rows = DB::table('board_lists as bl')
+            ->joinSub($sub, 'x', fn($join) => $join->on('x.list_id', '=', 'bl.id'))
+            ->select('bl.title as list_title', 'x.fecha', 'x.horas')
+            ->orderBy('x.fecha')
+            ->orderBy('bl.title')
+            ->get();
+
+        // 1) Generar lista completa de fechas (aunque no haya data)
+        $dates = [];
+        foreach (CarbonPeriod::create($start->toDateString(), $end->toDateString()) as $day) {
+            $dates[] = $day->toDateString();
+        }
+
+        // 2) Armar mapas: totales por día y horas por día/carril
+        $dayTotals = [];     // [fecha => totalHoras]
+        $dayLists = [];      // [fecha => [listTitle => horas]]
+        $allLists = [];      // set de carriles (title)
+
+        foreach ($rows as $r) {
+            $fecha = (string) $r->fecha;
+            $list  = (string) $r->list_title;
+            $hrs   = (float) $r->horas;
+
+            $dayTotals[$fecha] = ($dayTotals[$fecha] ?? 0.0) + $hrs;
+
+            if (!isset($dayLists[$fecha])) $dayLists[$fecha] = [];
+            $dayLists[$fecha][$list] = ($dayLists[$fecha][$list] ?? 0.0) + $hrs;
+
+            $allLists[$list] = true;
+        }
+
+        $lists = array_keys($allLists);
+        sort($lists);
+
+        // 3) Inicializar series (porcentaje por carril y día)
+        $series = [];
+        foreach ($lists as $name) {
+            $series[$name] = array_fill(0, count($dates), 0.0);
+        }
+        $series[$deadLabel] = array_fill(0, count($dates), 0.0);
+
+        // 4) Calcular porcentajes (y tiempo muerto)
+        foreach ($dates as $i => $d) {
+            $totalHrs = (float) ($dayTotals[$d] ?? 0.0);
+
+            foreach ($lists as $name) {
+                $hrs = (float) ($dayLists[$d][$name] ?? 0.0);
+                $pct = ($hrs / $targetHours) * 100.0;
+                $series[$name][$i] = round($pct, 2);
+            }
+
+            $deadHrs = max(0.0, $targetHours - $totalHrs);
+            $deadPct = ($deadHrs / $targetHours) * 100.0;
+            $series[$deadLabel][$i] = round($deadPct, 2);
+        }
+
+        $listsWithDead = array_merge($lists, [$deadLabel]);
+
+        return response()->json([
+            'project_id'   => $projectId,
+            'user_id'      => $userId,
+            'start_date'   => $start->toDateString(),
+            'end_date'     => $end->toDateString(),
+            'target_hours' => $targetHours,
+            'data' => [
+                'dates'  => $dates,
+                'lists'  => $listsWithDead,
+                'series' => $series,
+            ],
+        ]);
+    }
+
+    //Porcentaje carril por rango
+    public function chartListsPercentWeek(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'Rango inválido.'], 422);
+        }
+
+        $projectId = (int) $request->project_id;
+        $userId    = (int) $request->user_id;
+
+        $hoursPerDay = 8.0;
+        $deadLabel = 'Tiempo muerto';
+
+        // 1) Calcular días hábiles (Lun-Vie) dentro del rango
+        $workDays = 0;
+        foreach (CarbonPeriod::create($start->toDateString(), $end->toDateString()) as $day) {
+            // isoWeekday(): 1=lunes ... 7=domingo
+            if ($day->isoWeekday() <= 5) $workDays++;
+        }
+
+        $targetHours = $workDays * $hoursPerDay;
+
+        // Si no hay días hábiles (rango solo fin de semana), evitamos dividir entre 0
+        if ($targetHours <= 0) {
+            return response()->json([
+                'project_id' => $projectId,
+                'user_id'    => $userId,
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->toDateString(),
+                'work_days'  => $workDays,
+                'target_hours' => 0,
+                'data' => [
+                    'labels' => [$deadLabel],
+                    'hours'  => [0],
+                    'percent'=> [100],
+                ],
+            ]);
+        }
+
+       
+        $sub = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->where('t.user_id', $userId)
+            // ->where('ta.project_id', $projectId)
+            ->groupBy('ta.list_id')
+            ->selectRaw('ta.list_id, SUM(t.duration)/3600 as horas');
+
+        // Join con board_lists para el title
+        $rows = DB::table('board_lists as bl')
+            ->joinSub($sub, 'x', fn($join) => $join->on('x.list_id', '=', 'bl.id'))
+            ->select('bl.title as list_title', 'x.horas')
+            ->orderBy('bl.title')
+            ->get();
+
+        // 2) Calcular porcentajes por carril y tiempo muerto
+        $labels = [];
+        $hours = [];
+        $percent = [];
+
+        $totalWorked = 0.0;
+        foreach ($rows as $r) {
+            $labels[] = (string) $r->list_title;
+            $h = (float) $r->horas;
+            $hours[] = round($h, 2);
+
+            $p = ($h / $targetHours) * 100.0;
+            $percent[] = round($p, 2);
+
+            $totalWorked += $h;
+        }
+
+        $deadHours = max(0.0, $targetHours - $totalWorked);
+        $deadPct   = ($deadHours / $targetHours) * 100.0;
+
+        // Agregar Tiempo muerto al final
+        $labels[] = $deadLabel;
+        $hours[] = round($deadHours, 2);
+        $percent[] = round($deadPct, 2);
+
+        return response()->json([
+            'project_id'   => $projectId,
+            'user_id'      => $userId,
+            'start_date'   => $start->toDateString(),
+            'end_date'     => $end->toDateString(),
+            'work_days'    => $workDays,
+            'hours_per_day'=> $hoursPerDay,
+            'target_hours' => round($targetHours, 2),
+            'data' => [
+                'labels'  => $labels,
+                'hours'   => $hours,
+                'percent' => $percent,
+            ],
+        ]);
+    }
+
+    //Tabla detalle de tareas    
+    public function chartTaskHours(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+            'label_id'   => ['nullable', 'integer'],
+            'list_id'    => ['nullable', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        $userId    = (int) $request->user_id;
+        $projectId = (int) $request->project_id;
+        $labelId   = $request->label_id ? (int) $request->label_id : null;
+        $listId    = $request->list_id ? (int) $request->list_id : null;
+
+        // =========================
+        // Subquery: etiquetas por tarea
+        // =========================
+        $labelsSub = DB::table('task_labels as tl')
+            ->join('labels as l', 'tl.label_id', '=', 'l.id')
+            ->groupBy('tl.task_id')
+            ->selectRaw('
+                tl.task_id,
+                GROUP_CONCAT(
+                    DISTINCT CONCAT(l.name, "||", l.color)
+                    ORDER BY l.name
+                    SEPARATOR "##"
+                ) as labels_raw
+            ');
+
+        // =========================
+        // ✅ Subquery: desglose de timers por tarea
+        // - times_raw => "started||stopped||hours##started||stopped||hours"
+        // =========================
+        $timesSub = DB::table('timers as t')
+            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            // ->where('ta.project_id', $projectId)
+            ->where('t.user_id', $userId);
+
+        if ($listId) {
+            $timesSub->where('ta.list_id', $listId);
+        }
+
+        if ($labelId) {
+            $timesSub->whereExists(function ($q) use ($labelId) {
+                $q->select(DB::raw(1))
+                    ->from('task_labels as tl')
+                    ->whereColumn('tl.task_id', 'ta.id')
+                    ->where('tl.label_id', $labelId);
+            });
+        }
+
+        $timesSub = $timesSub
+            ->groupBy('ta.id')
+            ->selectRaw('
+                ta.id as task_id,
+                GROUP_CONCAT(
+                    CONCAT(
+                        t.started_at, "||",
+                        t.stopped_at, "||",
+                        (t.duration/3600)
+                    )
+                    ORDER BY t.started_at
+                    SEPARATOR "##"
+                ) as times_raw
+            ');
+
+        // =========================
+        // Query principal (la tuya)
+        // =========================
+        $base = DB::table('timers as t')
+            ->join('tasks as ta', 'ta.id', '=', 't.task_id')
+            ->leftJoinSub($labelsSub, 'lb', fn($join) => $join->on('lb.task_id', '=', 'ta.id'))
+            ->leftJoinSub($timesSub, 'tm', fn($join) => $join->on('tm.task_id', '=', 'ta.id'))
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            // ->where('ta.project_id', $projectId)
+            ->where('t.user_id', $userId);
+
+        if ($listId) {
+            $base->where('ta.list_id', $listId);
+        }
+
+        if ($labelId) {
+            $base->whereExists(function ($q) use ($labelId) {
+                $q->select(DB::raw(1))
+                    ->from('task_labels as tl')
+                    ->whereColumn('tl.task_id', 'ta.id')
+                    ->where('tl.label_id', $labelId);
+            });
+        }
+
+        $rows = $base
+            // ✅ Agregar tm.times_raw al groupBy para evitar ONLY_FULL_GROUP_BY
+            ->groupBy('ta.id', 'ta.title', 'ta.created_at', 'lb.labels_raw', 'tm.times_raw')
+            ->orderByDesc(DB::raw('SUM(t.duration)'))
+            ->selectRaw('
+                ta.id,
+                ta.title,
+                ta.created_at as created_at,
+                lb.labels_raw as labels_raw,
+                tm.times_raw as times_raw,
+                SUM(t.duration)/3600 as hours
+            ')
+            ->get();
+
+        return response()->json([
+            'project_id' => $projectId,
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'user_id'    => $userId,
+            'label_id'   => $labelId,
+            'list_id'    => $listId,
+            'rows' => $rows->map(function ($r) {
+                // ===== labels =====
+                $labels = [];
+                if (!empty($r->labels_raw)) {
+                    $parts = explode('##', $r->labels_raw);
+                    foreach ($parts as $p) {
+                        [$name, $color] = array_pad(explode('||', $p), 2, null);
+                        if ($name) {
+                            $labels[] = [
+                                'name'  => $name,
+                                'color' => $color, // ej "#fdd0ec"
+                            ];
+                        }
+                    }
+                }
+
+                // ===== times =====
+                $times = [];
+                if (!empty($r->times_raw)) {
+                    $parts = explode('##', $r->times_raw);
+                    foreach ($parts as $p) {
+                        [$startedAt, $stoppedAt, $hours] = array_pad(explode('||', $p), 3, null);
+
+                        if ($startedAt && $stoppedAt) {
+                            $times[] = [
+                                'startedAt' => $startedAt,
+                                'stoppedAt' => $stoppedAt,
+                                'hours'     => (float) $hours,
+                            ];
+                        }
+                    }
+                }
+
+                return [
+                    'id'        => (int) $r->id,
+                    'title'     => $r->title,
+                    'createdAt' => $r->created_at,
+                    'hours'     => (float) $r->hours,
+                    'labels'    => $labels,
+                    'times'     => $times, // ✅ desglose de timers
+                ];
+            }),
+        ]);
+    }
+
+    //Gráfica Timeline diario
+    public function chartWorkSchedule(Request $request)
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'Rango inválido.'], 422);
+        }
+
+        $projectId = (int) $request->project_id;
+        $userId    = (int) $request->user_id;
+
+        $rows = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->where('t.user_id', $userId)
+            ->where('ta.project_id', $projectId)
+            ->orderBy(DB::raw('DATE(t.started_at)'))
+            ->orderBy('t.started_at')
+            ->selectRaw('
+                ta.id as task_id,
+                ta.title as task_title,
+                DATE(t.started_at) as work_date,
+                t.started_at,
+                t.stopped_at,
+                t.duration/3600 as hours
+            ')
+            ->get();
+
+        return response()->json([
+            'project_id' => $projectId,
+            'user_id'    => $userId,
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'rows' => $rows->map(fn($r) => [
+                'taskId'    => (int) $r->task_id,
+                'taskTitle' => $r->task_title,
+                'date'      => $r->work_date,     // YYYY-MM-DD
+                'startedAt' => $r->started_at,    // datetime
+                'stoppedAt' => $r->stopped_at,    // datetime
+                'hours'     => (float) $r->hours, // duración hrs
+            ]),
+        ]);
+    }
+
+    //Solicitudes realizadas que tenga tareas asignadas
+
+    public function chartProjectRequestsTable(Request $request)
+    {
+        $request->validate([
+            'project_id' => ['required', 'integer'],
+            'user_id'    => ['required', 'integer'],
+        ]);
+
+        $projectId = (int) $request->project_id;
+        $userId    = (int) $request->user_id;
+
+        $rows = DB::table('user_request as ur')
+            ->join('users as u1', 'ur.user_id', '=', 'u1.id')
+            ->join('request_type as rt', 'ur.request_type_id', '=', 'rt.id')
+            ->join('tasks as ta', 'ur.task_id', '=', 'ta.id')
+            ->join('projects as pr', 'ta.project_id', '=', 'pr.id')
+            ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->leftJoin('board_sublist as bsl', 'ta.sublist_id', '=', 'bsl.id')
+            ->leftJoin('assignees as asg', 'ta.id', '=', 'asg.task_id')
+            ->leftJoin('users as u2', 'asg.user_id', '=', 'u2.id')
+            // ->where('ta.project_id', $projectId)
+            ->whereExists(function ($q) use ($userId) {
+                $q->select(DB::raw(1))
+                ->from('assignees as ax')
+                ->whereColumn('ax.task_id', 'ta.id')
+                ->where('ax.user_id', $userId);
+            })
+            ->selectRaw('
+                ur.id as requestId,
+                CONCAT(u1.first_name, " ", u1.last_name) as userRequest,
+                ur.created_at as dateRequest,
+                rt.title as requestType,
+                ta.title as taskTitle,
+                pr.title as projectTitle,
+                bl.title as listTitle,
+                bsl.title as sublistTitle,
+
+                GROUP_CONCAT(
+                    DISTINCT CONCAT(u2.first_name, " ", u2.last_name)
+                    ORDER BY u2.first_name, u2.last_name
+                    SEPARATOR ", "
+                ) as userAssigned
+            ')
+            ->groupBy(
+                'ur.id',
+                'u1.first_name',
+                'u1.last_name',
+                'ur.created_at',
+                'rt.title',
+                'ta.title',
+                'pr.title',
+                'bl.title',
+                'bsl.title'
+            )
+            ->orderByDesc('ur.created_at')
+            ->get();
+
+        return response()->json([
+            'project_id' => $projectId,
+            'user_id'    => $userId,
+            'rows' => $rows->map(fn($r) => [
+                'requestId'    => (int) $r->requestId,
+                'userRequest'  => $r->userRequest,
+                'dateRequest'  => $r->dateRequest,
+                'requestType'  => $r->requestType,
+                'taskTitle'    => $r->taskTitle,
+                'userAssigned' => $r->userAssigned,
+                'projectTitle' => $r->projectTitle,
+                'listTitle'    => $r->listTitle,
+                'sublistTitle' => $r->sublistTitle,
+            ]),
+        ]);
+    }
+
+    public function chartUsersOptions(Request $request)
+    {
+        // ✅ Sin validate, porque ya no necesita project_id
+        $rows = DB::table('users as u')
+            ->selectRaw('u.id, CONCAT(u.first_name, " ", u.last_name) as name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => $rows->map(fn($r) => [
+                'id'   => (int) $r->id,
+                'name' => $r->name,
             ]),
         ]);
     }
