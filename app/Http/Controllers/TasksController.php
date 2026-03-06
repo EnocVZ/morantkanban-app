@@ -180,9 +180,9 @@ class TasksController extends Controller
     }
 
     public function getJsonTask($taskUid){
-      $task = Task::where(function ($q) use ($taskUid) {
-            $q->where('id', $taskUid)
-            ->orWhere('slug', $taskUid);
+        $task = Task::where(function ($q) use ($taskUid) {
+        $q->where('id', $taskUid)
+        ->orWhere('slug', $taskUid);
         })
         ->with([
             'project',
@@ -206,16 +206,33 @@ class TasksController extends Controller
                 })
                 ->with([
                     'task' => function ($q) {
-                        $q->with(['list', 'sublist', 'assignees']);
+                        $q->with(['list','sublist','assignees']);
                     }
                 ]);
-            },
-
-            'subtask'
+            }
         ])
-        ->withCount('checklistDone')
+
+        ->withCount([
+            'subtaskList as total_subtasks',
+
+            'subtaskList as completed_subtasks' => function ($q) {
+                $q->whereHas('task', function ($q) {
+                    $q->where('is_done', 1);
+                });
+            }
+        ])
+
         ->first();
 
+        if ($task) {
+
+            $total = $task->total_subtasks;
+            $done = $task->completed_subtasks;
+
+            $task->progress = $total > 0
+                ? round(($done / $total) * 100)
+                : 0;
+        }
 
         if ($task && $task->timerList) {
             $userDurations = $task->timerList

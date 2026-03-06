@@ -72,7 +72,6 @@
             </div>
             <div v-else>
                <div class="content">
-                
                   <FolderSelection v-if="exploreFolder" :loaderUpload="isLoadingAttach" @onUploadFile="uploadAttachment"
                      @close="exploreFolder = false" :project="task.project" />
                   <toast ref="toast" :type="notificationType">{{ notificationMessage }}</toast>
@@ -136,6 +135,7 @@
                         <button type="button" class="small save" @click="moveTask()">{{ __('Move') }}</button>
                      </div>
                   </div>
+                  
                   <div class="m__body">
                      <main class="main">
                         <div class="s__1">
@@ -391,41 +391,22 @@
                               <h3 class="text-gray-700 font-semibold">Subtareas</h3>
                               <div class="flex items-center gap-4">
                               <button 
-                              @click="showFormSubTask =true"
+                              @click="openModalSubtask = true"
                               class="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-indigo-600">
                                  +
                               </button>
                               </div>
                            </div>
 
-                            <div class="flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow-md" v-if="showFormSubTask">
-                              <!-- Input -->
-                              <div class="w-full">
-                                 <label for="titleSubTask" class="block text-gray-700 text-sm font-medium mb-2">
-                                    Crear subtarea
-                                 </label>
-                                 <input type="text" v-model="titleSubTask" id="titleSubTask"
-                                    placeholder="Título de la tarea"
-                                    class="w-full border border-gray-300 rounded-lg py-2 px-3 text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                              </div>
-
-                              
-                              <div class="flex items-center action__buttons mt-2 justify-end"
-                                 v-show="!showLoadAttachLink">
-                                 <button type="button" class="small save" @click="saveSubTask">Guardar</button>
-                                 <button @click="showFormSubTask = false" type="button" class="small cancel">{{
-                                    __('Cancel') }}</button>
+                            
+                           <!-- Progress -->
+                           <div class="flex justify-between items-center mb-4">
+                              <span class="text-sm text-gray-600">{{ task.progress }}% Completado</span>
+                              <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                              <div class="bg-green-500 h-2 rounded-full" :style="{ width: task.progress + '%' }"></div>
                               </div>
                            </div>
-
-                           <!-- Progress -->
-                           <!--div class="flex justify-between items-center mb-4">
-                              <span class="text-sm text-gray-600">0% Done</span>
-                              <div class="w-1/2 bg-gray-200 rounded-full h-2">
-                              <div class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
-                              </div>
-                           </div-->
-
+                           <subtask v-model="openModalSubtask" :taskId="task.id" :projectId="this.task.project_id" @onSubmit="saveSubTask"></subtask>
                               <!-- List -->
                               <ul>
                                  <li
@@ -976,6 +957,7 @@
                   <TimeTrackingModal :open="openLogTime" @close="onCloseTimeTracking">
                      <TimeTracking :timer="timerToUpdate" :taskId="task.id" @close="onCloseTimeTracking"/>
                   </TimeTrackingModal>
+                  
                </div>
             </div>
          </div>
@@ -1003,6 +985,7 @@ import FolderSelection from '@/Shared/Modals/FolderSelection'
 import SelectMultiple from '@/Shared/SelectMultiple.vue';
 import TimeTracking from './TimeTracking.vue';
 import TimeTrackingModal from './TimeTrackingModal.vue';
+import Subtask from '@/Pages/Projects/Subtask.vue';
 
 export default {
    props: {
@@ -1085,12 +1068,14 @@ export default {
          parentTask:{},
          selectedUsers: [],
          openLogTime: false,
-         timerToUpdate:{}
+         timerToUpdate:{},
+         openModalSubtask: false
       }
    },
    components: {
       Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection, SelectMultiple,
-      TimeTracking, TimeTrackingModal
+      TimeTracking, TimeTrackingModal,
+      Subtask
    },
    computed: {
       sortedTasks: () => {
@@ -1714,28 +1699,8 @@ export default {
          })
 
       },
-      saveSubTask(){
-         //this.showLoadAttachLink = true
-         const request = {
-            title: this.titleSubTask,
-            parent_id: this.task.id,
-            project_id: this.task.project_id
-         }
-         axios.post(this.route('subtask.new'), request
-         ).then(res => {
-            const data = res.data
-            if(!data.error){
-               this.titleSubTask = '';
-               this.showFormSubTask = false;
-               this.task.subtask_list.push(data.data)
-            }
-
-         }).catch(e => {
-            
-         }).finally(() => {
-            this.showLoadAttachLink = false
-         })
-
+      saveSubTask(data){
+         this.task.subtask_list.push(data)
       },
       formatDate(date) {
          // Configurar el idioma español

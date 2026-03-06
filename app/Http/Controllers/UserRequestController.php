@@ -56,7 +56,7 @@ class UserRequestController extends Controller
                 ])
                 ->orderBy('created_at', 'desc')
                 ;
-            return MethodHelper::successResponse($items->get(), $items->toRawSql());
+            return MethodHelper::successResponse($items->get());
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }

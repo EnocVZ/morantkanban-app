@@ -7,59 +7,7 @@
       <board-filter :project="project" @board-filter="open_filter = false" :filters="filters" v-if="open_filter"
          @do-filter="doFilter" options="user,due,label" />
       <div class="p-6 min-h-screen">
-         <div class="space-y-6 pb-6" v-if="userRequestList.length > 0">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-               <div class="bg-gradient-to-r px-6 py-4 flex justify-between items-center">
-                  <div class="flex items-center gap-3">
-                     <div class="bg-white/20 p-2 rounded-lg backdrop-blur-md">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                     </div>
-                     <h2 class=" font-bold text-lg tracking-tight">{{ __('Solicitudes') }}</h2>
-                  </div>
-                  <span
-                     class="bg-white/20  text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
-                     {{ userRequestList.length }} pendientes
-                  </span>
-               </div>
-
-
-              <ul class="px-3 pb-3 grid 
-           grid-cols-1 
-           sm:grid-cols-2 
-           lg:grid-cols-3 
-           gap-4">
-
-                  <draggable :list="userRequestList" group="tasklist" item-key="id" class="contents">
-                     <template #item="{ element, indexTsk }">
-
-                        <li :key="indexTsk" class="bg-white border border-gray-200 
-                           rounded-xl p-4 
-                           shadow-sm hover:shadow-md
-                           transition-all duration-200">
-
-                           <!-- Título -->
-                           <h3 class="text-sm font-semibold text-gray-800 mb-2" @click="taskDetailsPopup(element.id)">
-                              {{ element.title }}
-                           </h3>
-
-                           <!-- Footer simple -->
-                           <div class="text-xs text-gray-500">
-                              {{ element.created_at_for_humans }}
-                           </div>
-
-                        </li>
-
-                     </template>
-                  </draggable>
-
-               </ul>
-
-            </div>
-         </div>
-
+         
          <!-- Listado de Sprints -->
          <div class="space-y-5">
             <draggable class="space-y-5" :list="board_lists" group="carrillist" item-key="id"
@@ -438,7 +386,7 @@ export default {
          this.taskDetailsPopup(this.filters.task)
       }
       this.board_lists = this.lists;
-      this.getUserRequests();
+     // this.getUserRequests();
 
    },
    methods: {

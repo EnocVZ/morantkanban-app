@@ -9,68 +9,105 @@
                 @do-filter="doFilter" options="user,due,label" />
             <div class="flex flex-col task__table overflow-y-auto h-full">
                 <div class="inline-block min-w-full h-full py-4 align-middle md:px-3 lg:px-4">
-                    <div class="flex space-x-4 overflow-x-auto p-4  min-h-screen bg-gray-100">
-                        
-                    <div v-for="(column, index) in tasks" :key="index"
-                        class="bg-white rounded-xl shadow-md w-96 flex flex-col">
-                        <div class="flex justify-between p-4 border-b">
-                            <h2 class="text-lg font-semibold">{{ column.title }}</h2>
-                            <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
-                            aria-label="Total de tareas">{{ column.total_tasks }}</span>
+                    <div class="flex space-x-4 overflow-x-auto p-4  min-h-screen bg-gray-100" v-show="project.project_type == 1">
+                        {{ project }}
+                        <div v-for="(column, index) in tasks" :key="index"
+                            class="bg-white rounded-xl shadow-md w-96 flex flex-col">
+                            <div class="flex justify-between p-4 border-b">
+                                <h2 class="text-lg font-semibold">{{ column.title }}</h2>
+                                <span class="inline-flex items-center justify-center px-3 py-1 ml-1 mr-1 text-xs cursor-default font-semibold text-indigo-500 bg-indigo-600 rounded-full bg-opacity-30"
+                                aria-label="Total de tareas">{{ column.total_tasks }}</span>
+                            </div>
+                            <ul class="space-y-2 mt-2 p-4">
+                                <li  v-for="element in column.tasks" :key="element.id"
+                                    @click="taskDetailsPopup(element)"
+                                    class="li_box p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded"
+                                    :class="{ 'bg-blue-50': element.user_request.read == 0}">
+                                    <!-- Etiquetas -->
+                                    <!--div v-if="element.task_labels.length"
+                                        class="mb-2 flex flex-wrap gap-1">
+                                        <button v-for="(la, l_index) in element.task_labels"
+                                            :key="l_index"
+                                            class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
+                                            :style="{ backgroundColor: la.label.color }"
+                                            :aria-label="la.label.name">
+                                            {{ la.label.name }}
+                                        </button>
+                                    </div-->
+
+                                    <!-- Título -->
+                                    <div class="font-medium text-sm text-gray-800 mb-2">{{ element.title }}</div>
+
+                                    <!-- Footer -->
+                                    <div
+                                        class="flex flex-wrap items-center text-gray-500 text-xs gap-3">
+                                        <!-- Fecha de entrega -->
+                                        <div 
+                                            :class="['flex items-center gap-1']">
+                                            <icon name="time" class="w-4 h-4" />
+                                            <span aria-label="Numero de días en la lista">{{ element.time_elapsed }}</span>
+                                        </div>
+                                        <div 
+                                            :class="['flex items-center gap-1']">
+                                            <icon name="time" class="w-4 h-4" />
+                                            <span aria-label="Numero de días en la lista">Creado hace {{ element.created_at_for_humans }}</span>
+                                        </div>
+                                        
+
+
+                                        <!-- Checklist -->
+                                        <div class="flex items-center gap-1 text-gray-500"
+                                            v-if="element?.subtask_list_count > 0">
+                                            <icon name="checklist" class="w-4 h-4" />
+                                            <span>
+                                                {{ element?.sub_task_completed_count + '/' +
+                                                element?.subtask_list_count }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
-                        <ul class="space-y-2 mt-2 p-4">
-                            <li  v-for="element in column.tasks" :key="element.id"
-                                @click="taskDetailsPopup(element)"
-                                class="li_box p-2 rounded shadow text-sm mt-2 mb-2 hover:bg-gray-50 hover:co cursor-pointer focus:outline-none focus:border focus:border-black p-2 rounded"
-                                :class="{ 'bg-blue-50': element.user_request.read == 0}">
-                                <!-- Etiquetas -->
-                                <!--div v-if="element.task_labels.length"
-                                    class="mb-2 flex flex-wrap gap-1">
-                                    <button v-for="(la, l_index) in element.task_labels"
-                                        :key="l_index"
-                                        class="text-xs text-white rounded-full px-2 py-0.5 font-medium"
-                                        :style="{ backgroundColor: la.label.color }"
-                                        :aria-label="la.label.name">
-                                        {{ la.label.name }}
-                                    </button>
-                                </div-->
-
-                                <!-- Título -->
-                                <div class="font-medium text-sm text-gray-800 mb-2">{{ element.title }}</div>
-
-                                <!-- Footer -->
-                                <div
-                                    class="flex flex-wrap items-center text-gray-500 text-xs gap-3">
-                                    <!-- Fecha de entrega -->
-                                    <div 
-                                        :class="['flex items-center gap-1']">
-                                        <icon name="time" class="w-4 h-4" />
-                                        <span aria-label="Numero de días en la lista">{{ element.time_elapsed }}</span>
-                                    </div>
-                                    <div 
-                                        :class="['flex items-center gap-1']">
-                                        <icon name="time" class="w-4 h-4" />
-                                        <span aria-label="Numero de días en la lista">Creado hace {{ element.created_at_for_humans }}</span>
-                                    </div>
-                                    
-
-
-                                    <!-- Checklist -->
-                                    <div class="flex items-center gap-1 text-gray-500"
-                                        v-if="element?.subtask_list_count > 0">
-                                        <icon name="checklist" class="w-4 h-4" />
-                                        <span>
-                                            {{ element?.sub_task_completed_count + '/' +
-                                            element?.subtask_list_count }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
                     </div>
-      </div>
+                    
                     <div class="table__view">
-                        
+                        <div v-show="project.project_type == 2"
+                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mx-4 mt-4">
+
+                        <div
+                            v-for="(element, indexTsk) in requestList"
+                            :key="indexTsk"
+                            @click="taskDetailsPopup(element)"
+                            class="group bg-white border border-gray-200 rounded-lg p-3
+                                shadow-sm hover:shadow-md hover:border-blue-200
+                                transition-all duration-200 cursor-pointer
+                                min-h-[70px] flex flex-col justify-between"
+                        >
+
+                            <!-- Título -->
+                            <h3 class="text-xs font-semibold text-gray-800 
+                                    group-hover:text-blue-600 line-clamp-2">
+                            {{ element.title }}
+                            </h3>
+
+                            <!-- Footer -->
+                            <div class="flex justify-between items-center mt-2">
+
+                            <span
+                                class="text-[10px] bg-blue-50 text-blue-600
+                                    px-2 py-[2px] rounded-md font-medium">
+                                Tarea
+                            </span>
+
+                            <span class="text-[10px] text-gray-500">
+                                {{ element.created_at_for_humans }}
+                            </span>
+
+                            </div>
+
+                        </div>
+
+                        </div>
                         <!-- List Popup Board -->
                         <div class="absolute flex w-[300px] z-10 text-sm flex-col bg-white px-4 py-4 rounded shadow"
                             :style="{ top: selected.top, left: selected.left }" v-if="showListBox">
@@ -201,6 +238,7 @@ export default {
         lists: {
             required: false,
         },
+        requestList: Object,
     },
     remember: 'form',
     data() {
@@ -253,18 +291,10 @@ export default {
     },
     created() {
         this.moment = moment
-        // for (let i = 0; i < this.list.length; i++) {
-        //     this.list[i].tasks = [...this.tasks];
-        // }
-        // console.log(this.list[1].tasks);
 
         let currentUrl = this.$page.url.substr(1)
         const currentUrlArray = currentUrl.split('/');
 
-        // if (urls[0] === '') {
-        //     return currentUrl === ''
-        // }
-        // return urls.filter(url => currentUrl.startsWith(url)).length
         this.checkTaskUri();
         this.getOtherData();
         if (!!this.filters.task) {

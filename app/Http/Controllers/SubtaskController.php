@@ -39,7 +39,8 @@ class SubtaskController extends Controller
                 'updated_at' => Carbon::now(),
             ];
             if($project->project_type == 2){
-                $requestTask['sublist_id'] = $sublist->id;
+                $requestTask['list_id'] = $body['list_id'];
+                $requestTask['sublist_id'] = $body['sublist_id'];;
             }
             
             $task = Task::create($requestTask);
