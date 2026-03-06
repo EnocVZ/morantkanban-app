@@ -3460,9 +3460,6 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   .lg\:items-center {
     align-items: center;
   }
-  .lg\:justify-end {
-    justify-content: flex-end;
-  }
   .lg\:justify-between {
     justify-content: space-between;
   }

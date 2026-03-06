@@ -476,9 +476,9 @@ Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatistic
   ->name('workspace.charts.general.hoursByUserProject')
   ->middleware('auth');
 
-Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
-    ->name('workspace.statistics.general.export.hoursByUserProject')
-    ->middleware('auth');
+// Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
+//     ->name('workspace.statistics.general.export.hoursByUserProject')
+//     ->middleware('auth');
 
 Route::get('/workspaces/{workspace}/statistics/general/table-task-timers', [WorkspaceStatisticsController::class, 'tableTaskTimers'])
     ->name('workspace.statistics.general.table.taskTimers');
@@ -528,7 +528,31 @@ Route::get('api/charts/project/requests-table', [ProjectsController::class, 'cha
     ->name('charts.project.requestsTable')
     ->middleware('auth');
 
-// Combo de usuarios
+//ESTADISTICAS GENERALES
 
+// Combo de usuarios
 Route::get('/charts/project/users-options', [ProjectsController::class, 'chartUsersOptions'])
-    ->name('charts.project.usersOptions');
+    ->name('charts.project.usersOptions')
+    ->middleware('auth');
+
+// Horas por usuario
+Route::get('/workspace/charts/general/hours-by-user-project', [WorkspaceStatisticsController::class, 'hoursByUserProject'])
+    ->name('workspace.charts.general.hoursByUserProject')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/hours-by-user-label', [WorkspaceStatisticsController::class, 'hoursByUserLabel'])
+    ->name('workspace.charts.general.hoursByUserLabel')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/hours-by-user-lane', [WorkspaceStatisticsController::class, 'hoursByUserLane'])
+    ->name('workspace.charts.general.hoursByUserLane')
+    ->middleware('auth');
+
+Route::get('/workspace/statistics/general/table/task-timers-by-dimension/{workspace}', [WorkspaceStatisticsController::class, 'taskTimersByDimension'])
+    ->name('workspace.statistics.general.table.taskTimersByDimension')
+    ->middleware('auth');
+
+Route::get(
+    '/workspace/statistics/general/export/report-by-dimension/{workspace}',[WorkspaceStatisticsController::class, 'exportReportByDimension'])
+    ->name('workspace.statistics.general.export.reportByDimension')
+    ->middleware('auth');
