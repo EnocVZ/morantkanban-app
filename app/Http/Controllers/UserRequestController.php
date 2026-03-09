@@ -55,8 +55,8 @@ class UserRequestController extends Controller
                     'attachments',
                 ])
                 ->orderBy('created_at', 'desc')
-                ->get();
-            return MethodHelper::successResponse($items);
+                ;
+            return MethodHelper::successResponse($items->get());
         } catch (\Exception $e) {
             return MethodHelper::errorResponse($e->getMessage());
         }

@@ -51,6 +51,19 @@ class WorkSpacesController extends Controller
         }
         return Redirect::route('projects.view.na');
     }
+
+    public function viewStatisticsGeneral($uid)
+    {
+        $workspace = \App\Models\WorkSpace::query()
+            ->where('slug', $uid)
+            ->orWhere('id', $uid)
+            ->firstOrFail();
+
+        return Inertia::render('Workspaces/StatisticsGeneral', [
+            'workspace' => $workspace,
+        ]);
+    }
+
     public function jsonAll(){
         $user_id = auth()->id();
         $workSpaces = Workspace::where('user_id', $user_id)
