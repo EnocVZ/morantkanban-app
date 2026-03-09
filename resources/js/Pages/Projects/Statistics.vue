@@ -53,27 +53,41 @@
 
         </div>
 
-        <!-- Filtro Etiqueta (debajo del rango de fechas) -->
+        <!-- Filtros secundarios -->
         <div class="mt-4">
-          <div class="w-full lg:w-96">
-            <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Etiqueta -->
+            <div class="w-full">
+              <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
+              <select
+                v-model="selectedLabelId"
+                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                @change="onLabelChange"
+              >
+                <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
+                <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
+                  {{ l.label }}
+                </option>
+              </select>
+            </div>
 
-            <select
-              v-model="selectedLabelId"
-              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
-              @change="onLabelChange"
-            >
-              <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
-              <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
-                {{ l.label }}
-              </option>
-            </select>
+            <!-- Lista -->
+            <div class="w-full">
+              <p class="text-xs text-gray-600 mb-1">{{ __('Carril') }}</p>
+              <select
+                v-model="selectedListId"
+                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+                @change="onListChange"
+              >
+                <option :value="null">{{ __('Seleccionar carril') }}</option>
+                <option v-for="b in listsOptions" :key="b.id" :value="b.id">
+                  {{ b.title }}
+                </option>
+              </select>
+            </div>
           </div>
-
-          <p class="text-xs text-gray-500 mt-1">
-            {{ __('Cambiar etiqueta actualiza la gráfica de tareas por persona.') }}
-          </p>
         </div>
+
 
 
         <p v-if="error" class="mt-3 text-sm text-red-600">
@@ -331,6 +345,9 @@ export default {
 
       labelsOptions: [],
       selectedLabelId: null,
+
+      listsOptions: [],
+      selectedListId: null,
     }
   },
 
@@ -368,31 +385,27 @@ export default {
           this.route('charts.project.labelsWithActivity'),
           { params: { start_date: start, end_date: end, project_id: this.project.id } }
         )
-
         const newLabels = labelsRes.data?.data || []
         this.labelsOptions = newLabels
-
         if (this.selectedLabelId && !newLabels.some(l => l.id === this.selectedLabelId)) {
           this.selectedLabelId = null
+        }
+
+        const listsRes = await axios.get(this.route('charts.project.listsWithActivity'), {
+          params: { start_date: start, end_date: end, project_id: this.project.id },
+        })
+        const newLists = listsRes.data?.data || []
+        this.listsOptions = newLists
+        // Mantener selección si sigue existiendo, si no, reset a null
+        if (this.selectedListId) {
+          const stillExists = newLists.some(b => b.id === this.selectedListId)
+          if (!stillExists) this.selectedListId = null
         }
 
         await this.loadTasksByUser()
         await this.loadHoursByUser()
 
-        const usersRes = await axios.get(
-          this.route('charts.project.usersWithActivity'),
-          { params: { start_date: start, end_date: end, project_id: this.project.id } }
-        )
-
-        this.usersOptions = usersRes.data?.data || []
-
-        const meId = this.auth?.user?.id
-        this.selectedUserId = this.usersOptions.some(u => u.id === meId)
-          ? meId
-          : (this.usersOptions[0]?.id ?? null)
-
-        await nextTick()
-
+        await this.loadUsersOptions()
         await this.loadIndividual()
         await this.loadProjectRequestsTable()
 
@@ -404,6 +417,51 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    async loadUsersOptions() {
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const usersRes = await axios.get(this.route('charts.project.usersWithActivity'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
+        },
+      })
+
+      this.usersOptions = usersRes.data?.data || []
+
+      // ✅ Si no hay usuarios, limpiar sección individual y salir
+      if (this.usersOptions.length === 0) {
+        this.clearIndividual()
+        return
+      }
+
+      // Mantener usuario si aún existe, si no fallback a "me" o primero
+      const current = this.selectedUserId
+      const stillExists = current && this.usersOptions.some(u => u.id === current)
+
+      if (!stillExists) {
+        const meId = this.auth?.user?.id
+        const hasMe = this.usersOptions.some(u => u.id === meId)
+        this.selectedUserId = hasMe ? meId : (this.usersOptions[0]?.id ?? null)
+      }
+
+      await nextTick()
+    },
+
+    async reloadTopAndUsers() {
+      await this.loadTasksByUser()
+      await this.loadHoursByUser()
+      await this.loadUsersOptions()
+
+      if (!this.selectedUserId) return
+
+      await this.loadIndividual()
     },
 
     renderHoursByDay() {
@@ -569,8 +627,10 @@ export default {
     },
 
     async loadIndividual() {
-      if (!this.selectedUserId) return
-
+      if (!this.selectedUserId) {
+        this.clearIndividual()
+        return
+      }
       const start = moment(this.startDate).format('YYYY-MM-DD')
       const end = moment(this.endDate).format('YYYY-MM-DD')
 
@@ -581,6 +641,8 @@ export default {
           end_date: end,
           project_id: this.project.id,
           user_id: this.selectedUserId,
+          label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -601,6 +663,8 @@ export default {
           end_date: end,
           project_id: this.project.id,
           user_id: this.selectedUserId,
+          label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -629,6 +693,7 @@ export default {
           end_date: end,
           project_id: this.project.id,
           label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -646,6 +711,7 @@ export default {
           end_date: end,
           project_id: this.project.id,
           label_id: this.selectedLabelId || null,
+          list_id: this.selectedListId || null,
         },
       })
 
@@ -655,18 +721,41 @@ export default {
 
 
     async onLabelChange() {
-      // No recalcular si aun está generando por fechas
       if (this.loading) return
-
-      // ✅ aquí solo refrescamos lo que depende de etiqueta (por ahora, tareas por persona)
       try {
-        await this.loadTasksByUser()
-        await this.loadHoursByUser()
+        await this.reloadTopAndUsers()
       } catch (e) {
         this.error =
           e?.response?.data?.error ||
           e?.response?.data?.message ||
           'Ocurrió un error al aplicar el filtro de etiqueta.'
+      }
+    },
+
+    async onListChange() {
+      if (this.loading) return
+      try {
+        await this.reloadTopAndUsers()
+      } catch (e) {
+        this.error =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'Ocurrió un error al aplicar el filtro de lista.'
+      }
+    },
+
+    clearIndividual() {
+      this.selectedUserId = null
+      this.kpiReady = false
+      this.avgHours = 0
+      this.targetHours = 8
+      this.chartData.dates = []
+      this.chartData.hours = []
+      this.taskRows = []
+
+      // Si quieres también borrar el dibujo anterior de Plotly:
+      if (this.plotly && this.$refs.hoursByDayChart) {
+        this.plotly.purge(this.$refs.hoursByDayChart)
       }
     },
 
