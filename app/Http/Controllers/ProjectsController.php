@@ -384,6 +384,23 @@ class ProjectsController extends Controller {
         $board_lists = BoardList::where('project_id', $project->id)->isOpen()->orderByOrder()->get()->toArray();
         $loopIndex = 0;
         $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
+        $requestList = Task::where('project_id', $project->id)
+              ->where('is_request', 1)
+              ->where('sublist_id', 0)
+              ->with([
+                    'taskLabels.label',
+                    'timer',
+                    'cover',
+                    'assignees',
+                ])
+                ->withCount([
+                    'checklistDone',
+                    'comments',
+                    'checklists',
+                    'attachments',
+                ])
+                ->orderBy('created_at', 'desc')->get()
+                ;
         $tasks = $this->getAllUserRequest($project);
         return Inertia::render('Projects/Table', [
             'title' => 'Lista | '.$project->title,
@@ -393,7 +410,8 @@ class ProjectsController extends Controller {
             'project' => $project,
             'filters' => $requests,
             'tasks' => $tasks,
-            'requestNoRead' => $requestNoRead
+            'requestNoRead' => $requestNoRead,
+            'requestList' => $requestList,
         ]);
     }
 
