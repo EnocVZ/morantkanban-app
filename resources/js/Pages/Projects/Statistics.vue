@@ -35,6 +35,21 @@
             </Datepicker>
           </div>
 
+          <div class="w-full lg:w-72" v-if="isAdmin">
+            <p class="text-xs text-gray-600 mb-1">{{ __('Usuario') }}</p>
+
+            <select
+              v-model="selectedUserId"
+              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
+              :disabled="loading"
+            >
+              <option :value="null" disabled>-- {{ __('Selecciona usuario') }} --</option>
+              <option v-for="u in usersOptions" :key="u.id" :value="u.id">
+                {{ u.name }}
+              </option>
+            </select>
+          </div>
+
           <div class="flex gap-3 items-center">
             <button
               type="button"
@@ -44,108 +59,15 @@
             >
               {{ loading ? __('Generando...') : __('Generar') }}
             </button>
-
-            <!-- <div v-if="kpiReady" class="text-sm text-gray-700">
-              <span class="font-semibold">{{ __('Promedio:') }}</span>
-              <span class="ml-1">{{ avgHours.toFixed(1) }}h</span>
-            </div> -->
-          </div>
-
-        </div>
-
-        <!-- Filtros secundarios -->
-        <div class="mt-4">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Etiqueta -->
-            <div class="w-full">
-              <p class="text-xs text-gray-600 mb-1">{{ __('Etiqueta') }}</p>
-              <select
-                v-model="selectedLabelId"
-                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
-                @change="onLabelChange"
-              >
-                <option :value="null">{{ __('Seleccionar etiqueta') }}</option>
-                <option v-for="l in labelsOptions" :key="l.id" :value="l.id">
-                  {{ l.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Lista -->
-            <div class="w-full">
-              <p class="text-xs text-gray-600 mb-1">{{ __('Carril') }}</p>
-              <select
-                v-model="selectedListId"
-                class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
-                @change="onListChange"
-              >
-                <option :value="null">{{ __('Seleccionar carril') }}</option>
-                <option v-for="b in listsOptions" :key="b.id" :value="b.id">
-                  {{ b.title }}
-                </option>
-              </select>
-            </div>
           </div>
         </div>
-
-
 
         <p v-if="error" class="mt-3 text-sm text-red-600">
           {{ error }}
         </p>
       </div>
 
-      <!-- Gráfica: Por persona (tareas) -->
-      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base font-bold text-gray-900">
-            {{ __('Total de tareas trabajadas por persona') }}
-          </h3>
-          <p class="text-xs text-gray-600" v-if="kpiReady">
-            {{ rangeLabel }}
-          </p>
-        </div>
-        <div ref="tasksByUserChart" class="w-full" style="min-height: 420px;"></div>
-      </div>
-
-      <!-- Gráfica: Por persona (horas) -->
-      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base font-bold text-gray-900">
-            {{ __('Total de horas trabajadas por persona') }}
-          </h3>
-          <p class="text-xs text-gray-600" v-if="kpiReady">
-            {{ rangeLabel }}
-          </p>
-        </div>
-        <div ref="hoursByUserChart" class="w-full" style="min-height: 420px;"></div>
-      </div>
-
-      <!-- Filtro por usuario (para ir a lo particular) -->
-      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div class="flex flex-col lg:flex-row gap-4 lg:items-end">
-          <div class="w-full lg:w-96">
-            <p class="text-xs text-gray-600 mb-1">{{ __('Usuario') }}</p>
-
-            <select
-              v-model="selectedUserId"
-              class="w-full px-3 py-2 border rounded-md bg-white hover:bg-gray-50 text-sm"
-              @change="onUserChange"
-            >
-              <option :value="null" disabled>{{ __('Selecciona un usuario') }}</option>
-              <option v-for="u in usersOptions" :key="u.id" :value="u.id">
-                {{ u.usuario }}
-              </option>
-            </select>
-          </div>
-
-          <div class="text-xs text-gray-500">
-            {{ __('Seleccione un usuario para ver métricas individuales.') }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráfica -->
+      <!-- Gráfica comportamiento semanal -->
       <div class="bg-white rounded-lg shadow-lg p-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-base font-bold text-gray-900">
@@ -175,9 +97,19 @@
                     <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">
                       {{ __('Tarea') }}
                     </th>
+
+                    <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-44">
+                      {{ __('Fecha de creación') }}
+                    </th>
+
+                    <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3">
+                      {{ __('Etiquetas') }}
+                    </th>
+
                     <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-40">
                       {{ __('Tiempos') }}
                     </th>
+
                     <th class="text-left text-xs font-semibold text-gray-600 px-4 py-3 w-48">
                       {{ __('Acciones') }}
                     </th>
@@ -186,42 +118,161 @@
 
                 <tbody>
                   <tr v-if="!loading && taskRows.length === 0">
-                    <td colspan="3" class="px-4 py-6 text-sm text-gray-500">
+                    <td colspan="5" class="px-4 py-6 text-sm text-gray-500">
                       {{ __('No hay tareas con tiempos en este rango.') }}
                     </td>
                   </tr>
 
-                  <tr
-                    v-for="row in taskRows"
-                    :key="row.id"
-                    class="border-t hover:bg-gray-50"
-                  >
-                    <td class="px-4 py-3 text-sm text-gray-900">
-                      <div class="font-medium">{{ row.title }}</div>
-                      <div class="text-xs text-gray-500">#{{ row.id }}</div>
-                    </td>
+                  <!-- ✅ IMPORTANTE: template v-for para poder renderizar 2 filas hermanas -->
+                  <template v-for="row in taskRows" :key="row.id">
+                    <!-- Fila principal -->
+                    <tr
+                      class="border-t cursor-pointer hover:bg-gray-50"
+                      @click="toggleTask(row.id)"
+                    >
+                      <td class="px-4 py-3 text-sm text-gray-900">
+                        <div class="font-medium">{{ row.title }}</div>
+                        <div class="text-xs text-gray-500">#{{ row.id }}</div>
+                      </td>
 
-                    <td class="px-4 py-3 text-sm text-gray-900">
-                      {{ row.hours.toFixed(1) }} hrs
-                    </td>
+                      <td class="px-4 py-3 text-sm text-gray-700">
+                        {{ formatDateTime(row.createdAt) }}
+                      </td>
 
-                    <td class="px-4 py-3">
-                      <button
-                        type="button"
-                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-                        @click="onEditTimes(row)"
-                      >
-                        {{ __('Editar tiempos') }}
-                      </button>
-                    </td>
-                  </tr>
+                      <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-2">
+                          <span
+                            v-for="(lb, idx) in (row.labels || [])"
+                            :key="idx"
+                            class="px-2 py-1 rounded text-xs font-semibold border"
+                            :style="labelStyle(lb)"
+                          >
+                            {{ lb.name }}
+                          </span>
+
+                          <span v-if="!row.labels || row.labels.length === 0" class="text-xs text-gray-400">
+                            -
+                          </span>
+                        </div>
+                      </td>
+
+                      <td class="px-4 py-3 text-sm text-gray-900">
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="font-semibold">
+                            {{ Number(row.hours || 0).toFixed(1) }} hrs
+                          </div>
+
+                          <div class="text-xs text-gray-500 flex items-center gap-2">
+                            <span v-if="row.times && row.times.length > 0">
+                              {{ row.times.length }} sesiones
+                            </span>
+                            <span v-else>-</span>
+
+                            <span v-if="row.times && row.times.length > 0" class="select-none">
+                              {{ isTaskOpen(row.id) ? '▾' : '▸' }}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td class="px-4 py-3">
+                        <button
+                          type="button"
+                          class="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                          @click.stop="onEditTimes(row)"
+                        >
+                          {{ __('Editar tiempos') }}
+                        </button>
+                      </td>
+                    </tr>
+
+                    <!-- Fila expandida (subtabla) -->
+                    <tr v-if="isTaskOpen(row.id)" :key="`sessions-${row.id}`" class="border-t bg-gray-50">
+                      <td colspan="5" class="px-4 py-3">
+                        <div class="rounded-md border bg-white overflow-hidden">
+                          <div class="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
+                            <div class="text-xs font-semibold text-gray-700">
+                              {{ __('Sesiones registradas') }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                              {{ (row.times || []).length }} {{ __('sesiones') }}
+                            </div>
+                          </div>
+
+                          <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                              <thead class="bg-white">
+                                <tr class="border-b">
+                                  <th class="text-left text-xs font-semibold text-gray-600 px-3 py-2 w-64">
+                                    {{ __('Inicio') }}
+                                  </th>
+                                  <th class="text-left text-xs font-semibold text-gray-600 px-3 py-2 w-64">
+                                    {{ __('Fin') }}
+                                  </th>
+                                  <th class="text-left text-xs font-semibold text-gray-600 px-3 py-2 w-32">
+                                    {{ __('Horas') }}
+                                  </th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                <tr v-if="!row.times || row.times.length === 0">
+                                  <td colspan="3" class="px-3 py-3 text-xs text-gray-400">
+                                    -
+                                  </td>
+                                </tr>
+
+                                <tr
+                                  v-for="(t, i) in (row.times || [])"
+                                  :key="i"
+                                  class="border-b last:border-b-0"
+                                >
+                                  <td class="px-3 py-2 text-xs text-gray-800">
+                                    {{ formatDateTimeFull(t.startedAt) }}
+                                  </td>
+                                  <td class="px-3 py-2 text-xs text-gray-800">
+                                    {{ formatDateTimeFull(t.stoppedAt) }}
+                                  </td>
+                                  <td class="px-3 py-2 text-xs text-gray-800 font-semibold">
+                                    {{ Number(t.hours || 0).toFixed(2) }}h
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
+        <!-- Gráfica por carril por día -->
+        <!-- ... -->
+      </div>
 
+      <!-- Gráfica semanal por carril -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">
+              {{ __('% semanal dedicado a cada carril') }}
+            </h3>
+            <p class="text-xs text-gray-600" v-if="listsWeekReady">
+              {{ __('Total:') }} {{ listsWeek.targetHours.toFixed(1) }}h
+              ({{ listsWeek.workDays }} {{ __('días hábiles') }} × 8h)
+            </p>
+          </div>
+
+          <p class="text-xs text-gray-600" v-if="listsWeekReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+
+        <div ref="listsWeekChart" class="w-full" style="min-height: 420px;"></div>
       </div>
 
       <!-- Apartado 3: Solicitudes del proyecto -->
@@ -229,10 +280,10 @@
         <div class="flex items-center justify-between mb-3">
           <div>
             <h3 class="text-base font-bold text-gray-900">
-              {{ __('Solicitudes del proyecto') }}
+              {{ __('Solicitudes con tareas asignadas') }}
             </h3>
             <p class="text-xs text-gray-600">
-              {{ __('Listado de solicitudes asociadas a tareas del proyecto actual.') }}
+              {{ __('Listado de solicitudes asociadas a tareas del usuario.') }}
             </p>
           </div>
 
@@ -283,10 +334,30 @@
         </div>
       </div>
 
+      <!-- ✅ Gráfica: Horarios trabajados -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">
+              {{ __('Horarios trabajados') }}
+            </h3>
+            <p class="text-xs text-gray-600">
+              {{ __('Actividades realizadas por día.') }}
+            </p>
+          </div>
+
+          <p class="text-xs text-gray-600" v-if="scheduleReady">
+            {{ rangeLabel }}
+          </p>
+        </div>
+
+        <div ref="scheduleChart" class="w-full" style="min-height: 420px;"></div>
+      </div>
 
     </div>
   </div>
 </template>
+
 <script>
 import { Head } from '@inertiajs/vue3'
 import Layout from '@/Shared/Layout'
@@ -310,8 +381,8 @@ export default {
   },
 
   data() {
-    const start = moment().startOf('week').add(1, 'day')
-    const end = moment().endOf('week').add(1, 'day')
+    const start = moment().startOf('isoWeek')
+    const end = moment().endOf('isoWeek')
 
     return {
       startDate: start.toDate(),
@@ -320,18 +391,13 @@ export default {
       loading: false,
       error: null,
 
-      // Plotly ya cargado
       plotly: Plotly,
 
       kpiReady: false,
       avgHours: 0,
       targetHours: 8,
 
-      usersOptions: [],
       selectedUserId: null,
-
-      peopleRows: [],
-      peopleHoursRows: [],
 
       taskRows: [],
 
@@ -343,11 +409,32 @@ export default {
       projectRequestsRows: [],
       loadingRequests: false,
 
-      labelsOptions: [],
-      selectedLabelId: null,
+      usersOptions: [],
+      peopleRows: [],
+      peopleHoursRows: [],
 
-      listsOptions: [],
-      selectedListId: null,
+      listsPctReady: false,
+      listsPct: {
+        dates: [],
+        lists: [],
+        series: {},
+        targetHours: 8,
+      },
+
+      listsWeekReady: false,
+      listsWeek: {
+        labels: [],
+        percent: [],
+        hours: [],
+        targetHours: 0,
+        workDays: 0,
+      },
+
+      scheduleReady: false,
+      scheduleRows: [],
+
+      // ✅ acordeón
+      openTaskIds: [],
     }
   },
 
@@ -357,9 +444,35 @@ export default {
       const e = moment(this.endDate).format('YYYY-MM-DD')
       return `${s} → ${e}`
     },
+
+    isAdmin() {
+      // ✅ Ajusta según cómo venga tu role desde backend
+      // Posibles: auth.user.role, auth.user.role.name, auth.user.role_title, etc.
+      const r =
+        this.auth?.user?.role?.name ||
+        this.auth?.user?.role ||
+        this.auth?.user?.role_name ||
+        this.auth?.user?.roleTitle ||
+        ''
+
+      return String(r).toLowerCase() === 'admin'
+    },
+
   },
 
   async mounted() {
+    // ✅ Si NO es admin: usamos el usuario logueado
+    if (!this.isAdmin) {
+      this.selectedUserId = 45
+      //this.selectedUserId = this.auth?.user?.id ?? null
+    } else {
+      // ✅ Si es admin: carga opciones y selecciona default (primero o el mismo logueado)
+      await this.loadUsersOptions()
+
+      const me = this.auth?.user?.id ?? null
+      const exists = this.usersOptions.some(u => u.id === me)
+      this.selectedUserId = exists ? me : (this.usersOptions[0]?.id ?? null)
+    }
     await this.generate()
   },
 
@@ -368,8 +481,28 @@ export default {
       return d ? moment(d).format('YYYY-MM-DD') : 'YYYY-MM-DD'
     },
 
+    formatTime(value) {
+      return value ? moment(value).format('HH:mm') : '-'
+    },
+
     formatDateTime(value) {
       return value ? moment(value).format('YYYY-MM-DD HH:mm') : '-'
+    },
+
+    formatDateTimeFull(value) {
+      return value ? moment(value).format('YYYY-MM-DD HH:mm') : '-'
+    },
+
+    isTaskOpen(taskId) {
+      return this.openTaskIds.includes(taskId)
+    },
+
+    toggleTask(taskId) {
+      if (this.isTaskOpen(taskId)) {
+        this.openTaskIds = this.openTaskIds.filter(id => id !== taskId)
+        return
+      }
+      this.openTaskIds = [...this.openTaskIds, taskId]
     },
 
     async generate() {
@@ -378,92 +511,27 @@ export default {
       this.kpiReady = false
 
       try {
-        const start = moment(this.startDate).format('YYYY-MM-DD')
-        const end = moment(this.endDate).format('YYYY-MM-DD')
-
-        const labelsRes = await axios.get(
-          this.route('charts.project.labelsWithActivity'),
-          { params: { start_date: start, end_date: end, project_id: this.project.id } }
-        )
-        const newLabels = labelsRes.data?.data || []
-        this.labelsOptions = newLabels
-        if (this.selectedLabelId && !newLabels.some(l => l.id === this.selectedLabelId)) {
-          this.selectedLabelId = null
-        }
-
-        const listsRes = await axios.get(this.route('charts.project.listsWithActivity'), {
-          params: { start_date: start, end_date: end, project_id: this.project.id },
-        })
-        const newLists = listsRes.data?.data || []
-        this.listsOptions = newLists
-        // Mantener selección si sigue existiendo, si no, reset a null
-        if (this.selectedListId) {
-          const stillExists = newLists.some(b => b.id === this.selectedListId)
-          if (!stillExists) this.selectedListId = null
-        }
-
-        await this.loadTasksByUser()
-        await this.loadHoursByUser()
-
-        await this.loadUsersOptions()
         await this.loadIndividual()
         await this.loadProjectRequestsTable()
-
+        await this.loadListsWeek()
+        await this.loadWorkSchedule()
       } catch (e) {
-        this.error =
+        console.error('Error generate():', e)
+
+        const status = e?.response?.status
+        const url = e?.config?.url
+        const msg =
           e?.response?.data?.error ||
           e?.response?.data?.message ||
-          'Ocurrió un error al generar las estadísticas.'
+          e?.message ||
+          'Error desconocido'
+
+        this.error = `Error al generar estadísticas${status ? ` (${status})` : ''}: ${msg}${url ? ` | ${url}` : ''}`
       } finally {
         this.loading = false
       }
     },
-
-    async loadUsersOptions() {
-      const start = moment(this.startDate).format('YYYY-MM-DD')
-      const end = moment(this.endDate).format('YYYY-MM-DD')
-
-      const usersRes = await axios.get(this.route('charts.project.usersWithActivity'), {
-        params: {
-          start_date: start,
-          end_date: end,
-          project_id: this.project.id,
-          label_id: this.selectedLabelId || null,
-          list_id: this.selectedListId || null,
-        },
-      })
-
-      this.usersOptions = usersRes.data?.data || []
-
-      // ✅ Si no hay usuarios, limpiar sección individual y salir
-      if (this.usersOptions.length === 0) {
-        this.clearIndividual()
-        return
-      }
-
-      // Mantener usuario si aún existe, si no fallback a "me" o primero
-      const current = this.selectedUserId
-      const stillExists = current && this.usersOptions.some(u => u.id === current)
-
-      if (!stillExists) {
-        const meId = this.auth?.user?.id
-        const hasMe = this.usersOptions.some(u => u.id === meId)
-        this.selectedUserId = hasMe ? meId : (this.usersOptions[0]?.id ?? null)
-      }
-
-      await nextTick()
-    },
-
-    async reloadTopAndUsers() {
-      await this.loadTasksByUser()
-      await this.loadHoursByUser()
-      await this.loadUsersOptions()
-
-      if (!this.selectedUserId) return
-
-      await this.loadIndividual()
-    },
-
+    
     renderHoursByDay() {
       if (!this.plotly || !this.$refs.hoursByDayChart) return
 
@@ -479,7 +547,6 @@ export default {
         hovertemplate: 'Fecha: %{x}<br>Horas: %{y:.2f}<extra></extra>',
       }
 
-      // Línea de meta
       const shapes = [
         {
           type: 'line',
@@ -489,10 +556,7 @@ export default {
           yref: 'y',
           y0: this.targetHours,
           y1: this.targetHours,
-          line: {
-            dash: 'dash',
-            width: 2,
-          },
+          line: { dash: 'dash', width: 2 },
         },
       ]
 
@@ -500,15 +564,8 @@ export default {
         title: 'Comportamiento semanal',
         height: 420,
         margin: { l: 40, r: 20, t: 60, b: 40 },
-        xaxis: {
-          title: 'Día',
-          type: 'category',
-        },
-        yaxis: {
-          title: 'Horas',
-          rangemode: 'tozero',
-          dtick: 1,
-        },
+        xaxis: { title: 'Día', type: 'category' },
+        yaxis: { title: 'Horas', rangemode: 'tozero', dtick: 1 },
         shapes,
         annotations: [
           {
@@ -536,94 +593,11 @@ export default {
       }
 
       const config = { responsive: true, displayModeBar: false }
-
       this.plotly.react(this.$refs.hoursByDayChart, [trace], layout, config)
     },
 
-    renderTasksByUser() {
-      if (!this.plotly || !this.$refs.tasksByUserChart) return
-
-      const y = (this.peopleRows || []).map(r => r.usuario)
-      const x = (this.peopleRows || []).map(r => Number(r.total || 0))
-
-      const trace = {
-        type: 'bar',
-        orientation: 'h',
-        x,
-        y,
-        text: x,
-        textposition: 'auto',
-        hovertemplate: 'Usuario: %{y}<br>Tareas: %{x}<extra></extra>',
-        name: 'Tareas',
-      }
-
-      const baseHeight = 120
-      const rowHeight = 34
-      const h = Math.max(420, baseHeight + (y.length * rowHeight))
-
-      const layout = {
-        title: `Tareas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
-        height: h,
-        margin: { l: 180, r: 20, t: 60, b: 40 },
-        xaxis: { title: '', rangemode: 'tozero' },
-        yaxis: { automargin: true },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-      }
-
-      const config = { responsive: true, displayModeBar: false }
-
-      this.plotly.react(this.$refs.tasksByUserChart, [trace], layout, config)
-    },
-
-    renderHoursByUser() {
-      if (!this.plotly || !this.$refs.hoursByUserChart) return
-
-      // Asegura orden mayor a menor 
-      const sorted = [...(this.peopleHoursRows || [])].sort(
-        (a, b) => Number(b.total_hours || 0) - Number(a.total_hours || 0)
-      )
-
-      const y = sorted.map(r => r.usuario)
-      const x = sorted.map(r => Number(r.total_hours || 0))
-
-      const trace = {
-        type: 'bar',
-        orientation: 'h',
-        x,
-        y,
-        text: x.map(v => `${v.toFixed(1)}h`),
-        textposition: 'auto',
-        hovertemplate: 'Usuario: %{y}<br>Horas: %{x:.2f}<extra></extra>',
-        name: 'Horas',
-      }
-
-      const baseHeight = 120
-      const rowHeight = 34
-      const h = Math.max(420, baseHeight + (y.length * rowHeight))
-
-      const layout = {
-        title: `Horas trabajadas desde el ${moment(this.startDate).format('DD [de] MMM')}`,
-        height: h,
-        margin: { l: 180, r: 20, t: 60, b: 40 },
-        xaxis: { title: '', rangemode: 'tozero' },
-        yaxis: { automargin: true },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-      }
-
-      const config = { responsive: true, displayModeBar: false }
-
-      this.plotly.react(this.$refs.hoursByUserChart, [trace], layout, config)
-    },
-
     onEditTimes(row) {
-      // Placeholder (en el futuro abre modal / pantalla de edición)
       alert(`Editar tiempos (pendiente). Tarea #${row.id}: ${row.title}`)
-    },
-
-    async onUserChange() {
-      await this.loadIndividual()
     },
 
     async loadIndividual() {
@@ -631,18 +605,16 @@ export default {
         this.clearIndividual()
         return
       }
+
       const start = moment(this.startDate).format('YYYY-MM-DD')
       const end = moment(this.endDate).format('YYYY-MM-DD')
 
-      // Gráfica: horas por día (por usuario seleccionado)
       const res = await axios.get(this.route('charts.individual.hoursByDay'), {
         params: {
           start_date: start,
           end_date: end,
           project_id: this.project.id,
           user_id: this.selectedUserId,
-          label_id: this.selectedLabelId || null,
-          list_id: this.selectedListId || null,
         },
       })
 
@@ -656,26 +628,27 @@ export default {
       this.kpiReady = true
       this.renderHoursByDay()
 
-      // Tabla: horas por tarea (por usuario seleccionado)
       const tableRes = await axios.get(this.route('charts.individual.taskHours'), {
         params: {
           start_date: start,
           end_date: end,
           project_id: this.project.id,
           user_id: this.selectedUserId,
-          label_id: this.selectedLabelId || null,
-          list_id: this.selectedListId || null,
         },
       })
 
       this.taskRows = tableRes.data?.rows || []
+      await nextTick()
     },
 
     async loadProjectRequestsTable() {
       this.loadingRequests = true
       try {
         const res = await axios.get(this.route('charts.project.requestsTable'), {
-          params: { project_id: this.project.id },
+          params: {
+            project_id: this.project.id,
+            user_id: this.selectedUserId, // ✅ MISMA variable que todo
+          },
         })
         this.projectRequestsRows = res.data?.rows || []
       } finally {
@@ -683,69 +656,247 @@ export default {
       }
     },
 
-    async loadTasksByUser() {
+    async loadListsWeek() {
+      if (!this.selectedUserId) {
+        this.clearListsWeek()
+        return
+      }
+
       const start = moment(this.startDate).format('YYYY-MM-DD')
       const end = moment(this.endDate).format('YYYY-MM-DD')
 
-      const peopleRes = await axios.get(this.route('charts.project.tasksByUser'), {
+      const res = await axios.get(this.route('charts.project.listsPercentWeek'), {
         params: {
           start_date: start,
           end_date: end,
           project_id: this.project.id,
-          label_id: this.selectedLabelId || null,
-          list_id: this.selectedListId || null,
+          user_id: this.selectedUserId,
         },
       })
 
-      this.peopleRows = peopleRes.data?.data || []
-      this.renderTasksByUser()
+      const payload = res.data || {}
+      const data = payload.data || {}
+
+      this.listsWeek.labels = data.labels || []
+      this.listsWeek.percent = data.percent || []
+      this.listsWeek.hours = data.hours || []
+      this.listsWeek.targetHours = Number(payload.target_hours || 0)
+      this.listsWeek.workDays = Number(payload.work_days || 0)
+
+      this.listsWeekReady = true
+      await nextTick()
+      this.renderListsWeek()
     },
 
-    async loadHoursByUser() {
-      const start = moment(this.startDate).format('YYYY-MM-DD')
-      const end = moment(this.endDate).format('YYYY-MM-DD')
+    renderListsWeek() {
+      if (!this.plotly || !this.$refs.listsWeekChart) return
+      if (!this.listsWeekReady) return
 
-      const hoursRes = await axios.get(this.route('charts.project.hoursByUser'), {
-        params: {
-          start_date: start,
-          end_date: end,
-          project_id: this.project.id,
-          label_id: this.selectedLabelId || null,
-          list_id: this.selectedListId || null,
-        },
+      const y = this.listsWeek.labels
+      const x = this.listsWeek.percent
+
+      const hover = y.map((label, idx) => {
+        const hrs = this.listsWeek.hours[idx] ?? 0
+        return `${label}<br>%: ${Number(x[idx] ?? 0).toFixed(1)}%<br>Horas: ${Number(hrs).toFixed(2)}h`
       })
 
-      this.peopleHoursRows = hoursRes.data?.data || []
-      this.renderHoursByUser()
+      const trace = {
+        type: 'bar',
+        orientation: 'h',
+        x,
+        y,
+        text: x.map(v => `${Number(v).toFixed(1)}%`),
+        textposition: 'auto',
+        hovertext: hover,
+        hoverinfo: 'text',
+        name: '%',
+      }
+
+      const baseHeight = 160
+      const rowHeight = 32
+      const h = Math.max(420, baseHeight + (y.length * rowHeight))
+
+      const layout = {
+        title: 'Distribución porcentual semanal por carril',
+        height: h,
+        margin: { l: 220, r: 20, t: 60, b: 40 },
+        xaxis: {
+          title: 'Porcentaje',
+          range: [0, 100],
+          ticksuffix: '%',
+        },
+        yaxis: { automargin: true },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+      this.plotly.react(this.$refs.listsWeekChart, [trace], layout, config)
     },
 
+    clearListsWeek() {
+      this.listsWeekReady = false
+      this.listsWeek = { labels: [], percent: [], hours: [], targetHours: 0, workDays: 0 }
 
-    async onLabelChange() {
-      if (this.loading) return
-      try {
-        await this.reloadTopAndUsers()
-      } catch (e) {
-        this.error =
-          e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          'Ocurrió un error al aplicar el filtro de etiqueta.'
+      if (this.plotly && this.$refs.listsWeekChart) {
+        this.plotly.purge(this.$refs.listsWeekChart)
       }
     },
 
-    async onListChange() {
-      if (this.loading) return
-      try {
-        await this.reloadTopAndUsers()
-      } catch (e) {
-        this.error =
-          e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          'Ocurrió un error al aplicar el filtro de lista.'
+    labelStyle(lb) {
+      const hex = (lb?.color || '').trim()
+
+      if (!hex) {
+        return {
+          backgroundColor: '#e5e7eb',
+          color: '#111827'
+        }
+      }
+
+      const r = parseInt(hex.substr(1, 2), 16)
+      const g = parseInt(hex.substr(3, 2), 16)
+      const b = parseInt(hex.substr(5, 2), 16)
+
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b)
+      const textColor = luminance > 186 ? '#111827' : '#ffffff'
+
+      return {
+        backgroundColor: hex,
+        color: textColor
+      }
+    },
+
+    async loadWorkSchedule() {
+      if (!this.selectedUserId) {
+        this.clearWorkSchedule()
+        return
+      }
+
+      const start = moment(this.startDate).format('YYYY-MM-DD')
+      const end = moment(this.endDate).format('YYYY-MM-DD')
+
+      const res = await axios.get(this.route('charts.individual.workSchedule'), {
+        params: {
+          start_date: start,
+          end_date: end,
+          project_id: this.project.id,
+          user_id: this.selectedUserId,
+        },
+      })
+
+      this.scheduleRows = res.data?.rows || []
+      this.scheduleReady = true
+      await nextTick()
+      this.renderWorkSchedule()
+    },
+
+    renderWorkSchedule() {
+      if (!this.plotly || !this.$refs.scheduleChart) return
+
+      const rows = this.scheduleRows || []
+
+      const toHourDecimal = (dt) => {
+        const m = moment(dt)
+        return m.hours() + (m.minutes() / 60)
+      }
+
+      const fmtTime = (dt) => moment(dt).format('HH:mm')
+
+      const datesUnique = [...new Set(rows.map(r => r.date))].sort()
+
+      if (datesUnique.length === 0) {
+        this.plotly.purge(this.$refs.scheduleChart)
+        return
+      }
+
+      const dateToIndex = new Map(datesUnique.map((d, i) => [d, i]))
+
+      const nDays = datesUnique.length
+      const barWidth = Math.max(8, Math.min(26, Math.round(260 / nDays)))
+
+      const oneColor = '#2563eb'
+
+      const traces = rows.map((r) => {
+        const x = dateToIndex.get(r.date)
+        const y0 = toHourDecimal(r.startedAt)
+        const y1 = toHourDecimal(r.stoppedAt)
+
+        return {
+          type: 'scatter',
+          mode: 'lines',
+          x: [x, x],
+          y: [y0, y1],
+          line: { width: barWidth, color: oneColor },
+          hovertemplate:
+            `<b>${(r.taskTitle || '').replaceAll('<','&lt;').replaceAll('>','&gt;')}</b>` +
+            `<br>Inicio: ${fmtTime(r.startedAt)}` +
+            `<br>Fin: ${fmtTime(r.stoppedAt)}` +
+            `<br>Duración: ${Number(r.hours || 0).toFixed(2)} h` +
+            `<extra></extra>`,
+          showlegend: false,
+        }
+      })
+
+      const shapes = []
+      for (let h = 8; h <= 20; h += 1) {
+        shapes.push({
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: 'y',
+          y0: h,
+          y1: h,
+          line: { dash: 'dot', width: 1 },
+        })
+      }
+
+      const layout = {
+        title: 'Horarios trabajados',
+        height: 420,
+        margin: { l: 70, r: 20, t: 50, b: 55 },
+
+        xaxis: {
+          title: 'Fecha',
+          tickmode: 'array',
+          tickvals: datesUnique.map((_, i) => i),
+          ticktext: datesUnique,
+          range: [-0.5, (nDays - 1) + 0.5],
+          fixedrange: true,
+          zeroline: false,
+          showgrid: false,
+        },
+
+        yaxis: {
+          title: 'Hora',
+          range: [8, 20],
+          dtick: 1,
+          tickvals: Array.from({ length: 13 }, (_, i) => 8 + i),
+          ticktext: Array.from({ length: 13 }, (_, i) => `${String(8 + i).padStart(2, '0')}:00`),
+          showgrid: false,
+          zeroline: false,
+          fixedrange: true,
+        },
+
+        shapes,
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+      }
+
+      const config = { responsive: true, displayModeBar: false }
+      this.plotly.react(this.$refs.scheduleChart, traces, layout, config)
+    },
+
+    clearWorkSchedule() {
+      this.scheduleReady = false
+      this.scheduleRows = []
+
+      if (this.plotly && this.$refs.scheduleChart) {
+        this.plotly.purge(this.$refs.scheduleChart)
       }
     },
 
     clearIndividual() {
-      this.selectedUserId = null
       this.kpiReady = false
       this.avgHours = 0
       this.targetHours = 8
@@ -753,12 +904,23 @@ export default {
       this.chartData.hours = []
       this.taskRows = []
 
-      // Si quieres también borrar el dibujo anterior de Plotly:
       if (this.plotly && this.$refs.hoursByDayChart) {
         this.plotly.purge(this.$refs.hoursByDayChart)
       }
     },
 
+    async loadUsersOptions() {
+      const res = await axios.get(this.route('charts.project.usersOptions'), {
+        params: { project_id: this.project.id },
+      })
+
+      this.usersOptions = res.data?.data || []
+    },
+
+    renderTasksByUser() {},
+    renderHoursByUser() {},
+    async loadTasksByUser() {},
+    async loadHoursByUser() {},
   },
 }
 </script>
