@@ -437,13 +437,9 @@ Route::get('p/statistics/{uid}', [ProjectsController::class, 'viewStatistics'])
     ->name('projects.view.statistics')
     ->middleware('auth');
 
-Route::get('api/charts/individual/hours-by-day', [ProjectsController::class, 'chartHoursByDay'])
-    ->name('charts.individual.hoursByDay')
-    ->middleware('auth');
 
-Route::get('api/charts/individual/task-hours', [ProjectsController::class, 'chartTaskHours'])
-    ->name('charts.individual.taskHours')
-    ->middleware('auth');
+
+
 
 Route::get('api/charts/project/tasks-by-user', [ProjectsController::class, 'chartTasksByUser'])
     ->name('charts.project.tasksByUser')
@@ -457,9 +453,7 @@ Route::get('api/charts/project/users-with-activity', [ProjectsController::class,
     ->name('charts.project.usersWithActivity')
     ->middleware('auth');
 
-Route::get('api/charts/project/requests-table', [ProjectsController::class, 'chartProjectRequestsTable'])
-    ->name('charts.project.requestsTable')
-    ->middleware('auth');
+
 
 Route::get('api/charts/project/labels-with-activity', [ProjectsController::class, 'chartLabelsWithActivity'])
     ->name('charts.project.labelsWithActivity')
@@ -468,6 +462,7 @@ Route::get('api/charts/project/labels-with-activity', [ProjectsController::class
 Route::get('api/charts/project/lists-with-activity', [ProjectsController::class, 'chartListsWithActivity'])
     ->name('charts.project.listsWithActivity')
     ->middleware('auth');
+
 
 Route::get('/statistics/general', [StatisticsController::class, 'general'])
     ->name('statistics.general')
@@ -481,9 +476,9 @@ Route::get('workspace/charts/general/hours-by-user-project', [WorkspaceStatistic
   ->name('workspace.charts.general.hoursByUserProject')
   ->middleware('auth');
 
-Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
-    ->name('workspace.statistics.general.export.hoursByUserProject')
-    ->middleware('auth');
+// Route::get('workspace/{uid}/statistics/general/export/hours-by-user-project', [WorkspaceStatisticsController::class, 'exportHoursByUserProject'])
+//     ->name('workspace.statistics.general.export.hoursByUserProject')
+//     ->middleware('auth');
 
 Route::get('/workspaces/{workspace}/statistics/general/table-task-timers', [WorkspaceStatisticsController::class, 'tableTaskTimers'])
     ->name('workspace.statistics.general.table.taskTimers');
@@ -499,3 +494,65 @@ Route::get('/workspaces/statistics/general/chart/userDailyHoursHeatmap',[Workspa
 
 Route::get('/workspace/charts/general/projectTasksByDay', [WorkspaceStatisticsController::class, 'chartProjectTasksByDay'])
     ->name('workspace.charts.general.projectTasksByDay');
+
+
+
+// Estadisticas individuales
+
+// Comportamiento semanal
+Route::get('api/charts/individual/hours-by-day', [ProjectsController::class, 'chartHoursByDay'])
+    ->name('charts.individual.hoursByDay')
+    ->middleware('auth');
+
+//Porcentaje carril por dias
+Route::get('api/charts/project/list-utilization-by-day', [ProjectsController::class, 'chartListsPercentByDay'])
+    ->name('charts.project.listUtilizationByDay')
+    ->middleware('auth');
+
+//Porcentaje carril por rango
+Route::get('api/charts/project/lists-percent-week', [ProjectsController::class, 'chartListsPercentWeek'])
+    ->name('charts.project.listsPercentWeek')
+    ->middleware('auth');
+
+//Tabla detalle de tareas
+Route::get('api/charts/individual/task-hours', [ProjectsController::class, 'chartTaskHours'])
+    ->name('charts.individual.taskHours')
+    ->middleware('auth');
+
+// Gráfica Timeline diario
+Route::get('api/charts/individual/work-schedule', [ProjectsController::class, 'chartWorkSchedule'])
+  ->name('charts.individual.workSchedule');
+
+// Tabla de solicitudes por usuario
+Route::get('api/charts/project/requests-table', [ProjectsController::class, 'chartProjectRequestsTable'])
+    ->name('charts.project.requestsTable')
+    ->middleware('auth');
+
+//ESTADISTICAS GENERALES
+
+// Combo de usuarios
+Route::get('/charts/project/users-options', [ProjectsController::class, 'chartUsersOptions'])
+    ->name('charts.project.usersOptions')
+    ->middleware('auth');
+
+// Horas por usuario
+Route::get('/workspace/charts/general/hours-by-user-project', [WorkspaceStatisticsController::class, 'hoursByUserProject'])
+    ->name('workspace.charts.general.hoursByUserProject')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/hours-by-user-label', [WorkspaceStatisticsController::class, 'hoursByUserLabel'])
+    ->name('workspace.charts.general.hoursByUserLabel')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/hours-by-user-lane', [WorkspaceStatisticsController::class, 'hoursByUserLane'])
+    ->name('workspace.charts.general.hoursByUserLane')
+    ->middleware('auth');
+
+Route::get('/workspace/statistics/general/table/task-timers-by-dimension/{workspace}', [WorkspaceStatisticsController::class, 'taskTimersByDimension'])
+    ->name('workspace.statistics.general.table.taskTimersByDimension')
+    ->middleware('auth');
+
+Route::get(
+    '/workspace/statistics/general/export/report-by-dimension/{workspace}',[WorkspaceStatisticsController::class, 'exportReportByDimension'])
+    ->name('workspace.statistics.general.export.reportByDimension')
+    ->middleware('auth');

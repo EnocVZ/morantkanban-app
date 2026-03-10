@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class WorkspaceStatisticsController extends Controller
 {
@@ -38,22 +39,201 @@ class WorkspaceStatisticsController extends Controller
                 t.user_id,
                 ta.project_id,
                 CONCAT(u.first_name,' ',u.last_name) as usuario,
-                p.title as proyecto,
+                p.title as dimension,
                 SUM(t.duration)/3600 as horas
             ")
             ->get();
 
-        $projects = $raw->pluck('proyecto')->unique()->values()->all();
+        return response()->json(
+            $this->buildHoursMatrixResponse($workspaceId, $start, $end, $raw, 'project')
+        );
+    }
+
+    public function hoursByUserLabel(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $raw = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+            ->join('labels as l', 'tl.label_id', '=', 'l.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->groupBy('t.user_id', 'l.id', 'u.first_name', 'u.last_name', 'l.name')
+            ->selectRaw("
+                t.user_id,
+                l.id as dimension_id,
+                CONCAT(u.first_name,' ',u.last_name) as usuario,
+                l.name as dimension,
+                SUM(t.duration)/3600 as horas
+            ")
+            ->get();
+
+        return response()->json(
+            $this->buildHoursMatrixResponse($workspaceId, $start, $end, $raw, 'label')
+        );
+    }
+
+    public function hoursByUserLane(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $raw = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->groupBy('t.user_id', 'bl.id', 'u.first_name', 'u.last_name', 'bl.title')
+            ->selectRaw("
+                t.user_id,
+                bl.id as dimension_id,
+                CONCAT(u.first_name,' ',u.last_name) as usuario,
+                bl.title as dimension,
+                SUM(t.duration)/3600 as horas
+            ")
+            ->get();
+
+        return response()->json(
+            $this->buildHoursMatrixResponse($workspaceId, $start, $end, $raw, 'lane')
+        );
+    }
+
+    public function taskTimersByDimension(Request $request, $workspace)
+    {
+        $request->validate([
+            'workspace_id'   => ['required', 'integer'],
+            'start_date'     => ['required', 'date'],
+            'end_date'       => ['required', 'date'],
+            'dimension_type' => ['required', 'in:project,label,lane'],
+            'selected_items' => ['nullable', 'array'],
+            'selected_items.*' => ['string'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+        $dimensionType = $request->dimension_type;
+        $selectedItems = $request->selected_items ?? [];
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $query = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->leftJoin('projects as p', 'ta.project_id', '=', 'p.id')
+            ->leftJoin('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->leftJoin('board_sublist as bs', 'ta.sublist_id', '=', 'bs.id')
+            ->leftJoin('workspaces as w', 'p.workspace_id', '=', 'w.id')
+            ->leftJoin('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()]);
+
+        if ($dimensionType === 'label') {
+            $query->join('task_labels as tl_filter', 'ta.id', '=', 'tl_filter.task_id')
+                ->join('labels as l_filter', 'tl_filter.label_id', '=', 'l_filter.id');
+
+            if (!empty($selectedItems)) {
+                $query->whereIn('l_filter.name', $selectedItems);
+            }
+        }
+
+        if ($dimensionType === 'project' && !empty($selectedItems)) {
+            $query->whereIn('p.title', $selectedItems);
+        }
+
+        if ($dimensionType === 'lane' && !empty($selectedItems)) {
+            $query->whereIn('bl.title', $selectedItems);
+        }
+
+        $query->leftJoin('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+            ->leftJoin('labels as l', 'tl.label_id', '=', 'l.id');
+
+        $rows = $query
+            ->groupBy(
+                'w.name',
+                'p.title',
+                'ta.title',
+                'ta.is_done',
+                'ta.created_at',
+                'u.first_name',
+                'u.last_name',
+                't.started_at',
+                't.stopped_at',
+                'bl.title',
+                'bs.title'
+            )
+            ->selectRaw("
+                w.name as espacio,
+                p.title as proyecto,
+                ta.title as tarea,
+                ta.is_done as terminada,
+                ta.created_at as creacion,
+                CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,'')) as realizada_por,
+                t.started_at as inicio,
+                t.stopped_at as fin,
+                SUM(t.duration)/3600 as horas,
+                bl.title as carril,
+                bs.title as estatus,
+                GROUP_CONCAT(DISTINCT l.name ORDER BY l.name SEPARATOR ', ') as etiquetas
+            ")
+            ->orderByDesc('t.started_at')
+            ->get();
+
+        return response()->json([
+            'workspace_id'   => $workspaceId,
+            'start_date'     => $start->toDateString(),
+            'end_date'       => $end->toDateString(),
+            'dimension_type' => $dimensionType,
+            'rows'           => $rows,
+        ]);
+    }
+
+    private function buildHoursMatrixResponse(int $workspaceId, Carbon $start, Carbon $end, $raw, string $dimensionType): array
+    {
+        $dimensions = $raw->pluck('dimension')->unique()->values()->all();
         $users = $raw->pluck('usuario')->unique()->values()->all();
 
         $map = [];
         foreach ($raw as $r) {
             $user = (string) $r->usuario;
-            $proj = (string) $r->proyecto;
+            $dim  = (string) $r->dimension;
             $hrs  = (float) $r->horas;
 
-            if (!isset($map[$user])) $map[$user] = [];
-            $map[$user][$proj] = ($map[$user][$proj] ?? 0) + $hrs;
+            if (!isset($map[$user])) {
+                $map[$user] = [];
+            }
+
+            $map[$user][$dim] = ($map[$user][$dim] ?? 0) + $hrs;
         }
 
         $rows = [];
@@ -61,12 +241,12 @@ class WorkspaceStatisticsController extends Controller
             $row = [
                 'usuario' => $user,
                 'total' => 0.0,
-                'projects' => [],
+                'items' => [],
             ];
 
-            foreach ($projects as $proj) {
-                $v = (float) ($map[$user][$proj] ?? 0.0);
-                $row['projects'][$proj] = $v;
+            foreach ($dimensions as $dim) {
+                $v = (float) ($map[$user][$dim] ?? 0.0);
+                $row['items'][$dim] = $v;
                 $row['total'] += $v;
             }
 
@@ -80,21 +260,22 @@ class WorkspaceStatisticsController extends Controller
             'series' => [],
         ];
 
-        foreach ($projects as $proj) {
+        foreach ($dimensions as $dim) {
             $chart['series'][] = [
-                'name' => $proj,
-                'values' => array_map(fn($r) => (float) $r['projects'][$proj], $rows),
+                'name' => $dim,
+                'values' => array_map(fn($r) => (float) $r['items'][$dim], $rows),
             ];
         }
 
-        return response()->json([
-            'workspace_id' => $workspaceId,
-            'start_date' => $start->toDateString(),
-            'end_date' => $end->toDateString(),
-            'projects' => $projects,
-            'rows' => $rows,
-            'chart' => $chart,
-        ]);
+        return [
+            'workspace_id'   => $workspaceId,
+            'start_date'     => $start->toDateString(),
+            'end_date'       => $end->toDateString(),
+            'dimension_type' => $dimensionType,
+            'dimensions'     => $dimensions,
+            'rows'           => $rows,
+            'chart'          => $chart,
+        ];
     }
 
     public function exportHoursByUserProject(Request $request)
@@ -410,7 +591,11 @@ class WorkspaceStatisticsController extends Controller
             ], 422);
         }
 
-        // 1) Traer horas por workspace
+        /*
+        |--------------------------------------------------------------------------
+        | 1) Traer horas trabajadas por workspace
+        |--------------------------------------------------------------------------
+        */
         $rows = DB::table('tasks as ta')
             ->join('timers as t', 'ta.id', '=', 't.task_id')
             ->join('projects as p', 'ta.project_id', '=', 'p.id')
@@ -425,13 +610,52 @@ class WorkspaceStatisticsController extends Controller
             ->orderByDesc(DB::raw('SUM(t.duration)'))
             ->get();
 
-        // 2) Total
-        $totalHours = $rows->sum(fn($r) => (float) $r->hours);
+        /*
+        |--------------------------------------------------------------------------
+        | 2) Total de horas trabajadas
+        |--------------------------------------------------------------------------
+        */
+        $workedHours = (float) $rows->sum(fn($r) => (float) $r->hours);
 
-        // 3) Calcular porcentaje
-        $mapped = $rows->map(function ($r) use ($totalHours) {
+        /*
+        |--------------------------------------------------------------------------
+        | 3) Calcular días hábiles (L-V)
+        |--------------------------------------------------------------------------
+        */
+        $businessDays = 0;
+        $cursor = $start->copy()->startOfDay();
+        $lastDay = $end->copy()->startOfDay();
+
+        while ($cursor->lte($lastDay)) {
+            if ($cursor->isWeekday()) {
+                $businessDays++;
+            }
+            $cursor->addDay();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4) Horas teóricas y tiempo muerto
+        |--------------------------------------------------------------------------
+        */
+        $theoreticalHours = $businessDays * 8;
+        $idleHours = max(0, $theoreticalHours - $workedHours);
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5) Base total para porcentajes
+        |--------------------------------------------------------------------------
+        */
+        $baseTotalHours = $workedHours + $idleHours;
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6) Mapear workspaces con porcentaje recalculado
+        |--------------------------------------------------------------------------
+        */
+        $mapped = $rows->map(function ($r) use ($baseTotalHours) {
             $hours = (float) $r->hours;
-            $pct = $totalHours > 0 ? ($hours / $totalHours) * 100 : 0;
+            $pct = $baseTotalHours > 0 ? ($hours / $baseTotalHours) * 100 : 0;
 
             return [
                 'workspace_id' => (int) $r->workspace_id,
@@ -441,12 +665,36 @@ class WorkspaceStatisticsController extends Controller
             ];
         })->values();
 
-        // 4) Responder
+        /*
+        |--------------------------------------------------------------------------
+        | 7) Agregar tiempo muerto si aplica
+        |--------------------------------------------------------------------------
+        */
+        if ($idleHours > 0) {
+            $idlePct = $baseTotalHours > 0 ? ($idleHours / $baseTotalHours) * 100 : 0;
+
+            $mapped->push([
+                'workspace_id' => 0,
+                'workspace'    => 'Tiempo muerto',
+                'hours'        => round($idleHours, 2),
+                'pct'          => round($idlePct, 2),
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 8) Responder
+        |--------------------------------------------------------------------------
+        */
         return response()->json([
-            'start_date'   => $start->toDateString(),
-            'end_date'     => $end->toDateString(),
-            'total_hours'  => round((float) $totalHours, 2),
-            'rows'         => $mapped,
+            'start_date'         => $start->toDateString(),
+            'end_date'           => $end->toDateString(),
+            'business_days'      => $businessDays,
+            'theoretical_hours'  => round((float) $theoreticalHours, 2),
+            'worked_hours'       => round((float) $workedHours, 2),
+            'idle_hours'         => round((float) $idleHours, 2),
+            'total_hours'        => round((float) $baseTotalHours, 2),
+            'rows'               => $mapped->values(),
         ]);
     }
 
@@ -611,5 +859,359 @@ class WorkspaceStatisticsController extends Controller
         ]);
     }
 
-    
+    public function exportReportByDimension(Request $request, $workspace)
+    {
+        $request->validate([
+            'workspace_id'      => ['required', 'integer'],
+            'start_date'        => ['required', 'date'],
+            'end_date'          => ['required', 'date'],
+            'dimension_type'    => ['required', 'in:project,label,lane'],
+            'selected_items'    => ['nullable', 'array'],
+            'selected_items.*'  => ['string'],
+        ]);
+
+        $workspaceId   = (int) $request->workspace_id;
+        $start         = Carbon::parse($request->start_date)->startOfDay();
+        $end           = Carbon::parse($request->end_date)->endOfDay();
+        $dimensionType = $request->dimension_type;
+        $selectedItems = $request->input('selected_items', []);
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1) DATASET MATRIZ
+        |--------------------------------------------------------------------------
+        */
+        if ($dimensionType === 'project') {
+            $raw = DB::table('tasks as ta')
+                ->join('timers as t', 'ta.id', '=', 't.task_id')
+                ->join('projects as p', 'ta.project_id', '=', 'p.id')
+                ->join('users as u', 't.user_id', '=', 'u.id')
+                // ->where('p.workspace_id', $workspaceId)
+                ->whereNotNull('t.stopped_at')
+                ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+                ->groupBy('t.user_id', 'ta.project_id', 'u.first_name', 'u.last_name', 'p.title')
+                ->selectRaw("
+                    t.user_id,
+                    ta.project_id as dimension_id,
+                    CONCAT(u.first_name,' ',u.last_name) as usuario,
+                    p.title as dimension,
+                    SUM(t.duration)/3600 as horas
+                ")
+                ->get();
+        } elseif ($dimensionType === 'label') {
+            $raw = DB::table('tasks as ta')
+                ->join('timers as t', 'ta.id', '=', 't.task_id')
+                ->join('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+                ->join('labels as l', 'tl.label_id', '=', 'l.id')
+                ->join('users as u', 't.user_id', '=', 'u.id')
+                // ->where('ta.workspace_id', $workspaceId)
+                ->whereNotNull('t.stopped_at')
+                ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+                ->groupBy('t.user_id', 'l.id', 'u.first_name', 'u.last_name', 'l.name')
+                ->selectRaw("
+                    t.user_id,
+                    l.id as dimension_id,
+                    CONCAT(u.first_name,' ',u.last_name) as usuario,
+                    l.name as dimension,
+                    SUM(t.duration)/3600 as horas
+                ")
+                ->get();
+        } else {
+            $raw = DB::table('tasks as ta')
+                ->join('timers as t', 'ta.id', '=', 't.task_id')
+                ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+                ->join('users as u', 't.user_id', '=', 'u.id')
+                // ->where('ta.workspace_id', $workspaceId)
+                ->whereNotNull('t.stopped_at')
+                ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+                ->groupBy('t.user_id', 'bl.id', 'u.first_name', 'u.last_name', 'bl.title')
+                ->selectRaw("
+                    t.user_id,
+                    bl.id as dimension_id,
+                    CONCAT(u.first_name,' ',u.last_name) as usuario,
+                    bl.title as dimension,
+                    SUM(t.duration)/3600 as horas
+                ")
+                ->get();
+        }
+
+        $allDimensions = $raw->pluck('dimension')->filter()->unique()->values()->all();
+
+        if (!empty($selectedItems)) {
+            $dimensions = array_values(array_filter($allDimensions, function ($item) use ($selectedItems) {
+                return in_array($item, $selectedItems, true);
+            }));
+        } else {
+            $dimensions = $allDimensions;
+        }
+
+        $users = $raw->pluck('usuario')->filter()->unique()->values()->all();
+
+        $map = [];
+        foreach ($raw as $r) {
+            $user = (string) $r->usuario;
+            $dim  = (string) $r->dimension;
+            $hrs  = (float) $r->horas;
+
+            if (!empty($dimensions) && !in_array($dim, $dimensions, true)) {
+                continue;
+            }
+
+            if (!isset($map[$user])) {
+                $map[$user] = [];
+            }
+
+            $map[$user][$dim] = ($map[$user][$dim] ?? 0) + $hrs;
+        }
+
+        $matrixRows = [];
+        foreach ($users as $user) {
+            $row = [
+                'usuario' => $user,
+                'total'   => 0.0,
+                'items'   => [],
+            ];
+
+            foreach ($dimensions as $dim) {
+                $value = (float) ($map[$user][$dim] ?? 0.0);
+                $row['items'][$dim] = $value;
+                $row['total'] += $value;
+            }
+
+            if ($row['total'] > 0 || empty($selectedItems)) {
+                $matrixRows[] = $row;
+            }
+        }
+
+        usort($matrixRows, fn($a, $b) => ($b['total'] <=> $a['total']));
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2) DATASET DETALLE
+        |--------------------------------------------------------------------------
+        */
+        $detailQuery = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->leftJoin('projects as p', 'ta.project_id', '=', 'p.id')
+            ->leftJoin('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->leftJoin('board_sublist as bs', 'ta.sublist_id', '=', 'bs.id')
+            ->leftJoin('workspaces as w', 'p.workspace_id', '=', 'w.id')
+            ->leftJoin('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()]);
+
+        if ($dimensionType === 'label') {
+            $detailQuery
+                ->join('task_labels as tl_filter', 'ta.id', '=', 'tl_filter.task_id')
+                ->join('labels as l_filter', 'tl_filter.label_id', '=', 'l_filter.id');
+
+            if (!empty($selectedItems)) {
+                $detailQuery->whereIn('l_filter.name', $selectedItems);
+            }
+        }
+
+        if ($dimensionType === 'project' && !empty($selectedItems)) {
+            $detailQuery->whereIn('p.title', $selectedItems);
+        }
+
+        if ($dimensionType === 'lane' && !empty($selectedItems)) {
+            $detailQuery->whereIn('bl.title', $selectedItems);
+        }
+
+        $detailQuery
+            ->leftJoin('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+            ->leftJoin('labels as l', 'tl.label_id', '=', 'l.id');
+
+        $detailRows = $detailQuery
+            ->groupBy(
+                'ta.id',
+                'w.name',
+                'p.title',
+                'ta.title',
+                'ta.is_done',
+                'ta.created_at',
+                'u.first_name',
+                'u.last_name',
+                't.started_at',
+                't.stopped_at',
+                'bl.title',
+                'bs.title'
+            )
+            ->selectRaw("
+                ta.id as task_id,
+                w.name as espacio,
+                p.title as proyecto,
+                ta.title as tarea,
+                ta.is_done as terminada,
+                ta.created_at as creacion,
+                CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,'')) as realizada_por,
+                t.started_at as inicio,
+                t.stopped_at as fin,
+                SUM(t.duration)/3600 as horas,
+                bl.title as carril,
+                bs.title as estatus,
+                GROUP_CONCAT(DISTINCT l.name ORDER BY l.name SEPARATOR '||') as etiquetas
+            ")
+            ->orderByDesc('t.started_at')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2.1) CONSTRUIR COLUMNAS DINÁMICAS DE ETIQUETAS
+        |--------------------------------------------------------------------------
+        */
+        $allLabels = [];
+
+        foreach ($detailRows as $row) {
+            $labels = [];
+
+            if (!empty($row->etiquetas)) {
+                $labels = array_filter(array_map('trim', explode('||', $row->etiquetas)));
+            }
+
+            foreach ($labels as $label) {
+                $allLabels[$label] = true;
+            }
+        }
+
+        $labelColumns = array_keys($allLabels);
+        sort($labelColumns, SORT_NATURAL | SORT_FLAG_CASE);
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3) GENERAR EXCEL
+        |--------------------------------------------------------------------------
+        */
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $sheet1 = $spreadsheet->getActiveSheet();
+        $sheet1->setTitle('Resumen');
+
+        $headers1 = array_merge(['Usuario'], $dimensions, ['Total']);
+
+        foreach ($headers1 as $index => $header) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
+            $sheet1->setCellValue($col . '1', $header);
+        }
+
+        $rowNumber = 2;
+        foreach ($matrixRows as $row) {
+            $sheet1->setCellValue('A' . $rowNumber, $row['usuario']);
+
+            $colIndex = 2;
+            foreach ($dimensions as $dimension) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet1->setCellValue($col . $rowNumber, (float) ($row['items'][$dimension] ?? 0));
+                $colIndex++;
+            }
+
+            $totalCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet1->setCellValue($totalCol . $rowNumber, (float) ($row['total'] ?? 0));
+
+            $rowNumber++;
+        }
+
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Detalle');
+
+        $headers2Base = [
+            'Espacio',
+            'Proyecto',
+            'Tarea',
+            'Terminada',
+            'Creación',
+            'Realizada por',
+            'Inicio',
+            'Fin',
+            'Horas',
+            'Carril',
+            'Estatus',
+        ];
+
+        $headers2 = array_merge($headers2Base, $labelColumns);
+
+        foreach ($headers2 as $index => $header) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
+            $sheet2->setCellValue($col . '1', $header);
+        }
+
+        $rowNumber = 2;
+        foreach ($detailRows as $row) {
+            $taskLabels = [];
+
+            if (!empty($row->etiquetas)) {
+                $taskLabels = array_filter(array_map('trim', explode('||', $row->etiquetas)));
+            }
+
+            $taskLabelsMap = array_fill_keys($taskLabels, true);
+
+            $sheet2->setCellValue('A' . $rowNumber, $row->espacio);
+            $sheet2->setCellValue('B' . $rowNumber, $row->proyecto);
+            $sheet2->setCellValue('C' . $rowNumber, $row->tarea);
+            $sheet2->setCellValue('D' . $rowNumber, ((int) $row->terminada) ? 'Sí' : 'No');
+            $sheet2->setCellValue('E' . $rowNumber, $row->creacion);
+            $sheet2->setCellValue('F' . $rowNumber, $row->realizada_por);
+            $sheet2->setCellValue('G' . $rowNumber, $row->inicio);
+            $sheet2->setCellValue('H' . $rowNumber, $row->fin);
+            $sheet2->setCellValue('I' . $rowNumber, (float) $row->horas);
+            $sheet2->setCellValue('J' . $rowNumber, $row->carril);
+            $sheet2->setCellValue('K' . $rowNumber, $row->estatus);
+
+            $colIndex = count($headers2Base) + 1;
+            foreach ($labelColumns as $labelName) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet2->setCellValue($col . $rowNumber, isset($taskLabelsMap[$labelName]) ? 'X' : '');
+                $colIndex++;
+            }
+
+            $rowNumber++;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4) FORMATO BÁSICO
+        |--------------------------------------------------------------------------
+        */
+        $lastCol1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers1));
+        $lastCol2 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers2));
+
+        $sheet1->getStyle('A1:' . $lastCol1 . '1')->getFont()->setBold(true);
+        $sheet2->getStyle('A1:' . $lastCol2 . '1')->getFont()->setBold(true);
+
+        $sheet1->freezePane('A2');
+        $sheet2->freezePane('A2');
+
+        $sheet1->setAutoFilter('A1:' . $lastCol1 . '1');
+        $sheet2->setAutoFilter('A1:' . $lastCol2 . '1');
+
+        for ($i = 1; $i <= count($headers1); $i++) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+            $sheet1->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        for ($i = 1; $i <= count($headers2); $i++) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+            $sheet2->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $fileName = 'reporte_' . $dimensionType . '_' . $start->format('Ymd') . '_' . $end->format('Ymd') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
+            'Pragma' => 'public',
+        ]);
+    }    
 }
