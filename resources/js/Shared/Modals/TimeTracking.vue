@@ -181,7 +181,9 @@ export default {
       }
 
       axios.post(this.route('task.timer.save'), request)
-        .then(() => {
+        .then((response) => {
+          const data = response?.data?.data;
+          this.$emit('onAddOrUpdateTime', data, true)
           this.$toast.success('Seguimiento de tiempo guardado correctamente')
         })
         .catch((response) => {
@@ -210,7 +212,9 @@ export default {
         this.route('task.timer.update', this.form.timerId),
         request
       )
-        .then(() => {
+        .then((response) => {
+          const data = response?.data?.data;
+          this.$emit('onAddOrUpdateTime', data, false)
           this.cancelModal()
           this.$toast.success('Seguimiento de tiempo actualizado correctamente')
         })
