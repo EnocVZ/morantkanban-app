@@ -32,6 +32,10 @@ class Kernel extends ConsoleKernel
         ->daily()
         //->hourly()
         ->timezone('America/Mexico_City');
+
+        $schedule->command('app:mark-task-done')
+        ->daily()
+        ->timezone('America/Mexico_City');
     }
 
     /**

@@ -90,7 +90,7 @@ class TimersController extends Controller
             $duration = $requests['duration'];
 
             $startDateTime = Carbon::parse($requests['started_at']);
-            $endDateTime   = $startDateTime->copy()->addHours($duration);
+            $endDateTime   = $startDateTime->copy()->addSeconds($duration);
 
             $exists = Timer::where('user_id', auth()->id())
                 ->where('id', '!=', $id)

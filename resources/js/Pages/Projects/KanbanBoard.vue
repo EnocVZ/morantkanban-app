@@ -75,6 +75,11 @@
                                                          <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
                                                          __('Automatizar tiempo') }}
                                                       </a>
+                                                      <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
+                                                         @click="onOpenOptionMarkTaskCompleted(sublist)">
+                                                         <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
+                                                         __('Marcar tareas como completadas') }}
+                                                      </a>
                                                    </div>
                                                 </template>
                                              </dropdown>
@@ -282,7 +287,11 @@
       <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
          @openTask="(id) => taskDetailsPopup(id)" />
       <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
-      <add-days-limit :showModal="showAddDaysLimitModal" @close="onCloseModalAddDaysLimit" :sublist="sublistSelected" />
+      <add-days-limit :showModal="showAddDaysLimitModal" @close="showAddDaysLimitModal = false" :sublist="sublistSelected" />
+      <option-mark-task-completed :showModal="showOptionMarkTaskCompletedModal"
+      @close="onCloseModalOptionMarkTaskCompleted"
+      @onSuccess="onSuccessOptionMarkTaskCompleted"
+      :sublist="sublistSelected" />
    </div>
 
 </template>
@@ -305,6 +314,7 @@ import mapValues from "lodash/mapValues";
 import ChangeWorkspace from '@/Shared/Modals/ChangeWorkspace'
 import moment from 'moment'
 import AddDaysLimit from '@/Pages/Projects/AddDaysLimit';
+import OptionMarkTaskCompleted from '@/Pages/Projects/OptionMarkTaskCompleted';
 
 export default {
    name: "KanbanBoard",
@@ -313,7 +323,8 @@ export default {
       RightMenu,
       Dropdown,
       ChangeWorkspace,
-      AddDaysLimit
+      AddDaysLimit,
+      OptionMarkTaskCompleted
    },
    layout: Layout,
    remember: 'form',
@@ -363,7 +374,9 @@ export default {
          userRequestList: [],
          showAddDaysLimitModal: false,
          sublistSelected: {},
-         board_lists: []
+         board_lists: [],
+         showAddDaysLimitModal: false,
+         showOptionMarkTaskCompletedModal: false,
       };
    },
    watch: {
@@ -643,8 +656,20 @@ export default {
       onCloseModalAddDaysLimit() {
          this.showAddDaysLimitModal = false;
          this.sublistSelected = {};
-      }
+      },
+      onOpenOptionMarkTaskCompleted(sublist) {
+         this.sublistSelected = sublist;
+         this.showOptionMarkTaskCompletedModal = true;
+      },
 
+      onSuccessOptionMarkTaskCompleted(enableDone) {
+         this.sublistSelected.mark_completed_task = enableDone;
+      },
+
+      onCloseModalOptionMarkTaskCompleted() {
+         this.showOptionMarkTaskCompletedModal = false;
+         this.sublistSelected = {};
+      }
    },
 };
 </script>

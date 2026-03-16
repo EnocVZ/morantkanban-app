@@ -400,8 +400,8 @@
 
                             
                            <!-- Progress -->
-                           <div class="flex justify-between items-center mb-4">
-                              <span class="text-sm text-gray-600">{{ task.progress }}% Completado</span>
+                           <div class="flex justify-between items-center mb-4" v-show="task?.subtask_list?.length > 0">
+                              <span class="text-sm text-gray-600">{{ task.progress }}% Progreso</span>
                               <div class="w-1/2 bg-gray-200 rounded-full h-2">
                               <div class="bg-green-500 h-2 rounded-full" :style="{ width: task.progress + '%' }"></div>
                               </div>
@@ -416,7 +416,7 @@
                                  >
                                  <div class="flex items-center gap-2">
                                     <span class="text-blue-500 font-semibold">{{ subtask?.task?.id }}</span>
-                                    <span class="text-gray-700" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask?.task?.id)"
+                                    <span  :class="['text-gray-700', subtask?.task?.is_done == 1 && 'line-through']" contenteditable="true" :keypress="(e)=>saveTitle(e, subtask?.task?.id)"
                                     @blur="(e)=>saveTitle(e, subtask?.task?.id)">{{ subtask?.task?.title }}</span>
                                  </div>
                                  <div class="flex items-center gap-3">
@@ -955,7 +955,7 @@
                      </aside>
                   </div>
                   <TimeTrackingModal :open="openLogTime" @close="onCloseTimeTracking">
-                     <TimeTracking :timer="timerToUpdate" :taskId="task.id" @close="onCloseTimeTracking"/>
+                     <TimeTracking :timer="timerToUpdate" :taskId="task.id" @close="onCloseTimeTracking" @onAddOrUpdateTime="onAddOrUpdateTime"/>
                   </TimeTrackingModal>
                   
                </div>
@@ -1775,6 +1775,17 @@ export default {
 
       saveNewTime() {
          this.openLogTime = true;
+      },
+
+      onAddOrUpdateTime(logtime, isNew){ 
+         if(isNew){
+            this.task.timers.push(logtime);
+         }else{
+            const timerIndex = this.task.timers.findIndex(t => t.id === logtime.id);
+            if(timerIndex > -1){
+               this.task.timers[timerIndex] = logtime;
+            }
+         }
       }
    },
    created() {
