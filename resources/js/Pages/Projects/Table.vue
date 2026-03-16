@@ -77,18 +77,50 @@
                         <div
                             v-for="(element, indexTsk) in requestList"
                             :key="indexTsk"
-                            @click="taskDetailsPopup(element)"
+                            
                             class="group bg-white border border-gray-200 rounded-lg p-3
                                 shadow-sm hover:shadow-md hover:border-blue-200
                                 transition-all duration-200 cursor-pointer
                                 min-h-[70px] flex flex-col justify-between"
                         >
+                            <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                                <!-- Título -->
+                                <h3 class="text-xs font-semibold text-gray-800 
+                                        group-hover:text-blue-600 line-clamp-2" @click="taskDetailsPopup(element)">
+                                {{ element.title }}
+                                </h3>
+                                        <dropdown className="rounded" placement="bottom-end">
+                                        <template #default>
+                                            <div class="flex items-center cursor-pointer group">
+                                                <icon class="w-5 h-5 drop-down-caret-icon fill-gray-400" name="more" />
+                                            </div>
+                                        </template>
+                                        <template #dropdown>
+                                            <div class="shadow-xl bg-white rounded text-sm ">
+                                                <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
+                                                    @click="showChatModal=true">
+                                                    <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
+                                                        __('Responder') }}
+                                                </a>
+                                            </div>
+                                        </template>
+                                    </dropdown>
+  
+                            </div>
+                             <!-- Barra de progreso -->
+                                <div class="mt-2">
+                                    <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                                        <span>Progreso</span>
+                                        <span>{{ element.subtasks_percentage }}%</span>
+                                    </div>
 
-                            <!-- Título -->
-                            <h3 class="text-xs font-semibold text-gray-800 
-                                    group-hover:text-blue-600 line-clamp-2">
-                            {{ element.title }}
-                            </h3>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                            class="bg-green-500 h-2 rounded-full"
+                                            :style="{ width: element.subtasks_percentage + '%' }"
+                                        ></div>
+                                    </div>
+                                </div>
 
                             <!-- Footer -->
                             <div class="flex justify-between items-center mt-2">
@@ -102,7 +134,6 @@
                             <span class="text-[10px] text-gray-500">
                                 {{ element.created_at_for_humans }}
                             </span>
-
                             </div>
 
                         </div>
@@ -201,6 +232,28 @@
             @closeModal="closeDetails()" />
         <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
             @openTask="(id) => taskDetailsPopup(id)" />
+            <!-- Modal -->
+       <div v-if="showChatModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+            <div class="bg-white w-[500px] h-[600px] rounded-xl shadow-xl flex flex-col">
+
+                <!-- Header -->
+                <div class="flex justify-between items-center border-b px-4 py-3">
+                    <h2 class="text-sm font-semibold">Chat de la tarea</h2>
+
+                    <button @click="showChatModal = false" class="text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Chat component -->
+                <div class="flex-1 overflow-hidden">
+                    <chatbox />
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 </template>
@@ -221,11 +274,12 @@ import mapValues from "lodash/mapValues";
 import BoardFilter from "../../Shared/BoardFilter";
 import RightMenu from "../../Shared/RightMenu";
 import axios from 'axios'
-
+import Dropdown from '@/Shared/Dropdown'
+import Chatbox from '@/Pages/Projects/Chatbox.vue';
 
 export default {
     metaInfo: { title: 'Dashboard' },
-    components: { RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, Datepicker, BoardViewMenu },
+    components: { RightMenu, BoardFilter, Head, Icon, Link, draggable, TaskDetails, Datepicker, BoardViewMenu, Dropdown, Chatbox },
     layout: Layout,
     props: {
         auth: Object,
@@ -274,6 +328,7 @@ export default {
                 label: this.filters.label,
                 task: this.filters.task ?? null,
             },
+            showChatModal: false,
         }
     },
     watch: {
