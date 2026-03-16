@@ -1604,6 +1604,8 @@ class ProjectsController extends Controller {
 
         $rows = DB::table('tasks as ta')
             ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->leftJoin('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+            ->leftJoin('labels as l', 'tl.label_id', '=', 'l.id')
             ->whereNotNull('t.stopped_at')
             ->whereBetween(DB::raw('DATE(t.started_at)'), [
                 $start->toDateString(),
@@ -1613,14 +1615,31 @@ class ProjectsController extends Controller {
             ->where('ta.project_id', $projectId)
             ->orderBy(DB::raw('DATE(t.started_at)'))
             ->orderBy('t.started_at')
-            ->selectRaw('
+            ->selectRaw("
                 ta.id as task_id,
                 ta.title as task_title,
                 DATE(t.started_at) as work_date,
                 t.started_at,
                 t.stopped_at,
-                t.duration/3600 as hours
-            ')
+                t.duration/3600 as hours,
+                GROUP_CONCAT(
+                    DISTINCT CONCAT(
+                        COALESCE(l.name, ''),
+                        '|||',
+                        COALESCE(l.color, '')
+                    )
+                    ORDER BY l.name
+                    SEPARATOR '###'
+                ) as labels_concat
+            ")
+            ->groupBy(
+                'ta.id',
+                'ta.title',
+                DB::raw('DATE(t.started_at)'),
+                't.started_at',
+                't.stopped_at',
+                't.duration'
+            )
             ->get();
 
         return response()->json([
@@ -1628,14 +1647,34 @@ class ProjectsController extends Controller {
             'user_id'    => $userId,
             'start_date' => $start->toDateString(),
             'end_date'   => $end->toDateString(),
-            'rows' => $rows->map(fn($r) => [
-                'taskId'    => (int) $r->task_id,
-                'taskTitle' => $r->task_title,
-                'date'      => $r->work_date,     // YYYY-MM-DD
-                'startedAt' => $r->started_at,    // datetime
-                'stoppedAt' => $r->stopped_at,    // datetime
-                'hours'     => (float) $r->hours, // duración hrs
-            ]),
+            'rows' => $rows->map(function ($r) {
+                $labels = [];
+
+                if (!empty($r->labels_concat)) {
+                    $labels = collect(explode('###', $r->labels_concat))
+                        ->map(function ($item) {
+                            $parts = explode('|||', $item);
+
+                            return [
+                                'name'  => $parts[0] ?? '',
+                                'color' => $parts[1] ?? '',
+                            ];
+                        })
+                        ->filter(fn($lb) => !empty($lb['name']))
+                        ->values()
+                        ->all();
+                }
+
+                return [
+                    'taskId'    => (int) $r->task_id,
+                    'taskTitle' => $r->task_title,
+                    'date'      => $r->work_date,
+                    'startedAt' => $r->started_at,
+                    'stoppedAt' => $r->stopped_at,
+                    'hours'     => (float) $r->hours,
+                    'labels'    => $labels,
+                ];
+            }),
         ]);
     }
 

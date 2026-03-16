@@ -802,6 +802,15 @@ export default {
 
       const fmtTime = (dt) => moment(dt).format('HH:mm')
 
+      const escapeHtml = (value) => {
+        return String(value || '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;')
+      }
+
       const datesUnique = [...new Set(rows.map(r => r.date))].sort()
 
       if (datesUnique.length === 0) {
@@ -821,6 +830,10 @@ export default {
         const y0 = toHourDecimal(r.startedAt)
         const y1 = toHourDecimal(r.stoppedAt)
 
+        const labelsText = Array.isArray(r.labels) && r.labels.length
+          ? r.labels.map(lb => escapeHtml(lb.name)).join(', ')
+          : '-'
+
         return {
           type: 'scatter',
           mode: 'lines',
@@ -828,7 +841,8 @@ export default {
           y: [y0, y1],
           line: { width: barWidth, color: oneColor },
           hovertemplate:
-            `<b>${(r.taskTitle || '').replaceAll('<','&lt;').replaceAll('>','&gt;')}</b>` +
+            `<b>${escapeHtml(r.taskTitle)}</b>` +
+            `<br>Etiquetas: ${labelsText}` +
             `<br>Inicio: ${fmtTime(r.startedAt)}` +
             `<br>Fin: ${fmtTime(r.stoppedAt)}` +
             `<br>Duración: ${Number(r.hours || 0).toFixed(2)} h` +

@@ -556,3 +556,15 @@ Route::get(
     '/workspace/statistics/general/export/report-by-dimension/{workspace}',[WorkspaceStatisticsController::class, 'exportReportByDimension'])
     ->name('workspace.statistics.general.export.reportByDimension')
     ->middleware('auth');
+
+Route::get('/workspace/charts/general/tasks-by-user-project', [WorkspaceStatisticsController::class, 'tasksByUserProject'])
+    ->name('workspace.charts.general.tasksByUserProject')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/tasks-by-user-label', [WorkspaceStatisticsController::class, 'tasksByUserLabel'])
+    ->name('workspace.charts.general.tasksByUserLabel')
+    ->middleware('auth');
+
+Route::get('/workspace/charts/general/tasks-by-user-lane', [WorkspaceStatisticsController::class, 'tasksByUserLane'])
+    ->name('workspace.charts.general.tasksByUserLane')
+    ->middleware('auth');

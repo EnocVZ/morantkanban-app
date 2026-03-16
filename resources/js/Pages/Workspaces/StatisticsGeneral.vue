@@ -373,6 +373,24 @@
         <div ref="hoursByUserProjectChart" class="w-full" style="min-height: 520px;"></div>
       </div>
 
+      <!-- ✅ Gráfica tareas trabajadas -->
+      <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-gray-900">{{ tasksChartTitle }}</h3>
+          <p class="text-xs text-gray-600" v-if="kpiReady">{{ rangeLabel }}</p>
+        </div>
+
+        <div v-if="loadingTasksWorkedChart" class="text-xs text-gray-500 mb-2">
+          {{ __('Cargando gráfica de tareas trabajadas...') }}
+        </div>
+
+        <p v-if="tasksWorkedChartError" class="text-xs text-red-600 mb-2">
+          {{ tasksWorkedChartError }}
+        </p>
+
+        <div ref="tasksWorkedByUserChart" class="w-full" style="min-height: 520px;"></div>
+      </div>
+
       <!-- ✅ GRAFICA % POR WORKSPACE -->
       <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
@@ -484,6 +502,10 @@ export default {
       loadingProjectTasks: false,
       projectTasksError: null,
       projectTasksPayload: null,
+
+      loadingTasksWorkedChart: false,
+      tasksWorkedChartError: null,
+      tasksWorkedChartPayload: null,
     }
   },
 
@@ -507,6 +529,12 @@ export default {
       if (this.groupBy === 'label') return this.__('Horas por usuario y etiqueta')
       if (this.groupBy === 'lane') return this.__('Horas por usuario y carril')
       return this.__('Horas por usuario y proyecto')
+    },
+
+    tasksChartTitle() {
+      if (this.groupBy === 'label') return this.__('Tareas trabajadas por usuario y etiqueta')
+      if (this.groupBy === 'lane') return this.__('Tareas trabajadas por usuario y carril')
+      return this.__('Tareas trabajadas por usuario y proyecto')
     },
 
     tableColumns() {
@@ -571,9 +599,9 @@ export default {
     selectedItems: {
       async handler() {
         this.renderChart()
-
+        this.renderTasksWorkedChart()
         if (this.kpiReady) {
-          await this.loadDetailTable()
+          await this.loadDetailTable()          
         }
       },
       deep: true,
@@ -588,6 +616,7 @@ export default {
 
       await this.loadMainDataset()
       await this.loadDetailTable()
+      await this.loadTasksWorkedChart()
     },
   },
 
@@ -685,6 +714,8 @@ export default {
         await this.loadWorkspacePctChart()
         await this.loadUserDailyHeatmap()
         await this.loadProjectTasksByDay()
+        await this.loadTasksWorkedChart()
+
       } catch (e) {
         this.error =
           e?.response?.data?.error ||
@@ -887,9 +918,9 @@ export default {
     }
     },
 
-  async exportDetailExcel() {
-    await this.exportExcel()
-  },
+    async exportDetailExcel() {
+      await this.exportExcel()
+    },
 
     async loadUserDailyHeatmap() {
       if (!this.plotly) return
@@ -1082,6 +1113,133 @@ export default {
 
       this.plotly.react(this.$refs.projectTasksByDayChart, traces, layout, config)
     },
+
+    async loadTasksWorkedChart() {
+      if (!this.plotly) return
+
+      this.loadingTasksWorkedChart = true
+      this.tasksWorkedChartError = null
+      this.tasksWorkedChartPayload = null
+
+      try {
+        const start = moment(this.startDate).format('YYYY-MM-DD')
+        const end = moment(this.endDate).format('YYYY-MM-DD')
+
+        let routeName = 'workspace.charts.general.tasksByUserProject'
+
+        if (this.groupBy === 'label') {
+          routeName = 'workspace.charts.general.tasksByUserLabel'
+        } else if (this.groupBy === 'lane') {
+          routeName = 'workspace.charts.general.tasksByUserLane'
+        }
+
+        const res = await axios.get(this.route(routeName), {
+          params: {
+            workspace_id: this.workspace.id,
+            start_date: start,
+            end_date: end,
+          },
+        })
+
+        this.tasksWorkedChartPayload = res.data || null
+
+        await nextTick()
+        this.renderTasksWorkedChart()
+      } catch (e) {
+        this.tasksWorkedChartError =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          'No se pudo cargar la gráfica de tareas trabajadas.'
+      } finally {
+        this.loadingTasksWorkedChart = false
+      }
+    },
+
+    renderTasksWorkedChart() {
+      if (!this.plotly || !this.$refs.tasksWorkedByUserChart) return
+
+      const payload = this.tasksWorkedChartPayload
+      const allRows = payload?.rows || []
+      const cols = this.tableColumns || []
+
+      if (!allRows.length || !cols.length) {
+        this.plotly.purge(this.$refs.tasksWorkedByUserChart)
+        return
+      }
+
+      const rows = allRows
+        .map(r => {
+          let total = 0
+          const items = {}
+
+          cols.forEach(col => {
+            const value = Number(r.items?.[col] || 0)
+            items[col] = value
+            total += value
+          })
+
+          return {
+            ...r,
+            items,
+            total,
+          }
+        })
+        .filter(r => r.total > 0)
+        .sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
+
+      const users = rows.map(r => r.usuario)
+
+      if (!users.length) {
+        this.plotly.purge(this.$refs.tasksWorkedByUserChart)
+        return
+      }
+
+      const traces = cols.map(itemName => ({
+        type: 'bar',
+        orientation: 'h',
+        name: itemName,
+        y: users,
+        x: rows.map(r => Number(r.items?.[itemName] || 0)),
+        hovertemplate:
+          'Usuario: %{y}<br>' +
+          this.dimensionLabel.slice(0, -1) +
+          ': %{fullData.name}<br>Tareas: %{x}<extra></extra>',
+      }))
+
+      const baseHeight = 180
+      const rowHeight = 34
+      const h = Math.max(520, baseHeight + (users.length * rowHeight))
+
+      const layout = {
+        barmode: 'stack',
+        height: h,
+        margin: { l: 220, r: 20, t: 20, b: 40 },
+        xaxis: {
+          title: 'Tareas',
+          rangemode: 'tozero',
+        },
+        yaxis: {
+          automargin: true,
+          autorange: 'reversed',
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        legend: {
+          orientation: 'h',
+          y: 1.08,
+          x: 0,
+          xanchor: 'left',
+        },
+      }
+
+      const config = {
+        responsive: true,
+        displayModeBar: false,
+      }
+
+      this.plotly.react(this.$refs.tasksWorkedByUserChart, traces, layout, config)
+    },
+
   },
 }
 </script>

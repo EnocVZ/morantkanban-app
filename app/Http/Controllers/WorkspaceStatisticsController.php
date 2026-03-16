@@ -1214,4 +1214,169 @@ class WorkspaceStatisticsController extends Controller
             'Pragma' => 'public',
         ]);
     }    
+
+
+
+
+    public function tasksByUserProject(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $raw = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('projects as p', 'ta.project_id', '=', 'p.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            // ->where('p.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->groupBy('t.user_id', 'ta.project_id', 'u.first_name', 'u.last_name', 'p.title')
+            ->selectRaw("
+                t.user_id,
+                ta.project_id as dimension_id,
+                CONCAT(u.first_name,' ',u.last_name) as usuario,
+                p.title as dimension,
+                COUNT(DISTINCT ta.id) as total
+            ")
+            ->get();
+
+        return response()->json(
+            $this->buildTasksMatrixResponse($workspaceId, $start, $end, $raw, 'project')
+        );
+    }
+
+    public function tasksByUserLabel(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $raw = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('task_labels as tl', 'ta.id', '=', 'tl.task_id')
+            ->join('labels as l', 'tl.label_id', '=', 'l.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->groupBy('t.user_id', 'l.id', 'u.first_name', 'u.last_name', 'l.name')
+            ->selectRaw("
+                t.user_id,
+                l.id as dimension_id,
+                CONCAT(u.first_name,' ',u.last_name) as usuario,
+                l.name as dimension,
+                COUNT(DISTINCT ta.id) as total
+            ")
+            ->get();
+
+        return response()->json(
+            $this->buildTasksMatrixResponse($workspaceId, $start, $end, $raw, 'label')
+        );
+    }
+
+    public function tasksByUserLane(Request $request)
+    {
+        $request->validate([
+            'workspace_id' => ['required', 'integer'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+        ]);
+
+        $workspaceId = (int) $request->workspace_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end   = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json(['error' => 'El rango de fechas no es válido (inicio > fin).'], 422);
+        }
+
+        $raw = DB::table('tasks as ta')
+            ->join('timers as t', 'ta.id', '=', 't.task_id')
+            ->join('board_lists as bl', 'ta.list_id', '=', 'bl.id')
+            ->join('users as u', 't.user_id', '=', 'u.id')
+            // ->where('ta.workspace_id', $workspaceId)
+            ->whereNotNull('t.stopped_at')
+            ->whereBetween(DB::raw('DATE(t.started_at)'), [$start->toDateString(), $end->toDateString()])
+            ->groupBy('t.user_id', 'bl.id', 'u.first_name', 'u.last_name', 'bl.title')
+            ->selectRaw("
+                t.user_id,
+                bl.id as dimension_id,
+                CONCAT(u.first_name,' ',u.last_name) as usuario,
+                bl.title as dimension,
+                COUNT(DISTINCT ta.id) as total
+            ")
+            ->get();
+
+        return response()->json(
+            $this->buildTasksMatrixResponse($workspaceId, $start, $end, $raw, 'lane')
+        );
+    }
+
+    private function buildTasksMatrixResponse(int $workspaceId, Carbon $start, Carbon $end, $raw, string $dimensionType): array
+    {
+        $dimensions = $raw->pluck('dimension')->filter()->unique()->values()->all();
+        $users = $raw->pluck('usuario')->filter()->unique()->values()->all();
+
+        $map = [];
+        foreach ($raw as $r) {
+            $user  = (string) $r->usuario;
+            $dim   = (string) $r->dimension;
+            $total = (int) $r->total;
+
+            if (!isset($map[$user])) {
+                $map[$user] = [];
+            }
+
+            $map[$user][$dim] = ($map[$user][$dim] ?? 0) + $total;
+        }
+
+        $rows = [];
+        foreach ($users as $user) {
+            $row = [
+                'usuario' => $user,
+                'total'   => 0,
+                'items'   => [],
+            ];
+
+            foreach ($dimensions as $dim) {
+                $value = (int) ($map[$user][$dim] ?? 0);
+                $row['items'][$dim] = $value;
+                $row['total'] += $value;
+            }
+
+            $rows[] = $row;
+        }
+
+        usort($rows, fn($a, $b) => ($b['total'] <=> $a['total']));
+
+        return [
+            'workspace_id'   => $workspaceId,
+            'start_date'     => $start->toDateString(),
+            'end_date'       => $end->toDateString(),
+            'dimension_type' => $dimensionType,
+            'dimensions'     => $dimensions,
+            'rows'           => $rows,
+        ];
+    }
 }
