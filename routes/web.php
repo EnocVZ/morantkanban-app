@@ -45,6 +45,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\TaskTimeLifeController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\WorkspaceStatisticsController;
+use App\Http\Controllers\ProductivityController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -567,4 +568,28 @@ Route::get('/workspace/charts/general/tasks-by-user-label', [WorkspaceStatistics
 
 Route::get('/workspace/charts/general/tasks-by-user-lane', [WorkspaceStatisticsController::class, 'tasksByUserLane'])
     ->name('workspace.charts.general.tasksByUserLane')
+    ->middleware('auth');
+
+Route::get('/productivity', [ProductivityController::class, 'index'])
+    ->name('productivity.index')
+    ->middleware('auth');
+
+Route::get('/productivity/filters/workspaces', [ProductivityController::class, 'workspaces'])
+    ->name('productivity.filters.workspaces')
+    ->middleware('auth');
+
+Route::get('/productivity/filters/projects', [ProductivityController::class, 'projects'])
+    ->name('productivity.filters.projects')
+    ->middleware('auth');
+
+Route::get('/productivity/filters/lanes', [ProductivityController::class, 'lanes'])
+    ->name('productivity.filters.lanes')
+    ->middleware('auth');
+
+Route::get('/productivity/charts/cumulative-flow', [ProductivityController::class, 'cumulativeFlowByLane'])
+    ->name('productivity.charts.cumulativeFlow')
+    ->middleware('auth');
+
+Route::get('/productivity/charts/completed-task-hours-boxplot', [ProductivityController::class, 'completedTaskHoursBoxplot'])
+    ->name('productivity.charts.completedTaskHoursBoxplot')
     ->middleware('auth');

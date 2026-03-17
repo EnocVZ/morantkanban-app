@@ -3441,6 +3441,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   .lg\:w-3\/5 {
     width: 60%;
   }
+  .lg\:w-56 {
+    width: 14rem;
+  }
   .lg\:w-64 {
     width: 16rem;
   }
@@ -3458,6 +3461,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
   }
   .lg\:flex-row {
     flex-direction: row;
+  }
+  .lg\:flex-wrap {
+    flex-wrap: wrap;
   }
   .lg\:items-end {
     align-items: flex-end;

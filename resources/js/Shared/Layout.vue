@@ -50,6 +50,13 @@
                                                 </div>
                                             </section>
                                         </div>
+
+                                        <Link
+                                            class="flex t__menu relative items-center rounded py-1 px-3 hover:bg-[#a6c5e229] text-white"
+                                            :href="route('productivity.index')"
+                                        >
+                                            <span>{{ __('Productividad') }}</span>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
