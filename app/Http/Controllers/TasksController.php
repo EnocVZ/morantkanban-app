@@ -16,6 +16,7 @@ use App\Models\Timer;
 use App\Models\User;
 use App\Models\UserRequest;
 use App\Models\SubTask;
+use App\Models\BoardSublist;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -655,14 +656,24 @@ class TasksController extends Controller
 
         public function moveTaskToNewSublist($taskId, Request $request){
             try {
+                
                 $requestData = $request->all();
                 $task = Task::whereId($taskId)->first();
+                $sublist = BoardSublist::whereId($requestData['sublist_id'])->first();
+                $prev_value = $task->sublist_id;
                 foreach ($requestData as $itemKey => $itemValue){
                     $task->{$itemKey} = $itemValue;
                 }
+
+                if($sublist->mark_completed_task == 1){
+                    $task->is_done = 1;
+                }else{
+                    $task->is_done = 0;
+                }
+
                 $task->updatedlist_at = now();
                 $task->updatesublist_at = now();
-
+                $this->LogTask($taskId,"update-sublist", $prev_value, $requestData['sublist_id']);
                 $task->save();
                 return MethodHelper::successResponse($task);
             } catch (\Exception $e) {
