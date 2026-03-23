@@ -3,11 +3,11 @@
 
       <Head :title="__(title)" />
       <board-view-menu :project="project" @filter-toggle="open_filter = !open_filter"
-         @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="filters" view="board" />
-      <board-filter :project="project" @board-filter="open_filter = false" :filters="filters" v-if="open_filter"
+         @menu-toggle="show_right_menu = !show_right_menu" @fClear="reset()" :filters="formFilter" view="board" />
+      <board-filter :project="project" @board-filter="open_filter = false" :filters="formFilter" v-if="open_filter"
          @do-filter="doFilter" options="user,due,label" />
       <div class="p-6 min-h-screen">
-         
+
          <!-- Listado de Sprints -->
          <div class="space-y-5">
             <draggable class="space-y-5" :list="board_lists" group="carrillist" item-key="id"
@@ -32,8 +32,8 @@
                      <transition name="fade">
                         <div v-show="column.collapsed" class="p-4 bg-gray-50">
                            <draggable :data-id="column.id" :data-colids="column.id"
-                              class="dragArea flex gap-4 overflow-x-auto"
-                              :list="column.sublist" group="columnlist" item-key="id" @end="afterDropColumn($event)">
+                              class="dragArea flex gap-4 overflow-x-auto" :list="column.sublist" group="columnlist"
+                              item-key="id" @end="afterDropColumn($event)">
                               <template #item="{ element: sublist, index: subcolumnIndex }">
                                  <div :id="sublist.id" :data-id="sublist.id"
                                     class="li_column bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-w-[260px]">
@@ -73,12 +73,12 @@
                                                       <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
                                                          @click="addDaysLimit(sublist)">
                                                          <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
-                                                         __('Automatizar tiempo') }}
+                                                            __('Automatizar tiempo') }}
                                                       </a>
                                                       <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
                                                          @click="onOpenOptionMarkTaskCompleted(sublist)">
                                                          <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
-                                                         __('Marcar tareas como completadas') }}
+                                                            __('Marcar tareas como completadas') }}
                                                       </a>
                                                    </div>
                                                 </template>
@@ -125,7 +125,7 @@
                                                                <a class="flex px-6 py-2 items-center hover:bg-indigo-500 hover:text-white hover:fill-white"
                                                                   @click="changeWorkspace(element)">
                                                                   <icon class="w-4 h-4 mr-2" name="user_edit" /> {{
-                                                                  __('Cambiar de espacio de trabajo') }}
+                                                                     __('Cambiar de espacio de trabajo') }}
                                                                </a>
                                                             </div>
                                                          </template>
@@ -287,17 +287,17 @@
       <right-menu v-if="show_right_menu" :project="project" @menu-toggle="show_right_menu = !show_right_menu"
          @openTask="(id) => taskDetailsPopup(id)" />
       <change-workspace v-if="visible.changeWorkspace" @onClose="onCloseChangeWorkSpace" :taskId="taskId" />
-      <add-days-limit :showModal="showAddDaysLimitModal" @close="showAddDaysLimitModal = false" :sublist="sublistSelected" />
+      <add-days-limit :showModal="showAddDaysLimitModal" @close="showAddDaysLimitModal = false"
+         :sublist="sublistSelected" />
       <option-mark-task-completed :showModal="showOptionMarkTaskCompletedModal"
-      @close="onCloseModalOptionMarkTaskCompleted"
-      @onSuccess="onSuccessOptionMarkTaskCompleted"
-      :sublist="sublistSelected" />
+         @close="onCloseModalOptionMarkTaskCompleted" @onSuccess="onSuccessOptionMarkTaskCompleted"
+         :sublist="sublistSelected" />
    </div>
 
 </template>
 
 <script>
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import Layout from '@/Shared/Layout'
 import Icon from '@/Shared/Icon'
 import BoardFilter from "@/Shared/BoardFilter";
@@ -334,7 +334,7 @@ export default {
       tasks: Object,
       project: Object,
       list_index: Object,
-      // filters: Object,
+      filters: Object,
       lists: {
          required: false
       },
@@ -348,9 +348,9 @@ export default {
    },
    data() {
       return {
-         filters: {},
          form: {
          },
+         formFilter:{},
          formColumn: {
             title: '',
             list_id: 0,
@@ -380,10 +380,10 @@ export default {
       };
    },
    watch: {
-      form(value) {
-         this.filters = value
+      formFilter(value) {
+         //this.filters = value
          this.getSublistDetail(value)
-      }
+      },
 
    },
    created() {
@@ -395,11 +395,12 @@ export default {
          this.taskDetailsId = this.task.slug || this.task.id;
          this.taskDetailsOpen = true;
       }
+
       if (!!this.filters.task) {
          this.taskDetailsPopup(this.filters.task)
       }
       this.board_lists = this.lists;
-     // this.getUserRequests();
+      // this.getUserRequests();
 
    },
    methods: {
@@ -417,11 +418,11 @@ export default {
          window.location.href = link;
       },
       reset() {
-         this.form = mapValues(this.form, () => null)
+         this.formFilter = mapValues(this.formFilter, () => null)
 
       },
       doFilter(form) {
-         this.form = { ...form }
+         this.formFilter = { ...form }
       },
       getSublistDetail(form) {
          axios.get(this.route('project.sublistdetail', this.project.id), { params: form })
@@ -508,8 +509,14 @@ export default {
          })
       },
       closeDetails() {
+         const url = new URL(window.location.href)
+
+  url.searchParams.delete('task')
+router.replace(url.pathname + url.search)
+
          this.form.task = null;
          this.taskDetailsOpen = false
+
          // this.getBoardLists();
       },
       taskDetailsPopup(id) {
