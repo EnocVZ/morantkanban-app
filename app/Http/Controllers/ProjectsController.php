@@ -760,7 +760,7 @@ class ProjectsController extends Controller {
     {
         $slug = optional(auth()->user()->role)->slug;
 
-        if (!in_array($slug, ['admin', 'CLT'])) {
+        if (!in_array($slug, ['admin', 'CLT', 'normal'])) {
             abort(403);
         }
 

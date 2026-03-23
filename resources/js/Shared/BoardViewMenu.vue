@@ -56,7 +56,7 @@ export default {
             return this.$page?.props?.auth?.user?.role?.slug || null
         },
         canSeeStatistics() {
-            return ['admin', 'CLT'].includes(this.roleSlug)
+            return ['admin', 'CLT', 'normal'].includes(this.roleSlug)
         },
         menuOptions() {
             // Filtra la opción "statistics" si no tiene permiso
