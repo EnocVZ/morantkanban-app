@@ -590,6 +590,10 @@ Route::get('/productivity/charts/cumulative-flow', [ProductivityController::clas
     ->name('productivity.charts.cumulativeFlow')
     ->middleware('auth');
 
+Route::get('/productivity/charts/cumulative-flow-project', [ProductivityController::class, 'cumulativeFlowProject'])
+    ->name('productivity.charts.cumulativeFlowProject')
+    ->middleware('auth');
+
 Route::get('/productivity/charts/completed-task-hours-boxplot', [ProductivityController::class, 'completedTaskHoursBoxplot'])
     ->name('productivity.charts.completedTaskHoursBoxplot')
     ->middleware('auth');

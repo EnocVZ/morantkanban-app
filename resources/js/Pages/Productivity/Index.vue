@@ -58,8 +58,8 @@
             </select>
           </div>
 
-          <!-- Carril -->
-          <div class="w-full lg:w-64">
+          <!-- Carril: solo visible para project_type = 2 -->
+          <div v-if="requiresLane" class="w-full lg:w-64">
             <p class="text-xs text-gray-600 mb-1">{{ __('Carril') }}</p>
             <select
               v-model="selectedLaneId"
@@ -140,7 +140,11 @@
               {{ __('Flujo acumulativo') }}
             </h3>
             <p class="text-xs text-gray-600">
-              {{ __('Acumulado de tareas por estatus dentro del carril seleccionado.') }}
+              {{
+                requiresLane
+                  ? __('Acumulado de tareas por estatus dentro del carril seleccionado.')
+                  : __('Acumulado de tareas por carril dentro del proyecto seleccionado.')
+              }}
             </p>
           </div>
 
@@ -234,6 +238,8 @@ export default {
       selectedProjectId: null,
       selectedLaneId: null,
 
+      selectedProjectType: null,
+
       loadingCumulativeFlow: false,
       cumulativeFlowError: null,
       cumulativeFlowPayload: null,
@@ -251,14 +257,21 @@ export default {
       return `${s} → ${e}`
     },
 
+    requiresLane() {
+      return Number(this.selectedProjectType) === 2
+    },
+
     canGenerate() {
-      return !!(
-        this.selectedWorkspaceId &&
-        this.selectedProjectId &&
-        this.selectedLaneId &&
-        this.startDate &&
-        this.endDate
-      )
+      const hasBase =
+        !!this.selectedWorkspaceId &&
+        !!this.selectedProjectId &&
+        !!this.startDate &&
+        !!this.endDate
+
+      if (!hasBase) return false
+      if (this.requiresLane) return !!this.selectedLaneId
+
+      return true
     },
   },
 
@@ -273,6 +286,7 @@ export default {
 
     resetProjectAndBelow() {
       this.selectedProjectId = null
+      this.selectedProjectType = null
       this.selectedLaneId = null
       this.projectOptions = []
       this.laneOptions = []
@@ -350,9 +364,19 @@ export default {
     },
 
     async onProjectChange() {
+      const selectedProject = this.projectOptions.find(
+        p => Number(p.id) === Number(this.selectedProjectId)
+      )
+
+      this.selectedProjectType = selectedProject ? Number(selectedProject.project_type) : null
+
       this.resetLaneAndBelow()
 
       if (!this.selectedProjectId) return
+
+      if (!this.requiresLane) {
+        return
+      }
 
       this.loadingFilters = true
       this.error = null
@@ -380,7 +404,7 @@ export default {
     },
 
     async loadCumulativeFlowChart() {
-      if (!this.plotly || !this.selectedLaneId) return
+      if (!this.plotly || !this.selectedProjectId) return
 
       this.loadingCumulativeFlow = true
       this.cumulativeFlowError = null
@@ -390,13 +414,27 @@ export default {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
-        const res = await axios.get(this.route('productivity.charts.cumulativeFlow'), {
-          params: {
-            lane_id: this.selectedLaneId,
-            start_date: start,
-            end_date: end,
-          },
-        })
+        let res = null
+
+        if (this.requiresLane) {
+          if (!this.selectedLaneId) return
+
+          res = await axios.get(this.route('productivity.charts.cumulativeFlow'), {
+            params: {
+              lane_id: this.selectedLaneId,
+              start_date: start,
+              end_date: end,
+            },
+          })
+        } else {
+          res = await axios.get(this.route('productivity.charts.cumulativeFlowProject'), {
+            params: {
+              project_id: this.selectedProjectId,
+              start_date: start,
+              end_date: end,
+            },
+          })
+        }
 
         this.cumulativeFlowPayload = res.data || null
 
@@ -490,17 +528,23 @@ export default {
         const start = moment(this.startDate).format('YYYY-MM-DD')
         const end = moment(this.endDate).format('YYYY-MM-DD')
 
+        const params = {
+          start_date: start,
+          end_date: end,
+          project_id: this.selectedProjectId,
+        }
+
+        if (this.requiresLane) {
+          params.lane_id = this.selectedLaneId
+        }
+
+        if (this.selectedWorkspaceId) {
+          params.workspace_id = this.selectedWorkspaceId
+        }
+
         const res = await axios.get(
           this.route('productivity.charts.completedTaskHoursBoxplot'),
-          {
-            params: {
-              workspace_id: this.selectedWorkspaceId,
-              project_id: this.selectedProjectId,
-              lane_id: this.selectedLaneId,
-              start_date: start,
-              end_date: end,
-            },
-          }
+          { params }
         )
 
         this.boxplotPayload = res.data || null
@@ -536,12 +580,8 @@ export default {
         hovertemplate:
           'Usuario: ' + row.user +
           '<br>Horas: %{x:.2f}<extra></extra>',
-        marker: {
-          size: 6,
-        },
-        line: {
-          width: 1.5,
-        },
+        marker: { size: 6 },
+        line: { width: 1.5 },
       }))
 
       const height = Math.max(520, 160 + (rows.length * 34))
@@ -578,7 +618,11 @@ export default {
 
       try {
         if (!this.canGenerate) {
-          throw new Error('Debes seleccionar espacio de trabajo, proyecto, carril y rango de fechas.')
+          throw new Error(
+            this.requiresLane
+              ? 'Debes seleccionar espacio de trabajo, proyecto, carril y rango de fechas.'
+              : 'Debes seleccionar espacio de trabajo, proyecto y rango de fechas.'
+          )
         }
 
         const start = moment(this.startDate).format('YYYY-MM-DD')

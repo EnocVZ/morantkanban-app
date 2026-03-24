@@ -39,7 +39,7 @@ class ProductivityController extends Controller
 
         $rows = DB::table('projects')
             ->where('workspace_id', $workspaceId)
-            ->select('id', 'title')
+            ->select('id', 'title', 'project_type')
             ->orderBy('title')
             ->get();
 
@@ -197,12 +197,141 @@ class ProductivityController extends Controller
         ]);
     }
 
+    public function cumulativeFlowProject(Request $request)
+    {
+        $request->validate([
+            'project_id' => ['required', 'integer'],
+            'start_date' => ['required', 'date'],
+            'end_date'   => ['required', 'date'],
+        ]);
+
+        $projectId = (int) $request->project_id;
+        $start     = Carbon::parse($request->start_date)->startOfDay();
+        $end       = Carbon::parse($request->end_date)->endOfDay();
+
+        if ($start->gt($end)) {
+            return response()->json([
+                'error' => 'El rango de fechas no es válido (inicio > fin).'
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1) Conteo diario de movimientos por carril
+        |--------------------------------------------------------------------------
+        | Replica la consulta que sí te devuelve datos
+        */
+        $raw = DB::table('log_task')
+            ->join('tasks', 'log_task.task_id', '=', 'tasks.id')
+            ->join('board_lists', 'log_task.new_value', '=', 'board_lists.id')
+            ->where('tasks.project_id', $projectId)
+            ->whereBetween(DB::raw('DATE(log_task.created_at)'), [
+                $start->toDateString(),
+                $end->toDateString(),
+            ])
+            ->groupBy(
+                'board_lists.id',
+                'board_lists.title',
+                DB::raw('DATE(log_task.created_at)')
+            )
+            ->selectRaw("
+                board_lists.id as list_id,
+                board_lists.title as list_title,
+                DATE(log_task.created_at) as work_date,
+                COUNT(log_task.task_id) as tareas
+            ")
+            ->orderBy('work_date')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2) Construir todas las fechas del rango
+        |--------------------------------------------------------------------------
+        */
+        $dates = [];
+        $cursor = $start->copy()->startOfDay();
+        $lastDay = $end->copy()->startOfDay();
+
+        while ($cursor->lte($lastDay)) {
+            $dates[] = $cursor->format('Y-m-d'); // <- CORREGIDO
+            $cursor->addDay();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3) Catálogo de carriles desde los datos reales
+        |--------------------------------------------------------------------------
+        */
+        $listCatalog = $raw
+            ->map(function ($row) {
+                return [
+                    'id' => (int) $row->list_id,
+                    'title' => (string) $row->list_title,
+                ];
+            })
+            ->unique('id')
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4) Mapear conteos diarios: [list_id][date] = tareas
+        |--------------------------------------------------------------------------
+        */
+        $dailyMap = [];
+
+        foreach ($raw as $row) {
+            $listId = (int) $row->list_id;
+            $date   = (string) $row->work_date;
+            $count  = (int) $row->tareas;
+
+            if (!isset($dailyMap[$listId])) {
+                $dailyMap[$listId] = [];
+            }
+
+            $dailyMap[$listId][$date] = $count;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5) Construir series acumulativas por carril
+        |--------------------------------------------------------------------------
+        */
+        $series = [];
+
+        foreach ($listCatalog as $list) {
+            $listId = (int) $list['id'];
+            $running = 0;
+            $y = [];
+
+            foreach ($dates as $date) {
+                $dailyValue = (int) ($dailyMap[$listId][$date] ?? 0);
+                $running += $dailyValue;
+                $y[] = $running;
+            }
+
+            $series[] = [
+                'id'   => $listId,
+                'name' => (string) $list['title'],
+                'y'    => $y,
+            ];
+        }
+
+        return response()->json([
+            'project_id' => $projectId,
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'dates'      => $dates,
+            'series'     => $series,
+            'raw_count'  => $raw->count(), // útil para depurar
+        ]);
+    }
+
     public function completedTaskHoursBoxplot(Request $request)
     {
         $request->validate([
             'workspace_id' => ['required', 'integer'],
             'project_id'   => ['required', 'integer'],
-            'lane_id'      => ['required', 'integer'],
+            // 'lane_id'      => ['required', 'integer'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
         ]);
