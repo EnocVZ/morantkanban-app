@@ -35,6 +35,7 @@
         <input
           type="date"
           v-model="form.date"
+          :max="today"
           required
           class="h-10 w-full rounded-lg border border-slate-300 px-3
           focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -103,9 +104,12 @@ export default {
         time: '',
       },
       loaderSave: false,
+      today: ''
     }
   },
-
+  created() {
+    this.today = moment().format('YYYY-MM-DD')
+  },
   watch: {
     timer: {
       handler(newTimer) {
@@ -128,7 +132,6 @@ export default {
 
   methods: {
 
-    // 🔁 Convertir segundos a horas + minutos
     convertSecondsToTime(seconds) {
       const duration = moment.duration(seconds, 'seconds')
 
@@ -189,10 +192,15 @@ export default {
         .catch((response) => {
           const data = response.response.data
 
-          if (data?.data?.code === "ERROR_OVERLAPPING_TIMES") {
-            this.$toast.error('No puedes guardar en ese rango de tiempo')
-          } else {
-            this.$toast.error('Error al guardar el seguimiento de tiempo')
+          switch (data?.data?.code) {
+            case "ERROR_OVERLAPPING_TIMES":
+              this.$toast.error('No puedes guardar en ese rango de tiempo')
+              break;
+            case "ERROR_ACTIVE_TIMER_EXISTS":
+              this.$toast.error('Ya tienes un seguimiento de tiempo activo, deténlo antes de iniciar uno nuevo')
+              break;
+            default:
+              this.$toast.error('Error en el  servidor al guardar el seguimiento de tiempo')
           }
         })
         .finally(() => {
