@@ -738,20 +738,7 @@
 
                            <div class="pl-8 pt-4">
                               <div class="space-y-4">
-                                 <div v-for="(log, log_i) in task.timers" :key="log_i + log" class="group relative flex py-1">
-                                    <div class="group flex-1 ltr:pl-4 rtl:pr-4">
-                                       <div class="flex items-center gap-2 text-sm text-gray-700">
-                                          <span class="font-medium text-gray-900">{{
-                                             formatDate(log.started_at) }}</span>-
-                                          <span class="font-medium text-gray-900">{{
-                                             formatDate(log.stopped_at) }}</span>
-                                          <span class="ml-auto text-gray-400 text-xs font-semibold">{{
-                                             moment.duration(log.duration, 'seconds').format('h[h] m[m] s[s]') }}</span>
-                                          <span><icon class="w-3 h-3 cursor-pointer" name="edit"
-                                                   @click="openEditLogTime(log)" /></span>
-                                       </div>
-                                    </div>
-                                 </div>
+                                 <timer-log v-model="task.timers" @onEdit="openEditLogTime"/>
                               </div>
                            </div> 
                         </section>
@@ -986,6 +973,7 @@ import SelectMultiple from '@/Shared/SelectMultiple.vue';
 import TimeTracking from './TimeTracking.vue';
 import TimeTrackingModal from './TimeTrackingModal.vue';
 import Subtask from '@/Pages/Projects/Subtask.vue';
+import TimerLog from '@/Pages/Projects/TimerLog.vue';
 
 export default {
    props: {
@@ -1073,9 +1061,10 @@ export default {
       }
    },
    components: {
-      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable, FolderSelection, SelectMultiple,
+      Icon, Loader, Link, Datepicker, QuillEditor, Head, Toast, draggable,
+      FolderSelection, SelectMultiple,
       TimeTracking, TimeTrackingModal,
-      Subtask
+      Subtask, TimerLog
    },
    computed: {
       sortedTasks: () => {

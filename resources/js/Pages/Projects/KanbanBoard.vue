@@ -511,8 +511,13 @@ export default {
       closeDetails() {
          const url = new URL(window.location.href)
 
-  url.searchParams.delete('task')
-router.replace(url.pathname + url.search)
+         url.searchParams.delete('task')
+
+         router.replace({
+            url: url.pathname + url.search,
+            preserveState: true,
+            preserveScroll: true,
+         })
 
          this.form.task = null;
          this.taskDetailsOpen = false
