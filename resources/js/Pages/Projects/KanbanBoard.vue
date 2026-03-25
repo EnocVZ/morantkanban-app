@@ -509,7 +509,7 @@ export default {
          })
       },
       closeDetails() {
-         const url = new URL(window.location.href)
+         /**const url = new URL(window.location.href)
 
          url.searchParams.delete('task')
 
@@ -517,7 +517,10 @@ export default {
             url: url.pathname + url.search,
             preserveState: true,
             preserveScroll: true,
-         })
+         })**/
+        const url = new URL(window.location.href);
+        url.searchParams.delete('task');
+        router.replace(url.pathname + url.search)
 
          this.form.task = null;
          this.taskDetailsOpen = false
