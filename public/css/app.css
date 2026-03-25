@@ -1646,6 +1646,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 .h-full {
   height: 100%;
 }
+.h-12 {
+  height: 3rem;
+}
 .max-h-36 {
   max-height: 9rem;
 }
@@ -1891,6 +1894,11 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .rotate-180 {
   --tw-rotate: 180deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.scale-100 {
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .transform {
@@ -2920,6 +2928,9 @@ body .dark.layout_landing .form-input,body .dark.layout_landing
 }
 .opacity-75 {
   opacity: 0.75;
+}
+.opacity-100 {
+  opacity: 1;
 }
 .shadow {
   --tw-shadow: 0 0 3px rgb(60 72 88 / 0.15);
