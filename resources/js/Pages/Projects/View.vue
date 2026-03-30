@@ -513,8 +513,6 @@ export default {
         },
         
     },
-    mounted(){
-    },
     created() {
         this.moment = moment
         

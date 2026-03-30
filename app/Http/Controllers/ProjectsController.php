@@ -385,22 +385,46 @@ class ProjectsController extends Controller {
         $loopIndex = 0;
         $requestNoRead = UserRequest::where('read', 0)->where('project_id', $project->id)->count();
         $requestList = Task::where('project_id', $project->id)
-              ->where('is_request', 1)
-              ->where('sublist_id', 0)
-              ->with([
-                    'taskLabels.label',
-                    'timer',
-                    'cover',
-                    'assignees',
-                ])
-                ->withCount([
-                    'checklistDone',
-                    'comments',
-                    'checklists',
-                    'attachments',
-                ])
-                ->orderBy('created_at', 'desc')->get()
-                ;
+                        ->where('is_request', 1)
+                        ->where('sublist_id', 0)
+                        ->with([
+                            'taskLabels.label',
+                            'timer',
+                            'cover',
+                            'assignees',
+                            'userRequest',
+                            'subtaskList' => function ($q) {
+                                $q->whereHas('task', function ($q) {
+                                    $q->where('is_archive', 0);
+                                })
+                                ->with([
+                                    'task' => function ($q) {
+                                        $q->with(['list','sublist','assignees']);
+                                    }
+                                ]);
+                            }
+                        ])
+                        ->withCount([
+                            'checklistDone',
+                            'comments',
+                            'checklists',
+                            'attachments',
+                            'subtaskList as total_subtasks',
+                            'subtaskList as completed_subtasks' => function ($q) {
+                                $q->whereHas('task', function ($q) {
+                                    $q->where('is_done', 1);
+                                });
+                            }
+                        ])
+                        ->orderBy('created_at', 'desc')
+                        ->get()
+                        ->map(function ($task) {
+                            $task->subtasks_percentage = $task->total_subtasks > 0
+                                ? round(($task->completed_subtasks / $task->total_subtasks) * 100, 2)
+                                : 0;
+
+                            return $task;
+                        });
         $tasks = $this->getAllUserRequest($project);
         return Inertia::render('Projects/Table', [
             'title' => 'Lista | '.$project->title,
@@ -736,7 +760,7 @@ class ProjectsController extends Controller {
     {
         $slug = optional(auth()->user()->role)->slug;
 
-        if (!in_array($slug, ['admin', 'CLT'])) {
+        if (!in_array($slug, ['admin', 'CLT', 'normal'])) {
             abort(403);
         }
 
