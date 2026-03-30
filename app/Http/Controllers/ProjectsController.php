@@ -790,8 +790,8 @@ class ProjectsController extends Controller {
             ->whereBetween(DB::raw('DATE(t.started_at)'), [
                 $start->toDateString(),
                 $end->toDateString(),
-            ])
-            ->where('ta.project_id', $projectId);
+            ]);
+            //->where('ta.project_id', $projectId)
 
         $listId = $request->list_id ? (int) $request->list_id : null;
         if ($listId) {
@@ -933,9 +933,7 @@ class ProjectsController extends Controller {
             ->whereBetween(DB::raw('DATE(t.started_at)'), [
                 $start->toDateString(),
                 $end->toDateString(),
-            ])
-            ->where('ta.project_id', $projectId);
-
+            ]);
         if ($listId) {
             $base->where('ta.list_id', $listId);
         }
@@ -999,8 +997,8 @@ class ProjectsController extends Controller {
                 $start->toDateString(),
                 $end->toDateString(),
             ])
-            ->where('ta.project_id', $projectId)
-            ->whereNotNull('tl.label_id')              // 👈 evita nulls por LEFT JOIN
+            // ->where('ta.project_id', $projectId)
+            ->whereNotNull('tl.label_id')       
             ->groupBy('tl.label_id')
             ->selectRaw('tl.label_id');
 
@@ -1064,7 +1062,7 @@ class ProjectsController extends Controller {
                 $start->toDateString(),
                 $end->toDateString(),
             ])
-            ->where('ta.project_id', $projectId)
+            // ->where('ta.project_id', $projectId)
             ->groupBy('ta.list_id')
             ->selectRaw('ta.list_id');
 
@@ -1612,7 +1610,7 @@ class ProjectsController extends Controller {
                 $end->toDateString(),
             ])
             ->where('t.user_id', $userId)
-            ->where('ta.project_id', $projectId)
+            // ->where('ta.project_id', $projectId)
             ->orderBy(DB::raw('DATE(t.started_at)'))
             ->orderBy('t.started_at')
             ->selectRaw("
