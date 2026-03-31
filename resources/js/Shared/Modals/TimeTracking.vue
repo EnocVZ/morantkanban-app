@@ -71,18 +71,22 @@
     </div>
 
   </form>
+  <toast ref="toast" :type="notificationType" :noActionOnClick="true">{{ notificationMessage }}
+    <button @click="onOpenDetail" class="text-xs px-2 py-1 ml-1 rounded-lg bg-white/20 hover:bg-white/30 transition text-white font-medium">
+     #{{ taskDetail.task_id }}
+</button></toast>
 </template>
 
 <script>
 import axios from 'axios'
 import moment from 'moment'
 import LoadingButton from '@/Shared/LoadingButton'
-
+import Toast from '@/Shared/Toast';
 export default {
   components: {
-    LoadingButton,
+    LoadingButton,Toast
   },
-
+  emits: ['close', 'onAddOrUpdateTime'],
   props: {
     taskId: {
       type: Number,
@@ -96,6 +100,9 @@ export default {
 
   data() {
     return {
+      notificationMessage: '',
+      notificationType: 'success',
+      taskDetail: {},
       form: {
         timerId: 0,
         hours: 0,
@@ -191,10 +198,12 @@ export default {
         })
         .catch((response) => {
           const data = response.response.data
-
-          switch (data?.data?.code) {
+          switch (data?.message) {
             case "ERROR_OVERLAPPING_TIMES":
-              this.$toast.error('No puedes guardar en ese rango de tiempo')
+              this.taskDetail = data?.data[0] || {};
+              this.notificationType = "error";
+               this.notificationMessage = "Ya tienes un seguimiento de tiempo en ese rango, haz click para verlo";
+                this.$refs.toast.showToast();
               break;
             case "ERROR_ACTIVE_TIMER_EXISTS":
               this.$toast.error('Ya tienes un seguimiento de tiempo activo, deténlo antes de iniciar uno nuevo')
@@ -238,6 +247,10 @@ export default {
         .finally(() => {
           this.loaderSave = false
         })
+    },
+
+    onOpenDetail(){
+       window.location.href = this.route('projects.view.board',{uid:  this.taskDetail.task.project_id, task:  this.taskDetail.task_id})
     }
 
   }

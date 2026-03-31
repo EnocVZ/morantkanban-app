@@ -50,63 +50,69 @@ class TimersController extends Controller
         return response()->json($duration);
     }
 
-    public function saveTimeTracking(Request $request){
-    try {
-        $requests = $request->all();
-        $duration = $requests['duration'];
+    public function saveTimeTracking(Request $request)
+    {
+        try {
+            $requests = $request->all();
+            $duration = $requests['duration'];
 
-        $startDateTime = Carbon::parse($requests['started_at']);
-        $endDateTime = $startDateTime->copy()->addSeconds($duration);
+            $startDateTime = Carbon::parse($requests['started_at']);
+            $endDateTime = $startDateTime->copy()->addSeconds($duration);
 
-        // Validar si existe timer activo (stopped_at null)
-        $activeTimerExists = Timer::where('user_id', auth()->id())
-            ->whereNull('stopped_at')
-            ->exists();
+            // Validar si existe timer activo (stopped_at null)
+            $activeTimer = Timer::where('user_id', auth()->id())
+                ->whereNull('stopped_at')
+                ->first();
 
-        //Validar si la fecha es hoy
-        $isToday = $startDateTime->isToday();
+            // Validar si la fecha es hoy
+            $isToday = $startDateTime->isToday();
 
-        if ($activeTimerExists && $isToday) {
-            return MethodHelper::errorResponse(
-                null,
-                "ERROR_ACTIVE_TIMER_EXISTS",
-                422,
-                ['code' => 'ERROR_ACTIVE_TIMER_EXISTS']
-            );
+            if ($activeTimer && $isToday) {
+                return MethodHelper::errorResponse(
+                    null,
+                    "ERROR_ACTIVE_TIMER_EXISTS",
+                    422,
+                    ['code' => 'ERROR_ACTIVE_TIMER_EXISTS']
+                );
+            }
+
+            // 🔥 Validación overlapping (obteniendo registros)
+            $overlappingTimers = Timer::where('user_id', auth()->id())
+                ->where(function ($q) use ($startDateTime, $endDateTime) {
+                    $q->where('started_at', '<', $endDateTime)
+                    ->where(function ($q2) use ($startDateTime) {
+                        $q2->where('stopped_at', '>', $startDateTime)
+                            ->orWhereNull('stopped_at');
+                    });
+                })
+                ->with('task')
+                ->get();
+
+            if ($overlappingTimers->isNotEmpty()) {
+                return MethodHelper::errorResponse(
+                    null,
+                    "ERROR_OVERLAPPING_TIMES",
+                    422,
+                    $overlappingTimers
+                );
+            }
+
+            // Guardar
+            $timer = Timer::create([
+                'user_id' => auth()->id(),
+                'task_id' => $requests['task_id'],
+                'started_at' => $requests['started_at'],
+                'stopped_at' => $endDateTime,
+                'duration' => $duration
+            ]);
+
+            return MethodHelper::successResponse($timer);
+
+        } catch (\Exception $e) {
+            return MethodHelper::errorResponse($e->getMessage());
         }
-
-        //Validación existente (overlapping)
-        $exists = Timer::where('user_id', auth()->id())
-            ->where(function ($q) use ($startDateTime, $endDateTime) {
-                $q->where('started_at', '<', $endDateTime)
-                  ->where('stopped_at', '>', $startDateTime);
-            })
-            ->exists();
-
-        if ($exists) {
-            return MethodHelper::errorResponse(
-                null,
-                "ERROR_OVERLAPPING_TIMES",
-                422,
-                ['code' => "ERROR_OVERLAPPING_TIMES"]
-            );
-        }
-
-        // Guardar
-        $timer = Timer::create([
-            'user_id' => auth()->id(),
-            'task_id' => $requests['task_id'],
-            'started_at' => $requests['started_at'],
-            'stopped_at' => $endDateTime,
-            'duration' => $duration
-        ]);
-
-        return MethodHelper::successResponse($timer);
-
-    } catch (\Exception $e) {
-        return MethodHelper::errorResponse($e->getMessage());
     }
-}
+
 
     public function updateTimeTracking(Request $request, $id)
     {

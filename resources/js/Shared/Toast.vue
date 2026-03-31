@@ -20,6 +20,10 @@ export default {
       type: Function,
       default: () => {},
     },
+    noActionOnClick: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -37,8 +41,10 @@ export default {
       this.visible = false;
     },
     closeOnClick() {
-      this.hideToast();
-      this.onClose();
+      if (!this.noActionOnClick) {
+        this.hideToast();
+        this.onClose();
+      }
     },
   },
 };

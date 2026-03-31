@@ -113,7 +113,7 @@
                                   </span>
                                 </button>
                             
-                                <div v-if="showDialog" class="fixed top-0 right-0 w-98 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
+                                <div v-if="showDialog" class="fixed top-0 right-0 w-80 h-full bg-white shadow-lg overflow-hidden modal-enter-active">
                                     <!-- Encabezado -->
                                     <div class="p-4 border-b flex justify-between items-center">
                                       <h2 class="text-xl font-semibold text-gray-800">Notificaciones</h2>
@@ -176,7 +176,7 @@
                                                 <span class="font-semibold text-red-600">La tarea expira mañana</span></p>
                                             <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification.project.workspace.name }}</p>
                                             <p class="text-xs text-gray-400">Proyecto: {{ notification.project.title }}</p>
-                                            <div  v-html="notification.title"/>
+                                            <div class="break-words whitespace-normal max-w-full" v-html="notification.title"/>
                                             <button @click="sendWasRead(notification, false)" class="text-[14px] text-blue-500">ver</button>
                                             </div>
                                             
@@ -206,7 +206,7 @@
                                             <p class="text-xs text-gray-400">Espacio de trabajo: {{ notification?.task?.project?.workspace?.name || "Ninguno"}}</p>
                                             <p class="text-xs text-gray-400">Proyecto: {{ notification?.task?.project?.title || "Ninguno"}}</p>
                                             <p class="text-xs text-gray-400">Tarea: {{ notification?.task?.title }}</p>
-                                            <div  v-html="notification.title"/>
+                                            <div class="texto-corto" v-html="notification.title"/>
                                             <button @click="sendWasRead(notification)" class="text-[14px] text-blue-500">ver</button>
                                             </div>
                                 
@@ -474,5 +474,15 @@ export default {
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.6s ease-in-out;
+}
+
+.texto-corto {
+  width: 180px;              
+  display: -webkit-box;
+  -webkit-line-clamp: 2;     
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  max-height: 2.8em;    
 }
 </style>
